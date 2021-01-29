@@ -19,7 +19,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import gb.smartchat.R
+import io.reactivex.disposables.Disposable
 import kotlin.math.roundToInt
 
 
@@ -48,26 +51,27 @@ fun View.updatePadding(
     setPadding(left, top, right, bottom)
 }
 
-@RequiresApi(Build.VERSION_CODES.KITKAT)
 fun View.addSystemTopPadding(
     targetView: View = this,
     isConsumed: Boolean = false
 ) {
-    doOnApplyWindowInsets { _, insets, initialPadding ->
-        targetView.updatePadding(
-            top = initialPadding.top + insets.systemWindowInsetTop
-        )
-        if (isConsumed) {
-            WindowInsetsCompat.Builder(insets).setSystemWindowInsets(
-                Insets.of(
-                    insets.systemWindowInsetLeft,
-                    0,
-                    insets.systemWindowInsetRight,
-                    insets.systemWindowInsetBottom
-                )
-            ).build()
-        } else {
-            insets
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        doOnApplyWindowInsets { _, insets, initialPadding ->
+            targetView.updatePadding(
+                top = initialPadding.top + insets.systemWindowInsetTop
+            )
+            if (isConsumed) {
+                WindowInsetsCompat.Builder(insets).setSystemWindowInsets(
+                    Insets.of(
+                        insets.systemWindowInsetLeft,
+                        0,
+                        insets.systemWindowInsetRight,
+                        insets.systemWindowInsetBottom
+                    )
+                ).build()
+            } else {
+                insets
+            }
         }
     }
 }
@@ -98,26 +102,27 @@ fun View.addSystemTopPadding(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.KITKAT)
 fun View.addSystemBottomPadding(
     targetView: View = this,
     isConsumed: Boolean = false
 ) {
-    doOnApplyWindowInsets { _, insets, initialPadding ->
-        targetView.updatePadding(
-            bottom = initialPadding.bottom + insets.systemWindowInsetBottom
-        )
-        if (isConsumed) {
-            WindowInsetsCompat.Builder(insets).setSystemWindowInsets(
-                Insets.of(
-                    insets.systemWindowInsetLeft,
-                    insets.systemWindowInsetTop,
-                    insets.systemWindowInsetRight,
-                    0
-                )
-            ).build()
-        } else {
-            insets
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        doOnApplyWindowInsets { _, insets, initialPadding ->
+            targetView.updatePadding(
+                bottom = initialPadding.bottom + insets.systemWindowInsetBottom
+            )
+            if (isConsumed) {
+                WindowInsetsCompat.Builder(insets).setSystemWindowInsets(
+                    Insets.of(
+                        insets.systemWindowInsetLeft,
+                        insets.systemWindowInsetTop,
+                        insets.systemWindowInsetRight,
+                        0
+                    )
+                ).build()
+            } else {
+                insets
+            }
         }
     }
 }
@@ -188,3 +193,12 @@ fun Context.colorFromAttr(@AttrRes attr: Int): Int {
 }
 
 fun Context.color(colorRes: Int) = ContextCompat.getColor(this, colorRes)
+
+fun Disposable.disposeOnPause(lifecycleOwner: LifecycleOwner) {
+    lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
+        override fun onPause(owner: LifecycleOwner) {
+            this@disposeOnPause.dispose()
+            lifecycleOwner.lifecycle.removeObserver(this)
+        }
+    })
+}

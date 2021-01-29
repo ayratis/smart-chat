@@ -15,8 +15,9 @@
         tools:ignore="AllowBackup">
 
         <activity
-            android:name=".ui.AppActivity"
-            android:theme="@style/Theme.SmartChat">
+            android:name=".ui.SmartChatActivity"
+            android:theme="@style/Theme.SmartChat"
+            android:windowSoftInputMode="adjustResize">
 
             <intent-filter>
 

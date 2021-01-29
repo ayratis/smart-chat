@@ -8,7 +8,7 @@ import gb.smartchat.R
 import kotlin.reflect.KClass
 
 
-const val defaultContainerId = R.id.container
+const val defaultContainerId = R.id.fragment_container
 
 fun FragmentManager.back() {
     popBackStack()
