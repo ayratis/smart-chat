@@ -3,6 +3,7 @@ package gb.smartchat.ui.chat
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import by.kirich1409.viewbindingdelegate.viewBinding
 import gb.smartchat.R
@@ -13,10 +14,10 @@ import gb.smartchat.utils.addSystemTopPadding
 class ChatFragment : Fragment(R.layout.fragment_chat) {
 
     private val binding by viewBinding(FragmentChatBinding::bind)
+    private val smartChatViewModel by viewModels<ChatViewModel>()
+
     private val chatAdapter by lazy {
-        ChatAdapter().apply {
-            submitList(listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11).map { ChatItem(it) })
-        }
+        ChatAdapter()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -30,6 +31,22 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
                 stackFromEnd = true
             }
             adapter = chatAdapter
+        }
+        binding.btnSend.setOnClickListener {
+            binding.etInput.text.toString().let {
+                if (it.isNotBlank()) smartChatViewModel.onSendClick(it)
+                binding.etInput.setText("")
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        smartChatViewModel.onStart()
+        smartChatViewModel.logList.observe(this) { list ->
+            chatAdapter.submitList(list) {
+                binding.rvChat.scrollToPosition(list.lastIndex)
+            }
         }
     }
 }

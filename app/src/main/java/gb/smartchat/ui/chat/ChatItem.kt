@@ -2,7 +2,7 @@ package gb.smartchat.ui.chat
 
 import androidx.recyclerview.widget.DiffUtil
 
-data class ChatItem(val id: Int) {
+data class ChatItem(val id: Int, val text: String) {
 
     class DiffUtilItemCallback : DiffUtil.ItemCallback<ChatItem>() {
         override fun areItemsTheSame(oldItem: ChatItem, newItem: ChatItem): Boolean {

@@ -8,6 +8,7 @@ import gb.smartchat.utils.configureSystemBars
 
 class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             window?.configureSystemBars()
@@ -15,9 +16,11 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         super.onCreate(savedInstanceState)
 
         if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
+            supportFragmentManager
+                .beginTransaction()
                 .replace(R.id.fragment_container, ChatFragment())
                 .commitNow()
         }
     }
+
 }

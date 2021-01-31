@@ -11,7 +11,7 @@ class ChatAdapter : ListAdapter<ChatItem, DummyViewHolder>(ChatItem.DiffUtilItem
     }
 
     override fun onBindViewHolder(holder: DummyViewHolder, position: Int) {
-        holder.bind(getItem(position).id.toString())
+        holder.bind(getItem(position).text)
     }
 
 }
