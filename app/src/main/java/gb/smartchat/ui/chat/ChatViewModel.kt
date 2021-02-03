@@ -3,129 +3,53 @@ package gb.smartchat.ui.chat
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.gson.Gson
-import gb.smartchat.entity.request.MessageCreateRequest
-import gb.smartchat.ui.data.SocketFactory
-import io.socket.client.Ack
-import io.socket.client.Socket
-import org.json.JSONObject
+import gb.smartchat.data.InstanceFactory
+import gb.smartchat.data.Repository
+import io.reactivex.disposables.CompositeDisposable
 
 class ChatViewModel(
-    private val socket: Socket = SocketFactory.createSocket(
-        url = "http://91.201.41.157:8000",
-        userId = "77f21ecc-0d4a-4f85-9173-55acf327f007"
-    ),
-    private val gson: Gson = Gson()
+    private val repository: Repository = InstanceFactory.createRepository()
 ) : ViewModel() {
 
     companion object {
-        private const val TAG = "Socket"
+        const val TAG = "ChatViewModel"
     }
 
-    val logList = MutableLiveData(listOf(ChatItem(1, "`````````````")))
+    private val compositeDisposable = CompositeDisposable()
+    val chatList = MutableLiveData<List<ChatItem>>(emptyList())
 
     init {
-
-        socket.on(Socket.EVENT_CONNECT) {
-            val msg = "connect"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_CONNECTING) {
-            val msg = "connecting"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_DISCONNECT) {
-            val msg = "disconnect"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_ERROR) {
-            val msg = "event error: ${(it.getOrNull(0) as? Exception)?.message}"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_MESSAGE) {
-            val msg = "message: ${it.getOrNull(0) as? String}"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_CONNECT_ERROR) {
-            val msg = "connect error: ${(it[0] as? Exception)?.message}"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_CONNECT_TIMEOUT) {
-            val msg = "connect timeout"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_RECONNECT) {
-            val msg = "reconnect"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_RECONNECT_ERROR) {
-            val msg = "reconnect error: ${(it[0] as? Exception)?.message}"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_RECONNECT_FAILED) {
-            val msg = "reconnect failed"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_RECONNECT_ATTEMPT) {
-            val msg = "reconnect attempt"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_RECONNECTING) {
-            val msg = "reconnecting"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_PING) {
-            val msg = "ping"
-            addMsgToList(msg)
-        }
-        socket.on(Socket.EVENT_PONG) {
-            val msg = "pong"
-            addMsgToList(msg)
-        }
-        //server custom
-        socket.on("srv:msg:new") {
-            val msg = "onNewMessage: $it"
-            addMsgToList(msg)
-        }
+        val d = repository.observeNewMessages()
+            .subscribe { message ->
+                addMsgToList(message.text ?: "```")
+            }
+        compositeDisposable.add(d)
     }
 
     fun onStart() {
-        if (!socket.connected()) {
-            socket.connect()
-        }
+        repository.connect()
     }
 
     fun onSendClick(text: String) {
-        val body =
-            MessageCreateRequest(
-                text = text,
-                senderId = "77f21ecc-0d4a-4f85-9173-55acf327f007",
-                chatId = 1,
-                clientId = "f3191891-ca47-4eb0-9fc8-02cd7d3cf3e5",
+        val d = repository.sendMessage(text)
+            .subscribe(
+                { Log.d(TAG, "onSend success: $it") },
+                { Log.e(TAG, "onSendFailure: ${it.message}", it) }
             )
-        val bodyJson = JSONObject(gson.toJson(body))
-        socket.emit(
-            "usr:msg:create",
-            bodyJson,
-            Ack { args ->
-                val response = args.getOrNull(0) as? JSONObject
-                val msg =
-                    "Ack callback\nrequest: usr:msg:create\nrequestBody: $body\nresponse: $response"
-                addMsgToList(msg)
-            }
-        )
+        compositeDisposable.add(d)
     }
 
     private fun addMsgToList(msg: String) {
         Log.d(TAG, msg)
-        val list = logList.value?.toMutableList() ?: mutableListOf()
+        val list = chatList.value ?: listOf()
         val lastItemId = list.lastOrNull()?.id ?: 1
-        list += ChatItem(lastItemId + 1, msg)
-        logList.postValue(list)
+        val newList = list + ChatItem(lastItemId + 1, msg)
+        chatList.postValue(newList)
     }
 
     override fun onCleared() {
-        socket.disconnect()
+        compositeDisposable.dispose()
+        repository.disconnect()
     }
 
 }

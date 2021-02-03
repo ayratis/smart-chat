@@ -14,7 +14,7 @@ import gb.smartchat.utils.addSystemTopPadding
 class ChatFragment : Fragment(R.layout.fragment_chat) {
 
     private val binding by viewBinding(FragmentChatBinding::bind)
-    private val smartChatViewModel by viewModels<ChatViewModel>()
+    private val viewModel by viewModels<ChatViewModel>()
 
     private val chatAdapter by lazy {
         ChatAdapter()
@@ -34,7 +34,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
         }
         binding.btnSend.setOnClickListener {
             binding.etInput.text.toString().let {
-                if (it.isNotBlank()) smartChatViewModel.onSendClick(it)
+                if (it.isNotBlank()) viewModel.onSendClick(it)
                 binding.etInput.setText("")
             }
         }
@@ -42,8 +42,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
 
     override fun onStart() {
         super.onStart()
-        smartChatViewModel.onStart()
-        smartChatViewModel.logList.observe(this) { list ->
+        viewModel.onStart()
+        viewModel.chatList.observe(this) { list ->
             chatAdapter.submitList(list) {
                 binding.rvChat.scrollToPosition(list.lastIndex)
             }
