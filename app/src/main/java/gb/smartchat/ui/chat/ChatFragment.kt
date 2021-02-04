@@ -1,3 +1,4 @@
+
 package gb.smartchat.ui.chat
 
 import android.os.Bundle

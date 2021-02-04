@@ -21,6 +21,7 @@ class ChatViewModel(
     init {
         val d = repository.observeNewMessages()
             .subscribe { message ->
+                Log.d(TAG, "new message: $message")
                 addMsgToList(message.text ?: "```")
             }
         compositeDisposable.add(d)

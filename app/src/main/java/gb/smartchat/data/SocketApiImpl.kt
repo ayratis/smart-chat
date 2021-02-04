@@ -6,6 +6,7 @@ import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.BuildConfig
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageCreateRequest
+import gb.smartchat.entity.response.NewMessage
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.socket.client.Socket
@@ -26,11 +27,7 @@ class SocketApiImpl(
         if (BuildConfig.DEBUG) {
             socket.setSystemListeners { log(it) }
         }
-        socket.on("srv:msg:new") {
-            val msg = "srv:msg:new: ${it[0] as? JSONObject}"
-            log(msg)
-        }
-//        setServerListeners()
+        setServerListeners()
     }
 
     override fun isConnected(): Boolean {
@@ -50,7 +47,7 @@ class SocketApiImpl(
 
     override fun sendMessage(message: MessageCreateRequest): Single<Boolean> {
         val method = "usr:msg:create"
-        val requestBody = message.toJSONObject()
+        val requestBody = JSONObject(gson.toJson(message))
         return socket.emitSingle(method, requestBody)
             .map { response ->
                 logAck(method, requestBody, response)
@@ -68,8 +65,8 @@ class SocketApiImpl(
             try {
                 val response = it[0] as JSONObject
                 log("srv:msg:new: $response")
-                val message = gson.fromJson(response.toString(), Message::class.java)
-                newMessageRelay.accept(message)
+                val message = gson.fromJson(response.toString(), NewMessage::class.java)
+                newMessageRelay.accept(message.message)
             } catch (e: Throwable) {
                 e.printStackTrace()
             }
