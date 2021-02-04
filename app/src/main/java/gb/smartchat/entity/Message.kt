@@ -14,10 +14,10 @@ data class Message(
     val clientId: String?,
     @SerializedName("text")
     val text: String?,
-    @SerializedName("quoted_message_id")
-    val quotedMessageId: Long,
-    @SerializedName("mentions")
-    val mentions: List<Any>?,
-    @SerializedName("file_ids")
-    val fileIds: List<String>?,
+//    @SerializedName("quoted_message_id")
+//    val quotedMessageId: Long,
+//    @SerializedName("mentions")
+//    val mentions: List<Any>?,
+//    @SerializedName("file_ids")
+//    val fileIds: List<String>?,
 )

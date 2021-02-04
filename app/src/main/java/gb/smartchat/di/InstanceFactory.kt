@@ -1,6 +1,9 @@
-package gb.smartchat.data
+package gb.smartchat.di
 
 import com.google.gson.Gson
+import gb.smartchat.data.Repository
+import gb.smartchat.data.socket.SocketApi
+import gb.smartchat.data.socket.SocketApiImpl
 import io.socket.client.IO
 import io.socket.client.Manager
 import io.socket.client.Socket

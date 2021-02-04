@@ -1,4 +1,4 @@
-package gb.smartchat.data
+package gb.smartchat.data.socket
 
 import android.util.Log
 import com.google.gson.Gson
@@ -7,6 +7,8 @@ import gb.smartchat.BuildConfig
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageCreateRequest
 import gb.smartchat.entity.response.NewMessage
+import gb.smartchat.utils.emitSingle
+import gb.smartchat.utils.setSystemListeners
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.socket.client.Socket

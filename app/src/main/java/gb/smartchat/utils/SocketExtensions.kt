@@ -1,4 +1,4 @@
-package gb.smartchat.data
+package gb.smartchat.utils
 
 import com.google.gson.Gson
 import io.reactivex.Single

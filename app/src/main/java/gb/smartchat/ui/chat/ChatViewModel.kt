@@ -3,11 +3,18 @@ package gb.smartchat.ui.chat
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import gb.smartchat.data.InstanceFactory
 import gb.smartchat.data.Repository
+import gb.smartchat.di.InstanceFactory
+import gb.smartchat.entity.Message
+import gb.smartchat.ui.chat.state_machine.Action
+import gb.smartchat.ui.chat.state_machine.SideEffect
+import gb.smartchat.ui.chat.state_machine.Store
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 
 class ChatViewModel(
+    private val store: Store = Store("77f21ecc-0d4a-4f85-9173-55acf327f007"),
     private val repository: Repository = InstanceFactory.createRepository()
 ) : ViewModel() {
 
@@ -16,15 +23,32 @@ class ChatViewModel(
     }
 
     private val compositeDisposable = CompositeDisposable()
+
     val chatList = MutableLiveData<List<ChatItem>>(emptyList())
 
     init {
-        val d = repository.observeNewMessages()
-            .subscribe { message ->
-                Log.d(TAG, "new message: $message")
-                addMsgToList(message.text ?: "```")
+
+        store.sideEffectListener = { sideEffect ->
+            when(sideEffect) {
+                is SideEffect.SendMessage -> sendMessage(sideEffect.message)
             }
-        compositeDisposable.add(d)
+        }
+
+        compositeDisposable.add(
+            Observable.wrap(store)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { state ->
+                    Log.d(TAG, "viewState: $state")
+                    chatList.value = state.chatItems
+                }
+        )
+        compositeDisposable.add(
+            repository.observeNewMessages()
+                .subscribe { message ->
+                    Log.d(TAG, "new message: $message")
+                    store.accept(Action.ServerNewMessage(message))
+                }
+        )
     }
 
     fun onStart() {
@@ -32,20 +56,22 @@ class ChatViewModel(
     }
 
     fun onSendClick(text: String) {
-        val d = repository.sendMessage(text)
-            .subscribe(
-                { Log.d(TAG, "onSend success: $it") },
-                { Log.e(TAG, "onSendFailure: ${it.message}", it) }
-            )
-        compositeDisposable.add(d)
+        store.accept(Action.ClientSendMessage(text))
     }
 
-    private fun addMsgToList(msg: String) {
-        Log.d(TAG, msg)
-        val list = chatList.value ?: listOf()
-        val lastItemId = list.lastOrNull()?.id ?: 1
-        val newList = list + ChatItem(lastItemId + 1, msg)
-        chatList.postValue(newList)
+    private fun sendMessage(message: Message) {
+        val d = repository.sendMessage(message)
+            .subscribe(
+                { result ->
+                    if (result) store.accept(Action.ServerMessageSent(message))
+                    else store.accept(Action.ServerMessageSendError(message))
+                },
+                { e ->
+                    Log.e(TAG, "sendMessage: error", e)
+                    store.accept(Action.ServerMessageSendError(message))
+                }
+            )
+        compositeDisposable.add(d)
     }
 
     override fun onCleared() {

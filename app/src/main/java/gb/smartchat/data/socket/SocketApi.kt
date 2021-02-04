@@ -1,4 +1,4 @@
-package gb.smartchat.data
+package gb.smartchat.data.socket
 
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageCreateRequest

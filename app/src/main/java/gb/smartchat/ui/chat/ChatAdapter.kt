@@ -11,7 +11,20 @@ class ChatAdapter : ListAdapter<ChatItem, DummyViewHolder>(ChatItem.DiffUtilItem
     }
 
     override fun onBindViewHolder(holder: DummyViewHolder, position: Int) {
-        holder.bind(getItem(position).text)
+        when (val item = getItem(position)) {
+            is ChatItem.Outgoing -> {
+                val statusText = when(item.status) {
+                    ChatItem.OutgoingStatus.SENDING -> "`"
+                    ChatItem.OutgoingStatus.SENT -> "+"
+                    ChatItem.OutgoingStatus.SENT_2 -> "++"
+                    ChatItem.OutgoingStatus.READ -> "r"
+                    ChatItem.OutgoingStatus.FAILURE -> "e"
+                }
+                holder.bind("${item.message.text} ($statusText)")
+            }
+            is ChatItem.Incoming -> holder.bind(item.message.text ?: "`null`")
+            is ChatItem.System -> holder.bind(item.message.text ?: "`null`")
+        }
     }
 
 }
