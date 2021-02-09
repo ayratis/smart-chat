@@ -2,6 +2,7 @@ package gb.smartchat.entity
 
 
 import com.google.gson.annotations.SerializedName
+import gb.smartchat.entity.request.MessageCreateRequest
 
 data class Message(
     @SerializedName("id")
@@ -31,5 +32,18 @@ data class Message(
 
         @SerializedName("user")
         USER
+    }
+
+    fun toMessageCreateRequestBody(): MessageCreateRequest? {
+        return if (text != null && senderId != null && chatId != null && clientId != null) {
+            MessageCreateRequest(
+                text = text,
+                senderId = senderId,
+                chatId = chatId,
+                clientId = clientId,
+            )
+        } else {
+            null
+        }
     }
 }

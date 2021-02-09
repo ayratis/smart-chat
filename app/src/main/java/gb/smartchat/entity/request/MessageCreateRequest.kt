@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 data class MessageCreateRequest(
     @SerializedName("text")
-    val text: String?,
+    val text: String,
     @SerializedName("sender_id")
     val senderId: String,
     @SerializedName("chat_id")

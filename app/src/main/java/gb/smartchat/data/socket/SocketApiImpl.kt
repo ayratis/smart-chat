@@ -23,13 +23,43 @@ class SocketApiImpl(
         const val TAG = "Socket"
     }
 
-    private val newMessageRelay = PublishRelay.create<Message>()
+    private val socketEventsRelay = PublishRelay.create<SocketEvent>()
 
     init {
         if (BuildConfig.DEBUG) {
-            socket.setSystemListeners { log(it) }
+            socket.setSystemListeners {
+                log(it)
+            }
         }
-        setServerListeners()
+        ServerEvent.values().forEach {
+            setServerEventListener(it)
+        }
+    }
+
+    private fun setServerEventListener(serverEvent: ServerEvent) {
+        socket.on(serverEvent.eventName) { args ->
+            log(ServerEvent.MESSAGE_NEW.eventName)
+            try {
+                val response = args[0] as JSONObject
+                log("${ServerEvent.MESSAGE_NEW.eventName}: $response")
+                val socketEvent = when (serverEvent) {
+                    ServerEvent.MESSAGE_NEW -> {
+                        val message =
+                            gson.fromJson(response.toString(), NewMessage::class.java).message
+                        SocketEvent.MessageNew(message)
+                    }
+                    ServerEvent.MESSAGE_CHANGE -> {
+                        val message =
+                            gson.fromJson(response.toString(), NewMessage::class.java).message
+                        SocketEvent.MessageChange(message)
+                    }
+                    else -> null
+                }
+                socketEvent?.let { socketEventsRelay.accept(it) }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+        }
     }
 
     override fun isConnected(): Boolean {
@@ -44,8 +74,9 @@ class SocketApiImpl(
         socket.disconnect()
     }
 
-    override fun observeNewMessages(): Observable<Message> =
-        newMessageRelay.hide()
+    override fun observeEvents(): Observable<SocketEvent> {
+        return socketEventsRelay.hide()
+    }
 
     override fun sendMessage(message: MessageCreateRequest): Single<Boolean> {
         val method = "usr:msg:create"
@@ -59,44 +90,6 @@ class SocketApiImpl(
                     false
                 }
             }
-    }
-
-    private fun setServerListeners() {
-        socket.on("srv:msg:new") {
-            log("srv:msg:new")
-            try {
-                val response = it[0] as JSONObject
-                log("srv:msg:new: $response")
-                val message = gson.fromJson(response.toString(), NewMessage::class.java)
-                newMessageRelay.accept(message.message)
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            }
-        }
-        socket.on("srv:msg:change") {
-            val msg = "srv:msg:change: ${it[0] as? JSONObject}"
-            log(msg)
-        }
-        socket.on("srv:typing") {
-            val msg = "srv:typing: ${it[0] as? JSONObject}"
-            log(msg)
-        }
-        socket.on("srv:msg:read") {
-            val msg = "srv:msg:read: ${it[0] as? JSONObject}"
-            log(msg)
-        }
-        socket.on("srv:msg:delete") {
-            val msg = "srv:msg:delete: ${it[0] as? JSONObject}"
-            log(msg)
-        }
-        socket.on("srv:username:missing") {
-            val msg = "srv:username:missing: ${it[0] as? JSONObject}"
-            log(msg)
-        }
-        socket.on("srv:user:missing") {
-            val msg = "srv:user:missing: ${it[0] as? JSONObject}"
-            log(msg)
-        }
     }
 
     private fun logAck(method: String, requestBody: JSONObject, responseBody: JSONObject) {

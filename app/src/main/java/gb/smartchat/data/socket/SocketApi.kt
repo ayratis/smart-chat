@@ -9,6 +9,6 @@ interface SocketApi {
     fun isConnected(): Boolean
     fun connect()
     fun disconnect()
-    fun observeNewMessages(): Observable<Message>
+    fun observeEvents(): Observable<SocketEvent>
     fun sendMessage(message: MessageCreateRequest): Single<Boolean>
 }

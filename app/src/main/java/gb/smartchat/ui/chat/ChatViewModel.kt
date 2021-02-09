@@ -3,9 +3,11 @@ package gb.smartchat.ui.chat
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import gb.smartchat.data.Repository
+import gb.smartchat.data.socket.SocketApi
+import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.di.InstanceFactory
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.request.MessageCreateRequest
 import gb.smartchat.ui.chat.state_machine.Action
 import gb.smartchat.ui.chat.state_machine.SideEffect
 import gb.smartchat.ui.chat.state_machine.Store
@@ -15,7 +17,7 @@ import io.reactivex.disposables.CompositeDisposable
 
 class ChatViewModel(
     private val store: Store = Store("77f21ecc-0d4a-4f85-9173-55acf327f007"),
-    private val repository: Repository = InstanceFactory.createRepository()
+    private val socketApi: SocketApi = InstanceFactory.createSocketApi()
 ) : ViewModel() {
 
     companion object {
@@ -23,17 +25,27 @@ class ChatViewModel(
     }
 
     private val compositeDisposable = CompositeDisposable()
-
     val chatList = MutableLiveData<List<ChatItem>>(emptyList())
 
     init {
+        setupStateMachine()
+        observeSocketEvents()
+    }
 
+    fun onStart() {
+        socketApi.connect()
+    }
+
+    fun onSendClick(text: String) {
+        store.accept(Action.ClientSendMessage(text))
+    }
+
+    private fun setupStateMachine() {
         store.sideEffectListener = { sideEffect ->
-            when(sideEffect) {
+            when (sideEffect) {
                 is SideEffect.SendMessage -> sendMessage(sideEffect.message)
             }
         }
-
         compositeDisposable.add(
             Observable.wrap(store)
                 .observeOn(AndroidSchedulers.mainThread())
@@ -42,25 +54,28 @@ class ChatViewModel(
                     chatList.value = state.chatItems
                 }
         )
-        compositeDisposable.add(
-            repository.observeNewMessages()
-                .subscribe { message ->
-                    Log.d(TAG, "new message: $message")
-                    store.accept(Action.ServerMessageNew(message))
+    }
+
+    private fun observeSocketEvents() {
+        val d = socketApi.observeEvents()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { event ->
+                when (event) {
+                    is SocketEvent.MessageNew -> {
+                        store.accept(Action.ServerMessageNew(event.message))
+                    }
+                    is SocketEvent.MessageChange -> {
+                        store.accept(Action.ServerMessageChange(event.message))
+                    }
                 }
-        )
-    }
-
-    fun onStart() {
-        repository.connect()
-    }
-
-    fun onSendClick(text: String) {
-        store.accept(Action.ClientSendMessage(text))
+            }
+        compositeDisposable.add(d)
     }
 
     private fun sendMessage(message: Message) {
-        val d = repository.sendMessage(message)
+        val messageCreateRequest = message.toMessageCreateRequestBody() ?: return
+        val d = socketApi.sendMessage(messageCreateRequest)
+            .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { result ->
                     if (result) store.accept(Action.ServerMessageSent(message))
@@ -76,7 +91,7 @@ class ChatViewModel(
 
     override fun onCleared() {
         compositeDisposable.dispose()
-        repository.disconnect()
+        socketApi.disconnect()
     }
 
 }

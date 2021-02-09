@@ -1,7 +1,6 @@
 package gb.smartchat.di
 
 import com.google.gson.Gson
-import gb.smartchat.data.Repository
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketApiImpl
 import io.socket.client.IO
@@ -45,13 +44,12 @@ object InstanceFactory {
         }
     }
 
-    fun createRepository(): Repository {
+    fun createSocketApi(): SocketApi {
         val socket: Socket = createSocket(
             url = "http://91.201.41.157:8000",
             userId = "77f21ecc-0d4a-4f85-9173-55acf327f007"
         )
         val gson = Gson()
-        val socketApi: SocketApi = SocketApiImpl(socket, gson)
-        return Repository(socketApi)
+        return SocketApiImpl(socket, gson)
     }
 }
