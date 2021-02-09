@@ -3,11 +3,11 @@ package gb.smartchat.ui.chat
 import androidx.recyclerview.widget.DiffUtil
 import gb.smartchat.entity.Message
 
-sealed class ChatItem {
+sealed class ChatItem(val message: Message) {
 
-    data class Incoming(val message: Message) : ChatItem()
-    data class Outgoing(val message: Message, val status: OutgoingStatus) : ChatItem()
-    data class System(val message: Message) : ChatItem()
+    data class Incoming(val _message: Message) : ChatItem(_message)
+    data class Outgoing(val _message: Message, val status: OutgoingStatus) : ChatItem(_message)
+    data class System(val _message: Message) : ChatItem(_message)
 
     enum class OutgoingStatus {
         SENDING,
@@ -23,8 +23,7 @@ sealed class ChatItem {
                 return oldItem.message.id == newItem.message.id
             }
             if (oldItem is Outgoing && newItem is Outgoing) {
-                return oldItem.message.clientId == newItem.message.clientId &&
-                        oldItem.message.text == newItem.message.text //todo нет гарантий
+                return oldItem.message.clientId == newItem.message.clientId
             }
             if (oldItem is System && newItem is System) {
                 return oldItem.message.id == newItem.message.id

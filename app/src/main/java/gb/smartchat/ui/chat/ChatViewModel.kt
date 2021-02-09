@@ -46,7 +46,7 @@ class ChatViewModel(
             repository.observeNewMessages()
                 .subscribe { message ->
                     Log.d(TAG, "new message: $message")
-                    store.accept(Action.ServerNewMessage(message))
+                    store.accept(Action.ServerMessageNew(message))
                 }
         )
     }

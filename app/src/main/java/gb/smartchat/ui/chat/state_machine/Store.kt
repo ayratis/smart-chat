@@ -13,8 +13,6 @@ import io.reactivex.functions.Consumer
 
 class Store(private val senderId: String) : ObservableSource<State>, Consumer<Action>, Disposable {
 
-    private var outgoingMsgId = 0
-
     private val actions = PublishRelay.create<Action>()
     private val viewState = BehaviorRelay.createDefault(State())
     var sideEffectListener: (SideEffect) -> Unit = {}
@@ -31,8 +29,8 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
     private fun reduce(state: State, action: Action): State {
         when (action) {
             is Action.ClientSendMessage -> {
-                outgoingMsgId++
-                val msg = createOutgoingMessage(outgoingMsgId, action.text)
+                val clientId = System.currentTimeMillis().toString()
+                val msg = createOutgoingMessage(clientId, action.text)
                 sideEffectListener.invoke(SideEffect.SendMessage(msg))
                 val list = state.chatItems + ChatItem.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
                 return state.copy(chatItems = list)
@@ -42,7 +40,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 val list = state.chatItems.toMutableList().apply {
                     replaceOrAddToEnd(newItem) { chatItem ->
                         chatItem is ChatItem.Outgoing &&
-                                chatItem.message.clientId == action.message.clientId //todo не гарантирует нифига
+                                chatItem.message.clientId == action.message.clientId
                     }
                 }
                 return state.copy(chatItems = list)
@@ -52,18 +50,18 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 val list = state.chatItems.toMutableList().apply {
                     replaceOrAddToEnd(newItem) { chatItem ->
                         chatItem is ChatItem.Outgoing &&
-                                chatItem.message.clientId == action.message.clientId //todo не гарантирует нифига
+                                chatItem.message.clientId == action.message.clientId
                     }
                 }
                 return state.copy(chatItems = list)
             }
-            is Action.ServerNewMessage -> {
+            is Action.ServerMessageNew -> {
                 return if (action.message.senderId == senderId) {
                     val newItem = ChatItem.Outgoing(action.message, ChatItem.OutgoingStatus.SENT_2)
                     val list = state.chatItems.toMutableList().apply {
                         replaceOrAddToEnd(newItem) { chatItem ->
                             chatItem is ChatItem.Outgoing &&
-                                    chatItem.message.clientId == action.message.clientId //todo не гарантирует нифига
+                                    chatItem.message.clientId == action.message.clientId
                         }
                     }
                     state.copy(chatItems = list)
@@ -72,16 +70,44 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     state.copy(chatItems = list)
                 }
             }
+            is Action.ServerMessageChange -> {
+                val position = state.chatItems.indexOfLast { it.message.id == action.message.id }
+                if (position != -1) {
+                    val newItem = when {
+                        action.message.type == Message.Type.SYSTEM -> {
+                            ChatItem.System(action.message)
+                        }
+                        action.message.senderId == senderId -> {
+                            val status = if (action.message.readedIds.isNullOrEmpty()) {
+                                ChatItem.OutgoingStatus.SENT_2
+                            } else {
+                                ChatItem.OutgoingStatus.READ
+                            }
+                            ChatItem.Outgoing(action.message, status)
+                        }
+                        else -> {
+                            ChatItem.Incoming(action.message)
+                        }
+                    }
+                    val newList = state.chatItems.toMutableList().apply {
+                        this[position] = newItem
+                    }
+                    return state.copy(chatItems = newList)
+                }
+                return state
+            }
         }
     }
 
-    private fun createOutgoingMessage(id: Int, text: String): Message {
+    private fun createOutgoingMessage(clientId: String, text: String): Message {
         return Message(
             id = -1,
             chatId = 1,
             senderId = senderId,
-            clientId = id.toString(),
+            clientId = clientId,
             text = text,
+            type = null,
+            readedIds = null
         )
     }
 

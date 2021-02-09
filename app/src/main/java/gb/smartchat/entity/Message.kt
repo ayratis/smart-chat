@@ -14,10 +14,22 @@ data class Message(
     val clientId: String?,
     @SerializedName("text")
     val text: String?,
+    @SerializedName("type")
+    val type: Type?,
+    @SerializedName("readed_ids")
+    val readedIds: List<String>?
 //    @SerializedName("quoted_message_id")
 //    val quotedMessageId: Long,
 //    @SerializedName("mentions")
 //    val mentions: List<Any>?,
 //    @SerializedName("file_ids")
 //    val fileIds: List<String>?,
-)
+) {
+    enum class Type {
+        @SerializedName("system")
+        SYSTEM,
+
+        @SerializedName("user")
+        USER
+    }
+}
