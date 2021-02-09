@@ -96,6 +96,14 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 }
                 return state
             }
+            is Action.ServerTyping -> {
+                val typingSenderIds = state.typingSenderIds + action.senderId
+                return state.copy(typingSenderIds = typingSenderIds)
+            }
+            is Action.InternalTypingTimeIsUp -> {
+                val typingSenderIds = state.typingSenderIds - action.senderId
+                return state.copy(typingSenderIds = typingSenderIds)
+            }
         }
     }
 

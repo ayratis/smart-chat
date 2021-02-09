@@ -9,4 +9,6 @@ sealed class Action {
     data class ServerMessageSendError(val message: Message): Action()
     data class ServerMessageNew(val message: Message): Action()
     data class ServerMessageChange(val message: Message): Action()
+    data class ServerTyping(val senderId: String): Action()
+    data class InternalTypingTimeIsUp(val senderId: String): Action()
 }

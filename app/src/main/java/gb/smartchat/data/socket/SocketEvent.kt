@@ -2,9 +2,10 @@ package gb.smartchat.data.socket
 
 import gb.smartchat.entity.Message
 
-sealed class SocketEvent(val event: ServerEvent) {
-    data class MessageNew(val message: Message) : SocketEvent(ServerEvent.MESSAGE_NEW)
-    data class MessageChange(val message: Message) : SocketEvent(ServerEvent.MESSAGE_CHANGE)
+sealed class SocketEvent {
+    data class MessageNew(val message: Message) : SocketEvent()
+    data class MessageChange(val message: Message) : SocketEvent()
+    data class Typing(val senderId: String) : SocketEvent()
 }
 
 enum class ServerEvent(val eventName: String) {

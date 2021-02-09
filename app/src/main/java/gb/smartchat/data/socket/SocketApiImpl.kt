@@ -6,7 +6,6 @@ import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.BuildConfig
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageCreateRequest
-import gb.smartchat.entity.response.NewMessage
 import gb.smartchat.utils.emitSingle
 import gb.smartchat.utils.setSystemListeners
 import io.reactivex.Observable
@@ -38,20 +37,23 @@ class SocketApiImpl(
 
     private fun setServerEventListener(serverEvent: ServerEvent) {
         socket.on(serverEvent.eventName) { args ->
-            log(ServerEvent.MESSAGE_NEW.eventName)
             try {
                 val response = args[0] as JSONObject
-                log("${ServerEvent.MESSAGE_NEW.eventName}: $response")
+                log("${serverEvent.eventName}: $response")
                 val socketEvent = when (serverEvent) {
                     ServerEvent.MESSAGE_NEW -> {
-                        val message =
-                            gson.fromJson(response.toString(), NewMessage::class.java).message
+                        val messageRaw = response.getJSONObject("new_message").toString()
+                        val message = gson.fromJson(messageRaw, Message::class.java)
                         SocketEvent.MessageNew(message)
                     }
                     ServerEvent.MESSAGE_CHANGE -> {
-                        val message =
-                            gson.fromJson(response.toString(), NewMessage::class.java).message
+                        val messageRaw = response.getJSONObject("new_message").toString()
+                        val message = gson.fromJson(messageRaw, Message::class.java)
                         SocketEvent.MessageChange(message)
+                    }
+                    ServerEvent.TYPING -> {
+                        val senderId = response.getString("sender_id")
+                        SocketEvent.Typing(senderId)
                     }
                     else -> null
                 }
