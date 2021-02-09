@@ -6,6 +6,7 @@ sealed class SocketEvent {
     data class MessageNew(val message: Message) : SocketEvent()
     data class MessageChange(val message: Message) : SocketEvent()
     data class Typing(val senderId: String) : SocketEvent()
+    data class MessageRead(val messageIds: List<Long>) : SocketEvent()
 }
 
 enum class ServerEvent(val eventName: String) {

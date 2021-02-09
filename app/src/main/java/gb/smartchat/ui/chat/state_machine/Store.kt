@@ -104,6 +104,24 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 val typingSenderIds = state.typingSenderIds - action.senderId
                 return state.copy(typingSenderIds = typingSenderIds)
             }
+            is Action.ServerMessageRead -> {
+                val chatItems = state.chatItems.toMutableList()
+                val messageIds = action.messageIds.toMutableList()
+                for (i in chatItems.lastIndex downTo 0) {
+                    val chatItem = chatItems[i]
+                    if (messageIds.contains(chatItem.message.id)) {
+                        val newItem = (chatItem as? ChatItem.Outgoing)
+                            ?.copy(status = ChatItem.OutgoingStatus.READ)
+                            ?: chatItem
+                        chatItems[i] = newItem
+                        messageIds.remove(chatItem.message.id)
+                        if (messageIds.isEmpty()) {
+                            break
+                        }
+                    }
+                }
+                return state.copy(chatItems = chatItems)
+            }
         }
     }
 

@@ -12,6 +12,7 @@ import io.reactivex.Observable
 import io.reactivex.Single
 import io.socket.client.Socket
 import org.json.JSONObject
+import java.util.ArrayList
 
 class SocketApiImpl(
     private val socket: Socket,
@@ -54,6 +55,11 @@ class SocketApiImpl(
                     ServerEvent.TYPING -> {
                         val senderId = response.getString("sender_id")
                         SocketEvent.Typing(senderId)
+                    }
+                    ServerEvent.READ -> {
+                        val messageIdsRaw = response.getJSONArray("messages_id").toString()
+                        val messageIds = gson.fromJson(messageIdsRaw, Array<Long>::class.java)
+                        SocketEvent.MessageRead(messageIds.toList())
                     }
                     else -> null
                 }

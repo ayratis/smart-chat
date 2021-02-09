@@ -74,6 +74,9 @@ class ChatViewModel(
                     is SocketEvent.Typing -> {
                         store.accept(Action.ServerTyping(event.senderId))
                     }
+                    is SocketEvent.MessageRead -> {
+                        store.accept(Action.ServerMessageRead(event.messageIds))
+                    }
                 }
             }
         compositeDisposable.add(d)
