@@ -19,6 +19,7 @@ class ChatAdapter : ListAdapter<ChatItem, DummyViewHolder>(ChatItem.DiffUtilItem
                     ChatItem.OutgoingStatus.SENT_2 -> "++"
                     ChatItem.OutgoingStatus.READ -> "r"
                     ChatItem.OutgoingStatus.FAILURE -> "e"
+                    ChatItem.OutgoingStatus.EDITING -> "editing"
                 }
                 holder.bind("${item.message.text} ($statusText)")
             }

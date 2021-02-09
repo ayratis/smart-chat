@@ -35,7 +35,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 val list = state.chatItems + ChatItem.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
                 return state.copy(chatItems = list)
             }
-            is Action.ServerMessageSent -> {
+            is Action.ServerMessageSendSuccess -> {
                 val newItem = ChatItem.Outgoing(action.message, ChatItem.OutgoingStatus.SENT)
                 val list = state.chatItems.toMutableList().apply {
                     replaceOrAddToEnd(newItem) { chatItem ->
@@ -122,6 +122,52 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 }
                 return state.copy(chatItems = chatItems)
             }
+            is Action.ClientEditMessageRequest -> {
+                return state.copy(editingMessage = action.message)
+            }
+            is Action.ClientEditMessageConfirm -> {
+                sideEffectListener(SideEffect.EditMessage(action.message, action.newText))
+                val position = state.chatItems.indexOfLast { it.message.id == action.message.id }
+                if (position != -1) {
+                    val newList = state.chatItems.toMutableList()
+                    val newMessage = action.message.copy(text = action.newText)
+                    val newItem = ChatItem.Outgoing(newMessage, ChatItem.OutgoingStatus.EDITING)
+                    newList[position] = newItem
+                    return state.copy(chatItems = newList, editingMessage = null)
+                }
+                return state.copy(editingMessage = null)
+            }
+            is Action.ServerMessageEditSuccess -> {
+                val position = state.chatItems.indexOfLast { it.message.id == action.message.id }
+                if (position != -1) {
+                    val newList = state.chatItems.toMutableList()
+                    val newStatus = if (action.message.readedIds.isNullOrEmpty()) {
+                        ChatItem.OutgoingStatus.SENT_2
+                    } else {
+                        ChatItem.OutgoingStatus.READ
+                    }
+                    val newItem = ChatItem.Outgoing(action.message, newStatus)
+                    newList[position] = newItem
+                    return state.copy(chatItems = newList)
+                }
+                return state
+            }
+            is Action.ServerMessageEditError -> {
+                val position = state.chatItems.indexOfLast { it.message.id == action.message.id }
+                if (position != -1) {
+                    val newList = state.chatItems.toMutableList()
+                    val newStatus = if (action.message.readedIds.isNullOrEmpty()) {
+                        ChatItem.OutgoingStatus.SENT_2
+                    } else {
+                        ChatItem.OutgoingStatus.READ
+                    }
+                    val newItem = ChatItem.Outgoing(action.message, newStatus)
+                    newList[position] = newItem
+                    return state.copy(chatItems = newList)
+                }
+                return state
+            }
+            
         }
     }
 

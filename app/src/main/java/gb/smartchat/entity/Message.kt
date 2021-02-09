@@ -3,6 +3,7 @@ package gb.smartchat.entity
 
 import com.google.gson.annotations.SerializedName
 import gb.smartchat.entity.request.MessageCreateRequest
+import gb.smartchat.entity.request.MessageEditRequest
 
 data class Message(
     @SerializedName("id")
@@ -42,8 +43,16 @@ data class Message(
                 chatId = chatId,
                 clientId = clientId,
             )
-        } else {
-            null
-        }
+        } else null
+    }
+
+    fun toMessageEditRequestBody(): MessageEditRequest? {
+        return if (text != null && chatId != null) {
+            MessageEditRequest(
+                text = text,
+                messageId = id,
+                chatId = chatId,
+            )
+        } else null
     }
 }

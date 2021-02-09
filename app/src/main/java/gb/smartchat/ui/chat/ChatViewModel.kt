@@ -48,6 +48,7 @@ class ChatViewModel(
             when (sideEffect) {
                 is SideEffect.SendMessage -> sendMessage(sideEffect.message)
                 is SideEffect.TypingTimer -> startTypingTimer(sideEffect.senderId)
+                is SideEffect.EditMessage -> editMessage(sideEffect.message, sideEffect.newText)
             }
         }
         compositeDisposable.add(
@@ -88,12 +89,32 @@ class ChatViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { result ->
-                    if (result) store.accept(Action.ServerMessageSent(message))
+                    if (result) store.accept(Action.ServerMessageSendSuccess(message))
                     else store.accept(Action.ServerMessageSendError(message))
                 },
                 { e ->
                     Log.e(TAG, "sendMessage: error", e)
                     store.accept(Action.ServerMessageSendError(message))
+                }
+            )
+        compositeDisposable.add(d)
+    }
+
+    private fun editMessage(message: Message, newText: String) {
+        val messageEditRequest = message.toMessageEditRequestBody() ?: return
+        val d = socketApi.editMessage(messageEditRequest)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { result ->
+                    if (result) {
+                        store.accept(Action.ServerMessageEditSuccess(message.copy(text = newText)))
+                    } else {
+                        store.accept(Action.ServerMessageEditSuccess(message))
+                    }
+                },
+                { e ->
+                    Log.e(TAG, "sendMessage: error", e)
+                    store.accept(Action.ServerMessageEditSuccess(message))
                 }
             )
         compositeDisposable.add(d)
