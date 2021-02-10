@@ -206,7 +206,7 @@ class ChatViewModel(
     private fun sendTyping(text: String) {
         val requestBody = TypingRequest(
             chatId = chatId,
-            userId = userId,
+            senderId = userId,
             text = text
         )
         val d = socketApi.sendTyping(requestBody)
