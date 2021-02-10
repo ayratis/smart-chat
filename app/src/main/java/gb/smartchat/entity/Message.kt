@@ -65,7 +65,6 @@ data class Message(
                 messageId = id,
                 chatId = chatId,
                 senderId = senderId,
-                userId = senderId
             )
         } else null
     }

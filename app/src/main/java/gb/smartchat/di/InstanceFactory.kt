@@ -44,10 +44,10 @@ object InstanceFactory {
         }
     }
 
-    fun createSocketApi(): SocketApi {
+    fun createSocketApi(userId: String): SocketApi {
         val socket: Socket = createSocket(
             url = "http://91.201.41.157:8000",
-            userId = "77f21ecc-0d4a-4f85-9173-55acf327f007"
+            userId = userId
         )
         val gson = Gson()
         return SocketApiImpl(socket, gson)

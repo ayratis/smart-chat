@@ -13,6 +13,10 @@ import io.reactivex.functions.Consumer
 
 class Store(private val senderId: String) : ObservableSource<State>, Consumer<Action>, Disposable {
 
+    companion object {
+        private const val TAG = "store"
+    }
+
     private val actions = PublishRelay.create<Action>()
     private val viewState = BehaviorRelay.createDefault(State())
     var sideEffectListener: (SideEffect) -> Unit = {}
@@ -32,8 +36,14 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 //if editing existing message
                 if (state.editingMessage != null) {
                     sideEffectListener(SideEffect.SetInputText(""))
-                    sideEffectListener(SideEffect.EditMessage(state.editingMessage, state.currentText))
-                    val position = state.chatItems.indexOfLast { it.message.id == state.editingMessage.id }
+                    sideEffectListener(
+                        SideEffect.EditMessage(
+                            state.editingMessage,
+                            state.currentText
+                        )
+                    )
+                    val position =
+                        state.chatItems.indexOfLast { it.message.id == state.editingMessage.id }
                     if (position != -1) {
                         val newList = state.chatItems.toMutableList()
                         val newMessage = state.editingMessage.copy(text = state.currentText)
@@ -48,7 +58,8 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     val clientId = System.currentTimeMillis().toString()
                     val msg = createOutgoingMessage(clientId, state.currentText)
                     sideEffectListener.invoke(SideEffect.SendMessage(msg))
-                    val list = state.chatItems + ChatItem.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
+                    val list =
+                        state.chatItems + ChatItem.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
                     sideEffectListener(SideEffect.SetInputText(""))
                     state.copy(chatItems = list, currentText = "")
                 } else {
@@ -91,37 +102,38 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 }
             }
             is Action.ServerMessageChange -> {
-                val position = state.chatItems.indexOfLast { it.message.id == action.message.id }
-                if (position != -1) {
-                    val newItem = when {
-                        action.message.type == Message.Type.SYSTEM -> {
-                            ChatItem.System(action.message)
-                        }
-                        action.message.type == Message.Type.DELETED -> {
-                            ChatItem.System(action.message)
-                        }
-                        action.message.senderId == senderId -> {
-                            val status = if (action.message.readedIds.isNullOrEmpty()) {
-                                ChatItem.OutgoingStatus.SENT_2
-                            } else {
-                                ChatItem.OutgoingStatus.READ
-                            }
-                            ChatItem.Outgoing(action.message, status)
-                        }
-                        else -> {
-                            ChatItem.Incoming(action.message)
-                        }
+                Log.d(TAG, "reduce: Action.ServerMessageChange, $action")
+                val newItem = when {
+                    action.message.type == Message.Type.SYSTEM -> {
+                        ChatItem.System(action.message)
                     }
-                    val newList = state.chatItems.toMutableList().apply {
-                        this[position] = newItem
+                    action.message.type == Message.Type.DELETED -> {
+                        ChatItem.System(action.message)
                     }
-                    return state.copy(chatItems = newList)
+                    action.message.senderId == senderId -> {
+                        val status = if (action.message.readedIds.isNullOrEmpty()) {
+                            ChatItem.OutgoingStatus.SENT_2
+                        } else {
+                            ChatItem.OutgoingStatus.READ
+                        }
+                        ChatItem.Outgoing(action.message, status)
+                    }
+                    else -> {
+                        ChatItem.Incoming(action.message)
+                    }
                 }
-                return state
+                val newList = state.chatItems.replaceLastWith(newItem) {
+                    it.message.id == action.message.id
+                }
+                return state.copy(chatItems = newList)
             }
             is Action.ServerTyping -> {
-                val typingSenderIds = state.typingSenderIds + action.senderId
-                return state.copy(typingSenderIds = typingSenderIds)
+                sideEffectListener(SideEffect.TypingTimer(action.senderId))
+                if (!state.typingSenderIds.contains(action.senderId)) {
+                    val typingSenderIds = state.typingSenderIds + action.senderId
+                    return state.copy(typingSenderIds = typingSenderIds)
+                }
+                return state
             }
             is Action.InternalTypingTimeIsUp -> {
                 val typingSenderIds = state.typingSenderIds - action.senderId

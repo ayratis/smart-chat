@@ -9,8 +9,8 @@ data class MessageDeleteRequest(
     val messageId: Long,
     @SerializedName("chat_id")
     val chatId: Long,
-    @SerializedName("user_id")
-    val userId: String,
+//    @SerializedName("user_id")
+//    val userId: String,
     @SerializedName("sender_id")
     val senderId: String,
     @SerializedName("for_all")

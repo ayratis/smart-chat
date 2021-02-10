@@ -3,9 +3,9 @@ package gb.smartchat.ui.chat
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
-import gb.smartchat.di.InstanceFactory
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.TypingRequest
@@ -22,10 +22,10 @@ import io.reactivex.disposables.Disposable
 import java.util.concurrent.TimeUnit
 
 class ChatViewModel(
-    private val store: Store = Store("77f21ecc-0d4a-4f85-9173-55acf327f007"),
-    private val userId: String = "77f21ecc-0d4a-4f85-9173-55acf327f007",
-    private val chatId: Long = 1,
-    private val socketApi: SocketApi = InstanceFactory.createSocketApi()
+    private val store: Store,
+    private val userId: String,
+    private val chatId: Long,
+    private val socketApi: SocketApi
 ) : ViewModel() {
 
     companion object {
@@ -158,7 +158,7 @@ class ChatViewModel(
     }
 
     private fun editMessage(message: Message, newText: String) {
-        val messageEditRequest = message.toMessageEditRequestBody() ?: return
+        val messageEditRequest = message.copy(text = newText).toMessageEditRequestBody() ?: return
         val d = socketApi.editMessage(messageEditRequest)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -232,4 +232,15 @@ class ChatViewModel(
         socketApi.disconnect()
     }
 
+    class Factory(
+        private val store: Store,
+        private val userId: String,
+        private val chatId: Long,
+        private val socketApi: SocketApi
+    ): ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            return ChatViewModel(store, userId, chatId, socketApi) as T
+        }
+    }
 }

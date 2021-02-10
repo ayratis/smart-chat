@@ -9,6 +9,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import by.kirich1409.viewbindingdelegate.viewBinding
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
+import gb.smartchat.di.InstanceFactory
+import gb.smartchat.ui.chat.state_machine.Store
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.visible
@@ -17,10 +19,32 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
 
     companion object {
         private const val TAG = "ChatFragment"
+        private const val ARG_USER_ID = "arg_user_id"
+        private const val ARG_CHAT_ID = "arg_chat_id"
+
+        fun create(userId: String, chatId: Long) = ChatFragment().apply {
+            arguments = Bundle().apply {
+                putString(ARG_USER_ID, userId)
+                putLong(ARG_CHAT_ID, chatId)
+            }
+        }
     }
 
+    private val argUserId: String by lazy {
+        requireArguments().getString(ARG_USER_ID)!!
+    }
+    private val argChatId: Long by lazy {
+        requireArguments().getLong(ARG_CHAT_ID)
+    }
+    private val viewModel by viewModels<ChatViewModel> {
+        ChatViewModel.Factory(
+            store = Store(argUserId),
+            userId = argUserId,
+            chatId = argChatId,
+            socketApi = InstanceFactory.createSocketApi(argUserId)
+        )
+    }
     private val binding by viewBinding(FragmentChatBinding::bind)
-    private val viewModel by viewModels<ChatViewModel>()
 
     private val chatAdapter by lazy {
         ChatAdapter(
@@ -66,10 +90,16 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
                 binding.rvChat.scrollToPosition(state.chatItems.lastIndex)
             }
             binding.viewEditingMessage.visible(state.editingMessage != null)
+
             binding.tvEditingMessage.text = state.editingMessage?.text
+
             binding.btnMainAction.text =
                 if (state.editingMessage != null) getString(R.string.edit)
                 else getString(R.string.send)
+
+            binding.toolbar.subtitle =
+                if (state.typingSenderIds.isEmpty()) ""
+                else state.typingSenderIds.toString()
         }
 
         viewModel.setInputText.observe(this) { singleEvent ->
