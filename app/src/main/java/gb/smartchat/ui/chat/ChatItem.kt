@@ -39,7 +39,7 @@ sealed class ChatItem(val message: Message) {
                 return oldItem.message == newItem.message
             }
             if (oldItem is Outgoing && newItem is Outgoing) {
-                return oldItem.message == newItem.message
+                return oldItem == newItem
             }
             if (oldItem is System && newItem is System) {
                 return oldItem.message == newItem.message

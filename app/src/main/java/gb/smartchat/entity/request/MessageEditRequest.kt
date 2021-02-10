@@ -9,6 +9,8 @@ data class MessageEditRequest (
     val messageId: Long,
     @SerializedName("chat_id")
     val chatId: Long,
+    @SerializedName("sender_id")
+    val senderId: String,
 //    @SerializedName("mentions")
 //    val mentions: List<Mention> = emptyList(),
 )

@@ -1,4 +1,3 @@
-
 package gb.smartchat.ui.chat
 
 import android.os.Bundle
@@ -12,6 +11,7 @@ import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
+import gb.smartchat.utils.visible
 
 class ChatFragment : Fragment(R.layout.fragment_chat) {
 
@@ -42,7 +42,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
         binding.spacerBottom.addSystemBottomPadding()
         binding.rvChat.apply {
             setHasFixedSize(true)
-            addSystemBottomPadding()
             layoutManager = LinearLayoutManager(context).apply {
                 stackFromEnd = true
             }
@@ -51,18 +50,32 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
         binding.etInput.doAfterTextChanged {
             viewModel.onTextChanged(it?.toString() ?: "")
         }
-        binding.btnSend.setOnClickListener {
+        binding.btnMainAction.setOnClickListener {
             viewModel.onSendClick()
-            binding.etInput.setText("")
+        }
+        binding.btnEditingClose.setOnClickListener {
+            viewModel.onEditMessageReject()
         }
     }
 
     override fun onStart() {
         super.onStart()
         viewModel.onStart()
-        viewModel.chatList.observe(this) { list ->
-            chatAdapter.submitList(list) {
-                binding.rvChat.scrollToPosition(list.lastIndex)
+        viewModel.viewState.observe(this) { state ->
+            chatAdapter.submitList(state.chatItems) {
+                binding.rvChat.scrollToPosition(state.chatItems.lastIndex)
+            }
+            binding.viewEditingMessage.visible(state.editingMessage != null)
+            binding.tvEditingMessage.text = state.editingMessage?.text
+            binding.btnMainAction.text =
+                if (state.editingMessage != null) getString(R.string.edit)
+                else getString(R.string.send)
+        }
+
+        viewModel.setInputText.observe(this) { singleEvent ->
+            singleEvent.getContentIfNotHandled()?.let {
+                binding.etInput.setText(it)
+                binding.etInput.setSelection(it.length)
             }
         }
     }

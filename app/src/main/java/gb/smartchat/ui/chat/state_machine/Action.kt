@@ -5,9 +5,9 @@ import gb.smartchat.entity.Message
 
 sealed class Action {
 
-    object ClientSendMessage : Action()
+    object ClientActionWithMessage : Action()
     data class ClientEditMessageRequest(val message: Message): Action()
-    data class ClientEditMessageConfirm(val message: Message, val newText: String): Action()
+    object ClientEditMessageReject : Action()
     data class ClientDeleteMessage(val message: Message): Action()
     data class ClientTextChanged(val text: String): Action()
 

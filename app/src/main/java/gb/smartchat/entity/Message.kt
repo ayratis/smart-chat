@@ -48,11 +48,12 @@ data class Message(
     }
 
     fun toMessageEditRequestBody(): MessageEditRequest? {
-        return if (text != null && chatId != null) {
+        return if (text != null && chatId != null && senderId != null) {
             MessageEditRequest(
                 text = text,
                 messageId = id,
                 chatId = chatId,
+                senderId = senderId
             )
         } else null
     }

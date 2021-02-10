@@ -19,34 +19,71 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_chat"
-        android:paddingBottom="80dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@id/layout_input"
         android:layout_below="@id/toolbar"
         android:clipToPadding="true"
         tools:listitem="@layout/item_dummy" />
 
-    <EditText
-        android:id="@+id/et_input"
+    <RelativeLayout
+        android:id="@+id/layout_input"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginEnd="120dp"
-        android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_above="@id/spacer_bottom"
-        tools:ignore="Autofill,LabelFor,TextFields"
-        android:layout_marginRight="80dp"
-        android:layout_marginLeft="16dp" />
-
-    <Button
-        android:id="@+id/btn_send"
-        android:layout_alignParentEnd="true"
-        android:layout_above="@id/spacer_bottom"
-        android:layout_margin="16dp"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/send"
-        android:layout_alignParentRight="true" />
+        android:layout_above="@id/spacer_bottom">
+
+        <LinearLayout
+            android:id="@+id/view_editing_message"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/tv_editing_message"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                tools:text="Привет! Как дела?" />
+
+            <TextView
+                android:id="@+id/btn_editing_close"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:text="X" />
+
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/et_input"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_below="@id/view_editing_message"
+            android:layout_marginStart="16dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginEnd="120dp"
+            android:layout_marginRight="80dp"
+            android:layout_marginBottom="16dp"
+            tools:ignore="Autofill,LabelFor,TextFields" />
+
+        <Button
+            android:id="@+id/btn_main_action"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_editing_message"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginEnd="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="@string/send" />
+
+    </RelativeLayout>
+
 
     <FrameLayout
         android:id="@+id/spacer_bottom"

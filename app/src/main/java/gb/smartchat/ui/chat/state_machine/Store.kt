@@ -28,12 +28,28 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
 
     private fun reduce(state: State, action: Action): State {
         when (action) {
-            is Action.ClientSendMessage -> {
+            is Action.ClientActionWithMessage -> {
+                //if editing existing message
+                if (state.editingMessage != null) {
+                    sideEffectListener(SideEffect.SetInputText(""))
+                    sideEffectListener(SideEffect.EditMessage(state.editingMessage, state.currentText))
+                    val position = state.chatItems.indexOfLast { it.message.id == state.editingMessage.id }
+                    if (position != -1) {
+                        val newList = state.chatItems.toMutableList()
+                        val newMessage = state.editingMessage.copy(text = state.currentText)
+                        val newItem = ChatItem.Outgoing(newMessage, ChatItem.OutgoingStatus.EDITING)
+                        newList[position] = newItem
+                        return state.copy(chatItems = newList, editingMessage = null)
+                    }
+                    return state.copy(editingMessage = null)
+                }
+                //if sending new message
                 return if (state.currentText.isNotEmpty()) {
                     val clientId = System.currentTimeMillis().toString()
                     val msg = createOutgoingMessage(clientId, state.currentText)
                     sideEffectListener.invoke(SideEffect.SendMessage(msg))
                     val list = state.chatItems + ChatItem.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
+                    sideEffectListener(SideEffect.SetInputText(""))
                     state.copy(chatItems = list, currentText = "")
                 } else {
                     state
@@ -127,18 +143,11 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 return state.copy(chatItems = chatItems)
             }
             is Action.ClientEditMessageRequest -> {
+                sideEffectListener(SideEffect.SetInputText(action.message.text ?: ""))
                 return state.copy(editingMessage = action.message)
             }
-            is Action.ClientEditMessageConfirm -> {
-                sideEffectListener(SideEffect.EditMessage(action.message, action.newText))
-                val position = state.chatItems.indexOfLast { it.message.id == action.message.id }
-                if (position != -1) {
-                    val newList = state.chatItems.toMutableList()
-                    val newMessage = action.message.copy(text = action.newText)
-                    val newItem = ChatItem.Outgoing(newMessage, ChatItem.OutgoingStatus.EDITING)
-                    newList[position] = newItem
-                    return state.copy(chatItems = newList, editingMessage = null)
-                }
+            is Action.ClientEditMessageReject -> {
+                sideEffectListener(SideEffect.SetInputText(""))
                 return state.copy(editingMessage = null)
             }
             is Action.ServerMessageEditSuccess -> {

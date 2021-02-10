@@ -11,7 +11,9 @@ import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.TypingRequest
 import gb.smartchat.ui.chat.state_machine.Action
 import gb.smartchat.ui.chat.state_machine.SideEffect
+import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.chat.state_machine.Store
+import gb.smartchat.utils.SingleEvent
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -32,7 +34,8 @@ class ChatViewModel(
 
     private val compositeDisposable = CompositeDisposable()
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
-    val chatList = MutableLiveData<List<ChatItem>>(emptyList())
+    val viewState = MutableLiveData<State>()
+    val setInputText = MutableLiveData<SingleEvent<String>>()
 
     init {
         setupStateMachine()
@@ -49,15 +52,15 @@ class ChatViewModel(
     }
 
     fun onSendClick() {
-        store.accept(Action.ClientSendMessage)
+        store.accept(Action.ClientActionWithMessage)
     }
 
     fun onEditMessageRequest(message: Message) {
         store.accept(Action.ClientEditMessageRequest(message))
     }
 
-    fun onEditMessageConfirm(message: Message, newText: String) {
-        store.accept(Action.ClientEditMessageConfirm(message, newText))
+    fun onEditMessageReject() {
+        store.accept(Action.ClientEditMessageReject)
     }
 
     fun onDeleteMessage(message: Message) {
@@ -91,6 +94,7 @@ class ChatViewModel(
                 is SideEffect.TypingTimer -> startTypingTimer(sideEffect.senderId)
                 is SideEffect.EditMessage -> editMessage(sideEffect.message, sideEffect.newText)
                 is SideEffect.DeleteMessage -> deleteMessage(sideEffect.message)
+                is SideEffect.SetInputText -> setInputText.postValue(SingleEvent(sideEffect.text))
             }
         }
         compositeDisposable.add(
@@ -98,7 +102,7 @@ class ChatViewModel(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { state ->
                     Log.d(TAG, "viewState: $state")
-                    chatList.value = state.chatItems
+                    viewState.value = state
                 }
         )
         compositeDisposable.add(
