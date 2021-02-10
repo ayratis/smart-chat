@@ -180,9 +180,11 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 return state.copy(chatItems = list)
             }
             is Action.ServerMessageDeleteSuccess -> {
-                val newList = state.chatItems.toMutableList()
-                newList.removeAll { it.message.id == action.message.id }
-                return state.copy(chatItems = newList)
+                val newItem = ChatItem.Outgoing(action.message, ChatItem.OutgoingStatus.DELETED)
+                val list = state.chatItems.replaceLastWith(newItem) { chatItem ->
+                    chatItem.message.id == action.message.id
+                }
+                return state.copy(chatItems = list)
             }
             is Action.ServerMessageDeleteError -> {
                 val newStatus = if (action.message.readedIds.isNullOrEmpty()) {

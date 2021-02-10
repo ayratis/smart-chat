@@ -20,7 +20,7 @@ data class Message(
     @SerializedName("type")
     val type: Type?,
     @SerializedName("readed_ids")
-    val readedIds: List<String> = emptyList()
+    val readedIds: List<String>?
 //    @SerializedName("quoted_message_id")
 //    val quotedMessageId: Long,
 //    @SerializedName("mentions")
@@ -60,9 +60,11 @@ data class Message(
     fun toMessageDeleteRequestBody(): MessageDeleteRequest? {
         return if (text != null && chatId != null && senderId != null) {
             MessageDeleteRequest(
-                messageIds = listOf(id),
+//                messageIds = listOf(id),
+                messageId = id,
                 chatId = chatId,
-                senderId = senderId
+                senderId = senderId,
+                userId = senderId
             )
         } else null
     }

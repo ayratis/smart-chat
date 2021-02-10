@@ -12,6 +12,6 @@ interface SocketApi {
     fun sendMessage(messageCreateRequest: MessageCreateRequest): Single<Boolean>
     fun editMessage(messageEditRequest: MessageEditRequest): Single<Boolean>
     fun readMessage(messageReadRequest: MessageReadRequest): Single<Int>
-    fun deleteMessage(messageDeleteRequest: MessageDeleteRequest): Single<Int>
+    fun deleteMessage(messageDeleteRequest: MessageDeleteRequest): Single<Boolean>
     fun sendTyping(typingRequest: TypingRequest): Single<Any>
 }

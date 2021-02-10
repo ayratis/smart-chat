@@ -66,7 +66,7 @@ class ChatViewModel(
 
     fun onChatItemBind(chatItem: ChatItem) {
         if (chatItem is ChatItem.Incoming/*|| chatItem is ChatItem.System*/) {
-            if (!chatItem.message.readedIds.contains(userId)) {
+            if (chatItem.message.readedIds?.contains(userId) != true) {
                 val requestBody = MessageReadRequest(
                     messageIds = listOf(chatItem.message.id),
                     chatId = chatId,
@@ -179,8 +179,8 @@ class ChatViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { result ->
-                    if (result > 0) {
-                        store.accept(Action.ServerMessageEditSuccess(message))
+                    if (result) {
+                        store.accept(Action.ServerMessageDeleteSuccess(message))
                     } else {
                         store.accept(Action.ServerMessageDeleteError(message))
                     }

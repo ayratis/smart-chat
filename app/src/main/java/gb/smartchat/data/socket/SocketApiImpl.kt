@@ -106,10 +106,10 @@ class SocketApiImpl(
             }
     }
 
-    override fun deleteMessage(messageDeleteRequest: MessageDeleteRequest): Single<Int> {
+    override fun deleteMessage(messageDeleteRequest: MessageDeleteRequest): Single<Boolean> {
         return sendEvent("usr:msg:delete", messageDeleteRequest)
             .map { response ->
-                response.getJSONObject("result").getInt("read_message_count")
+                response.getJSONObject("result").getBoolean("success")
             }
     }
 

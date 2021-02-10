@@ -2,11 +2,7 @@
 package gb.smartchat.ui.chat
 
 import android.os.Bundle
-import android.util.Log
-import android.view.ContextMenu
-import android.view.MenuItem
 import android.view.View
-import android.widget.AdapterView
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -31,8 +27,11 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
             onItemBindListener = { chatItem ->
                 viewModel.onChatItemBind(chatItem)
             },
-            onLongClickListener = { chatItem ->
-
+            onDeleteListener = { chatItem ->
+                viewModel.onDeleteMessage(chatItem.message)
+            },
+            onEditListener = { chatItem ->
+                viewModel.onEditMessageRequest(chatItem.message)
             }
         )
     }
@@ -56,34 +55,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
             viewModel.onSendClick()
             binding.etInput.setText("")
         }
-
-        registerForContextMenu(binding.rvChat)
-    }
-
-    override fun onCreateContextMenu(
-        menu: ContextMenu,
-        v: View,
-        menuInfo: ContextMenu.ContextMenuInfo?
-    ) {
-        super.onCreateContextMenu(menu, v, menuInfo)
-        val inflater = requireActivity().menuInflater
-        inflater.inflate(R.menu.outgoing_message, menu)
-    }
-
-    override fun onContextItemSelected(item: MenuItem): Boolean {
-        val info = item.menuInfo as AdapterView.AdapterContextMenuInfo
-        Log.d(TAG, "onContextItemSelected: info: $info")
-        when (item.itemId) {
-            R.id.action_edit -> {
-                Log.d(TAG, "onContextItemSelected: edit")
-                return true
-            }
-            R.id.action_delete -> {
-                Log.d(TAG, "onContextItemSelected: delete")
-                return true
-            }
-        }
-        return super.onContextItemSelected(item)
     }
 
     override fun onStart() {
