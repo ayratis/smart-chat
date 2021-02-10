@@ -1,0 +1,12 @@
+package gb.smartchat.entity.request
+
+import com.google.gson.annotations.SerializedName
+
+data class MessageDeleteRequest(
+    @SerializedName("message_ids")
+    val messageIds: List<Long>,
+    @SerializedName("chat_id")
+    val chatId: Long,
+    @SerializedName("sender_id")
+    val senderId: String
+)

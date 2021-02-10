@@ -3,13 +3,14 @@ package gb.smartchat.entity
 
 import com.google.gson.annotations.SerializedName
 import gb.smartchat.entity.request.MessageCreateRequest
+import gb.smartchat.entity.request.MessageDeleteRequest
 import gb.smartchat.entity.request.MessageEditRequest
 
 data class Message(
     @SerializedName("id")
     val id: Long,
     @SerializedName("chat_id")
-    val chatId: Int?,
+    val chatId: Long?,
     @SerializedName("sender_id")
     val senderId: String?,
     @SerializedName("client_id")
@@ -52,6 +53,16 @@ data class Message(
                 text = text,
                 messageId = id,
                 chatId = chatId,
+            )
+        } else null
+    }
+
+    fun toMessageDeleteRequestBody(): MessageDeleteRequest? {
+        return if (text != null && chatId != null && senderId != null) {
+            MessageDeleteRequest(
+                messageIds = listOf(id),
+                chatId = chatId,
+                senderId = senderId
             )
         } else null
     }

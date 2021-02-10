@@ -6,6 +6,7 @@ import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.BuildConfig
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageCreateRequest
+import gb.smartchat.entity.request.MessageDeleteRequest
 import gb.smartchat.entity.request.MessageEditRequest
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.utils.emitSingle
@@ -108,7 +109,12 @@ class SocketApiImpl(
             }
     }
 
-
+    override fun deleteMessage(messageDeleteRequest: MessageDeleteRequest): Single<Int> {
+        return sendEvent("usr:msg:delete", messageDeleteRequest)
+            .map { response ->
+                response.getJSONObject("result").getInt("read_message_count")
+            }
+    }
 
     private fun <R> sendEvent(method: String, body: R): Single<JSONObject> {
         val requestBody = JSONObject(gson.toJson(body))

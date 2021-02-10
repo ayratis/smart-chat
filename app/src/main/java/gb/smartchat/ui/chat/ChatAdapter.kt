@@ -22,6 +22,7 @@ class ChatAdapter(
                     ChatItem.OutgoingStatus.READ -> "r"
                     ChatItem.OutgoingStatus.FAILURE -> "e"
                     ChatItem.OutgoingStatus.EDITING -> "editing"
+                    ChatItem.OutgoingStatus.DELETING -> "deleting"
                 }
                 holder.bind("${item.message.text} ($statusText)")
             }

@@ -46,6 +46,18 @@ class ChatViewModel(
         store.accept(Action.ClientSendMessage(text))
     }
 
+    fun onEditMessageRequest(message: Message) {
+        store.accept(Action.ClientEditMessageRequest(message))
+    }
+
+    fun onEditMessageConfirm(message: Message, newText: String) {
+        store.accept(Action.ClientEditMessageConfirm(message, newText))
+    }
+
+    fun onDeleteMessage(message: Message) {
+        store.accept(Action.ClientDeleteMessage(message))
+    }
+
     fun onChatItemBind(chatItem: ChatItem) {
         if (chatItem is ChatItem.Incoming/*|| chatItem is ChatItem.System*/) {
             if (!chatItem.message.readedIds.contains(userId)) {
@@ -72,6 +84,7 @@ class ChatViewModel(
                 is SideEffect.SendMessage -> sendMessage(sideEffect.message)
                 is SideEffect.TypingTimer -> startTypingTimer(sideEffect.senderId)
                 is SideEffect.EditMessage -> editMessage(sideEffect.message, sideEffect.newText)
+                is SideEffect.DeleteMessage -> deleteMessage(sideEffect.message)
             }
         }
         compositeDisposable.add(
@@ -138,6 +151,26 @@ class ChatViewModel(
                 { e ->
                     Log.e(TAG, "sendMessage: error", e)
                     store.accept(Action.ServerMessageEditSuccess(message))
+                }
+            )
+        compositeDisposable.add(d)
+    }
+
+    private fun deleteMessage(message: Message) {
+        val messageDeleteRequest = message.toMessageDeleteRequestBody() ?: return
+        val d = socketApi.deleteMessage(messageDeleteRequest)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { result ->
+                    if (result > 0) {
+                        store.accept(Action.ServerMessageEditSuccess(message))
+                    } else {
+                        store.accept(Action.ServerMessageDeleteError(message))
+                    }
+                },
+                { e ->
+                    Log.e(TAG, "deleteMessage: error", e)
+                    store.accept(Action.ServerMessageDeleteError(message))
                 }
             )
         compositeDisposable.add(d)

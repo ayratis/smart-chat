@@ -8,6 +8,7 @@ sealed class Action {
     data class ClientSendMessage(val text: String) : Action()
     data class ClientEditMessageRequest(val message: Message): Action()
     data class ClientEditMessageConfirm(val message: Message, val newText: String): Action()
+    data class ClientDeleteMessage(val message: Message): Action()
 
     data class ServerMessageNew(val message: Message): Action()
     data class ServerMessageChange(val message: Message): Action()
@@ -18,6 +19,8 @@ sealed class Action {
     data class ServerMessageSendError(val message: Message): Action()
     data class ServerMessageEditSuccess(val message: Message): Action()
     data class ServerMessageEditError(val message: Message): Action()
+    data class ServerMessageDeleteSuccess(val message: Message): Action()
+    data class ServerMessageDeleteError(val message: Message): Action()
 
     data class InternalTypingTimeIsUp(val senderId: String): Action()
 }

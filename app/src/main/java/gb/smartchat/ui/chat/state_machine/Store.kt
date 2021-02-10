@@ -167,7 +167,31 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 }
                 return state
             }
-
+            is Action.ClientDeleteMessage -> {
+                sideEffectListener(SideEffect.DeleteMessage(action.message))
+                val newItem = ChatItem.Outgoing(action.message, ChatItem.OutgoingStatus.DELETING)
+                val list = state.chatItems.replaceLastWith(newItem) { chatItem ->
+                    chatItem.message.id == action.message.id
+                }
+                return state.copy(chatItems = list)
+            }
+            is Action.ServerMessageDeleteSuccess -> {
+                val newList = state.chatItems.toMutableList()
+                newList.removeAll { it.message.id == action.message.id }
+                return state.copy(chatItems = newList)
+            }
+            is Action.ServerMessageDeleteError -> {
+                val newStatus = if (action.message.readedIds.isNullOrEmpty()) {
+                    ChatItem.OutgoingStatus.SENT_2
+                } else {
+                    ChatItem.OutgoingStatus.READ
+                }
+                val newItem = ChatItem.Outgoing(action.message, newStatus)
+                val list = state.chatItems.replaceLastWith(newItem) { chatItem ->
+                    chatItem.message.id == action.message.id
+                }
+                return state.copy(chatItems = list)
+            }
         }
     }
 
@@ -190,6 +214,15 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
         } else {
             this += item
         }
+    }
+
+    private inline fun <T> List<T>.replaceLastWith(item: T, predicate: (T) -> Boolean): List<T> {
+        val list = this.toMutableList()
+        val position = list.indexOfLast(predicate)
+        if (position != -1) {
+            list[position] = item
+        }
+        return list
     }
 
     override fun accept(t: Action) {

@@ -8,7 +8,7 @@ data class MessageCreateRequest(
     @SerializedName("sender_id")
     val senderId: String,
     @SerializedName("chat_id")
-    val chatId: Int,
+    val chatId: Long,
     @SerializedName("client_id")
     val clientId: String,
     @SerializedName("quoted_message_id")

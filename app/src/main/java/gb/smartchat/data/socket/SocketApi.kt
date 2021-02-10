@@ -1,6 +1,7 @@
 package gb.smartchat.data.socket
 
 import gb.smartchat.entity.request.MessageCreateRequest
+import gb.smartchat.entity.request.MessageDeleteRequest
 import gb.smartchat.entity.request.MessageEditRequest
 import gb.smartchat.entity.request.MessageReadRequest
 import io.reactivex.Observable
@@ -14,4 +15,5 @@ interface SocketApi {
     fun sendMessage(messageCreateRequest: MessageCreateRequest): Single<Boolean>
     fun editMessage(messageEditRequest: MessageEditRequest): Single<Boolean>
     fun readMessage(messageReadRequest: MessageReadRequest): Single<Int>
+    fun deleteMessage(messageDeleteRequest: MessageDeleteRequest): Single<Int>
 }

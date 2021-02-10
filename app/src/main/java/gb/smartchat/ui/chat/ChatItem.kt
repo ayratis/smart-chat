@@ -15,7 +15,8 @@ sealed class ChatItem(val message: Message) {
         SENT_2,
         READ,
         FAILURE,
-        EDITING
+        EDITING,
+        DELETING
     }
 
     class DiffUtilItemCallback : DiffUtil.ItemCallback<ChatItem>() {
