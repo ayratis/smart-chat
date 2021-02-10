@@ -7,6 +7,7 @@ import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.di.InstanceFactory
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.ui.chat.state_machine.Action
 import gb.smartchat.ui.chat.state_machine.SideEffect
 import gb.smartchat.ui.chat.state_machine.Store
@@ -19,6 +20,8 @@ import java.util.concurrent.TimeUnit
 
 class ChatViewModel(
     private val store: Store = Store("77f21ecc-0d4a-4f85-9173-55acf327f007"),
+    private val userId: String = "77f21ecc-0d4a-4f85-9173-55acf327f007",
+    private val chatId: Long = 1,
     private val socketApi: SocketApi = InstanceFactory.createSocketApi()
 ) : ViewModel() {
 
@@ -41,6 +44,26 @@ class ChatViewModel(
 
     fun onSendClick(text: String) {
         store.accept(Action.ClientSendMessage(text))
+    }
+
+    fun onChatItemBind(chatItem: ChatItem) {
+        if (chatItem is ChatItem.Incoming/*|| chatItem is ChatItem.System*/) {
+            if (!chatItem.message.readedIds.contains(userId)) {
+                val requestBody = MessageReadRequest(
+                    messageIds = listOf(chatItem.message.id),
+                    chatId = chatId,
+                    senderId = userId,
+                )
+                val d = socketApi.readMessage(requestBody)
+                    .subscribe(
+                        { /*do nothing*/ },
+                        { e ->
+                            Log.e(TAG, "messageRead", e)
+                        }
+                    )
+                compositeDisposable.add(d)
+            }
+        }
     }
 
     private fun setupStateMachine() {

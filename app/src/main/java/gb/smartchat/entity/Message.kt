@@ -19,7 +19,7 @@ data class Message(
     @SerializedName("type")
     val type: Type?,
     @SerializedName("readed_ids")
-    val readedIds: List<String>?
+    val readedIds: List<String> = emptyList()
 //    @SerializedName("quoted_message_id")
 //    val quotedMessageId: Long,
 //    @SerializedName("mentions")

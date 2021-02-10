@@ -167,7 +167,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 }
                 return state
             }
-            
+
         }
     }
 
@@ -179,7 +179,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             clientId = clientId,
             text = text,
             type = null,
-            readedIds = null
+            readedIds = emptyList()
         )
     }
 

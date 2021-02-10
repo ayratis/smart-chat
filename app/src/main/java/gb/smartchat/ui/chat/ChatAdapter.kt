@@ -4,7 +4,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import gb.smartchat.ui.global.view_holder.DummyViewHolder
 
-class ChatAdapter : ListAdapter<ChatItem, DummyViewHolder>(ChatItem.DiffUtilItemCallback()) {
+class ChatAdapter(
+    private val onItemBindListener: (ChatItem) -> Unit
+) : ListAdapter<ChatItem, DummyViewHolder>(ChatItem.DiffUtilItemCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DummyViewHolder {
         return DummyViewHolder.create(parent)

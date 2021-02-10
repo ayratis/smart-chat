@@ -18,7 +18,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
     private val viewModel by viewModels<ChatViewModel>()
 
     private val chatAdapter by lazy {
-        ChatAdapter()
+        ChatAdapter { chatItem ->
+            viewModel.onChatItemBind(chatItem)
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

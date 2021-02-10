@@ -7,6 +7,7 @@ import gb.smartchat.BuildConfig
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageCreateRequest
 import gb.smartchat.entity.request.MessageEditRequest
+import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.utils.emitSingle
 import gb.smartchat.utils.setSystemListeners
 import io.reactivex.Observable
@@ -86,32 +87,33 @@ class SocketApiImpl(
         return socketEventsRelay.hide()
     }
 
-    override fun sendMessage(message: MessageCreateRequest): Single<Boolean> {
-        val method = "usr:msg:create"
-        val requestBody = JSONObject(gson.toJson(message))
-        return socket.emitSingle(method, requestBody)
+    override fun sendMessage(messageCreateRequest: MessageCreateRequest): Single<Boolean> {
+        return sendEvent("usr:msg:edit", messageCreateRequest)
             .map { response ->
-                logAck(method, requestBody, response)
-                try {
-                    response.getJSONObject("result").getBoolean("success")
-                } catch (e: Throwable) {
-                    false
-                }
+                response.getJSONObject("result").getBoolean("success")
             }
     }
 
     override fun editMessage(messageEditRequest: MessageEditRequest): Single<Boolean> {
-        val method = "usr:msg:edit"
-        val requestBody = JSONObject(gson.toJson(messageEditRequest))
-        return socket.emitSingle(method, requestBody)
+        return sendEvent("usr:msg:edit", messageEditRequest)
             .map { response ->
-                logAck(method, requestBody, response)
-                try {
-                    response.getJSONObject("result").getBoolean("success")
-                } catch (e: Throwable) {
-                    false
-                }
+                response.getJSONObject("result").getBoolean("success")
             }
+    }
+
+    override fun readMessage(messageReadRequest: MessageReadRequest): Single<Int> {
+        return sendEvent("usr:msg:read", messageReadRequest)
+            .map { response ->
+                response.getJSONObject("result").getInt("read_message_count")
+            }
+    }
+
+
+
+    private fun <R> sendEvent(method: String, body: R): Single<JSONObject> {
+        val requestBody = JSONObject(gson.toJson(body))
+        return socket.emitSingle(method, requestBody)
+            .doOnSuccess { logAck(method, requestBody, it) }
     }
 
     private fun logAck(method: String, requestBody: JSONObject, responseBody: JSONObject) {
