@@ -86,7 +86,7 @@ class SocketApiImpl(
     }
 
     override fun sendMessage(messageCreateRequest: MessageCreateRequest): Single<Boolean> {
-        return sendEvent("usr:msg:edit", messageCreateRequest)
+        return sendEvent("usr:msg:create", messageCreateRequest)
             .map { response ->
                 response.getJSONObject("result").getBoolean("success")
             }

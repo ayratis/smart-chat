@@ -44,6 +44,7 @@ class ChatViewModel(
     }
 
     fun onTextChanged(text: String) {
+        Log.d(TAG, "onTextChanged: $text")
         store.accept(Action.ClientTextChanged(text))
     }
 
@@ -105,7 +106,7 @@ class ChatViewModel(
                 .map { it.currentText }
                 .distinctUntilChanged()
                 .filter { it.isNotEmpty() }
-                .debounce(2, TimeUnit.SECONDS)
+                .throttleLatest(1500, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { text ->
                     sendTyping(text)
