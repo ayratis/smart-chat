@@ -8,6 +8,7 @@ import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.di.InstanceFactory
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageReadRequest
+import gb.smartchat.entity.request.TypingRequest
 import gb.smartchat.ui.chat.state_machine.Action
 import gb.smartchat.ui.chat.state_machine.SideEffect
 import gb.smartchat.ui.chat.state_machine.Store
@@ -42,8 +43,12 @@ class ChatViewModel(
         socketApi.connect()
     }
 
-    fun onSendClick(text: String) {
-        store.accept(Action.ClientSendMessage(text))
+    fun onTextChanged(text: String) {
+        store.accept(Action.ClientTextChanged(text))
+    }
+
+    fun onSendClick() {
+        store.accept(Action.ClientSendMessage)
     }
 
     fun onEditMessageRequest(message: Message) {
@@ -93,6 +98,17 @@ class ChatViewModel(
                 .subscribe { state ->
                     Log.d(TAG, "viewState: $state")
                     chatList.value = state.chatItems
+                }
+        )
+        compositeDisposable.add(
+            Observable.wrap(store)
+                .map { it.currentText }
+                .distinctUntilChanged()
+                .filter { it.isNotEmpty() }
+                .debounce(2, TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { text ->
+                    sendTyping(text)
                 }
         )
     }
@@ -184,6 +200,21 @@ class ChatViewModel(
             .subscribe {
                 store.accept(Action.InternalTypingTimeIsUp(senderId))
             }
+    }
+
+    private fun sendTyping(text: String) {
+        val requestBody = TypingRequest(
+            chatId = chatId,
+            userId = userId,
+            text = text
+        )
+        val d = socketApi.sendTyping(requestBody)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { /*do nothing*/ },
+                { Log.e(TAG, "sendTyping: error", it) }
+            )
+        compositeDisposable.addAll(d)
     }
 
     override fun onCleared() {

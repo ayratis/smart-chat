@@ -29,11 +29,15 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
     private fun reduce(state: State, action: Action): State {
         when (action) {
             is Action.ClientSendMessage -> {
-                val clientId = System.currentTimeMillis().toString()
-                val msg = createOutgoingMessage(clientId, action.text)
-                sideEffectListener.invoke(SideEffect.SendMessage(msg))
-                val list = state.chatItems + ChatItem.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
-                return state.copy(chatItems = list)
+                return if (state.currentText.isNotEmpty()) {
+                    val clientId = System.currentTimeMillis().toString()
+                    val msg = createOutgoingMessage(clientId, state.currentText)
+                    sideEffectListener.invoke(SideEffect.SendMessage(msg))
+                    val list = state.chatItems + ChatItem.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
+                    state.copy(chatItems = list, currentText = "")
+                } else {
+                    state
+                }
             }
             is Action.ServerMessageSendSuccess -> {
                 val newItem = ChatItem.Outgoing(action.message, ChatItem.OutgoingStatus.SENT)
@@ -191,6 +195,9 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     chatItem.message.id == action.message.id
                 }
                 return state.copy(chatItems = list)
+            }
+            is Action.ClientTextChanged -> {
+                return state.copy(currentText = action.text)
             }
         }
     }

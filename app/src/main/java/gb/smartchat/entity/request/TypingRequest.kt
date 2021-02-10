@@ -2,13 +2,11 @@ package gb.smartchat.entity.request
 
 import com.google.gson.annotations.SerializedName
 
-data class MessageEditRequest (
+data class TypingRequest(
     @SerializedName("text")
     val text: String,
-    @SerializedName("message_id")
-    val messageId: Long,
+    @SerializedName("user_id")
+    val userId: String,
     @SerializedName("chat_id")
     val chatId: Long,
-//    @SerializedName("mentions")
-//    val mentions: List<Mention> = emptyList(),
 )

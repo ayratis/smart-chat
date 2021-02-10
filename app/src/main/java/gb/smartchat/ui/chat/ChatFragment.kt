@@ -3,6 +3,7 @@ package gb.smartchat.ui.chat
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -35,11 +36,12 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
             }
             adapter = chatAdapter
         }
+        binding.etInput.doAfterTextChanged {
+            viewModel.onTextChanged(it?.toString() ?: "")
+        }
         binding.btnSend.setOnClickListener {
-            binding.etInput.text.toString().let {
-                if (it.isNotBlank()) viewModel.onSendClick(it)
-                binding.etInput.setText("")
-            }
+            viewModel.onSendClick()
+            binding.etInput.setText("")
         }
     }
 
