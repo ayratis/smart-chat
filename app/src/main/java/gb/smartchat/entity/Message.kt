@@ -32,8 +32,8 @@ data class Message(
         @SerializedName("system")
         SYSTEM,
 
-        @SerializedName("user")
-        USER
+        @SerializedName("DELETED")
+        DELETED
     }
 
     fun toMessageCreateRequestBody(): MessageCreateRequest? {

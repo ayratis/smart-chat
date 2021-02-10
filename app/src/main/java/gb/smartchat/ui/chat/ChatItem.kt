@@ -36,13 +36,13 @@ sealed class ChatItem(val message: Message) {
 
         override fun areContentsTheSame(oldItem: ChatItem, newItem: ChatItem): Boolean {
             if (oldItem is Incoming && newItem is Incoming) {
-                return oldItem.message == newItem.message
+                return oldItem == newItem
             }
             if (oldItem is Outgoing && newItem is Outgoing) {
                 return oldItem == newItem
             }
             if (oldItem is System && newItem is System) {
-                return oldItem.message == newItem.message
+                return oldItem == newItem
             }
             return false
         }

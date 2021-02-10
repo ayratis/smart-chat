@@ -97,6 +97,9 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                         action.message.type == Message.Type.SYSTEM -> {
                             ChatItem.System(action.message)
                         }
+                        action.message.type == Message.Type.DELETED -> {
+                            ChatItem.System(action.message)
+                        }
                         action.message.senderId == senderId -> {
                             val status = if (action.message.readedIds.isNullOrEmpty()) {
                                 ChatItem.OutgoingStatus.SENT_2

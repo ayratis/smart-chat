@@ -24,7 +24,8 @@
         android:layout_above="@id/layout_input"
         android:layout_below="@id/toolbar"
         android:clipToPadding="true"
-        tools:listitem="@layout/item_dummy" />
+        android:paddingVertical="8dp"
+        tools:listitem="@layout/item_chat_msg_outgoing" />
 
     <RelativeLayout
         android:id="@+id/layout_input"
