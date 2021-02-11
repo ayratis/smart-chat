@@ -31,7 +31,7 @@
         android:layout_height="match_parent"
         android:layout_above="@id/divider2"
         android:layout_below="@id/divider1"
-        android:clipToPadding="true"
+        android:clipToPadding="false"
         android:paddingVertical="8dp"
         tools:listitem="@layout/item_chat_msg_outgoing" />
 

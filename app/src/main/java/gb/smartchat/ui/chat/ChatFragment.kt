@@ -92,8 +92,12 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
                 .map { it.chatItems }
                 .distinctUntilChanged()
                 .subscribe { chatItems ->
+                    val pos = (binding.rvChat.layoutManager as LinearLayoutManager)
+                        .findLastVisibleItemPosition()
                     chatAdapter.submitList(chatItems) {
-                        if (chatItems.lastOrNull() is ChatItem.Outgoing) {
+                        if (chatItems.lastOrNull() is ChatItem.Outgoing ||
+                            pos == chatItems.lastIndex - 1
+                        ) {
                             binding.rvChat.scrollToPosition(chatItems.lastIndex)
                         }
                     }
@@ -115,7 +119,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
                 .subscribe { typingSenderIds ->
                     binding.toolbar.subtitle =
                         if (typingSenderIds.isEmpty()) ""
-                        else typingSenderIds.toString()
+                        else "typing: $typingSenderIds"
                 },
             viewModel.setInputText.subscribe { singleEvent ->
                 singleEvent.getContentIfNotHandled()?.let {
