@@ -1,5 +1,6 @@
 package gb.smartchat.ui.chat.state_machine
 
+import android.net.Uri
 import gb.smartchat.entity.Message
 
 
@@ -10,6 +11,10 @@ sealed class Action {
     object ClientEditMessageReject : Action()
     data class ClientDeleteMessage(val message: Message): Action()
     data class ClientTextChanged(val text: String): Action()
+    data class ClientAttachPhoto(val photoUri: Uri) : Action()
+    object ClientDetachPhoto: Action()
+    data class ClientAttachFile(val fileUri: Uri) : Action()
+    object ClientDetachFile: Action()
 
     data class ServerMessageNew(val message: Message): Action()
     data class ServerMessageChange(val message: Message): Action()

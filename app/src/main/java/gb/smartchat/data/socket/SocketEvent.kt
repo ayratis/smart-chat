@@ -10,11 +10,12 @@ sealed class SocketEvent {
 }
 
 enum class ServerEvent(val eventName: String) {
-    MESSAGE_NEW("srv:msg:new"),
-    MESSAGE_CHANGE("srv:msg:change"),
     TYPING("srv:typing"),
+    MESSAGE_NEW("srv:msg:new"),
     READ("srv:msg:read"),
+    MESSAGE_CHANGE("srv:msg:change"),
     MESSAGE_DELETE("srv:msg:delete"),
+
     USERNAME_MISSING("srv:username:missing"),
     USER_MISSING("srv:user:missing")
 }

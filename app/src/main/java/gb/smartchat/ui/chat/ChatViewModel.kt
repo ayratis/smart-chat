@@ -1,5 +1,6 @@
 package gb.smartchat.ui.chat
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -65,6 +66,22 @@ class ChatViewModel(
 
     fun onDeleteMessage(message: Message) {
         store.accept(Action.ClientDeleteMessage(message))
+    }
+
+    fun attachPhoto(photoUri: Uri) {
+        store.accept(Action.ClientAttachPhoto(photoUri))
+    }
+
+    fun detachPhoto() {
+        store.accept(Action.ClientDetachPhoto)
+    }
+
+    fun attachFile(fileUri: Uri) {
+        store.accept(Action.ClientAttachFile(fileUri))
+    }
+
+    fun detachFile() {
+        store.accept(Action.ClientDetachFile)
     }
 
     fun onChatItemBind(chatItem: ChatItem) {

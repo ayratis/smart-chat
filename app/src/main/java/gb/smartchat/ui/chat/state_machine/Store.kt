@@ -225,6 +225,18 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             is Action.ClientTextChanged -> {
                 return state.copy(currentText = action.text)
             }
+            is Action.ClientAttachPhoto -> {
+                return state.copy(attachedPhoto = action.photoUri, attachedFile = null)
+            }
+            is Action.ClientDetachPhoto -> {
+                return state.copy(attachedPhoto = null, attachedFile = null)
+            }
+            is Action.ClientAttachFile -> {
+                return state.copy(attachedPhoto = null, attachedFile = action.fileUri)
+            }
+            is Action.ClientDetachFile -> {
+                return state.copy(attachedPhoto = null, attachedFile = null)
+            }
         }
     }
 
