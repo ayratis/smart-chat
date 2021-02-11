@@ -125,4 +125,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
             }
         )
     }
+
+    override fun onPause() {
+        compositeDisposable.clear()
+        super.onPause()
+    }
 }

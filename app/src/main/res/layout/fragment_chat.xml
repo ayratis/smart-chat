@@ -15,17 +15,32 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/spacer_top"
-        app:title="CHAT" />
+        app:title="@string/app_name" />
+
+    <View
+        android:id="@+id/divider1"
+        android:layout_below="@id/toolbar"
+        android:background="@color/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_chat"
+        android:overScrollMode="never"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/layout_input"
-        android:layout_below="@id/toolbar"
+        android:layout_above="@id/divider2"
+        android:layout_below="@id/divider1"
         android:clipToPadding="true"
         android:paddingVertical="8dp"
         tools:listitem="@layout/item_chat_msg_outgoing" />
+
+    <View
+        android:id="@+id/divider2"
+        android:layout_above="@id/layout_input"
+        android:background="@color/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"/>
 
     <RelativeLayout
         android:id="@+id/layout_input"
@@ -38,49 +53,62 @@
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:orientation="horizontal"
+            android:background="#0d000000"
             android:visibility="gone"
             tools:visibility="visible">
 
             <TextView
                 android:id="@+id/tv_editing_message"
                 android:layout_width="0dp"
+                android:gravity="center_vertical"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
                 tools:text="Привет! Как дела?" />
 
-            <TextView
+            <ImageButton
                 android:id="@+id/btn_editing_close"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:gravity="center"
-                android:text="X" />
+                android:background="?attr/actionBarItemBackground"
+                android:src="@drawable/ic_baseline_close_24"
+                android:contentDescription="@string/cancel" />
 
         </LinearLayout>
+
+        <View
+            android:id="@+id/divider3"
+            android:layout_below="@id/view_editing_message"
+            android:background="@color/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
 
         <EditText
             android:id="@+id/et_input"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_below="@id/view_editing_message"
+            android:layout_marginTop="8dp"
+            android:layout_below="@id/divider3"
             android:layout_marginStart="16dp"
             android:layout_marginLeft="16dp"
             android:layout_marginEnd="120dp"
             android:layout_marginRight="80dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             tools:ignore="Autofill,LabelFor,TextFields" />
 
         <Button
             android:id="@+id/btn_main_action"
             android:layout_width="wrap_content"
+            android:layout_marginTop="8dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/view_editing_message"
+            android:layout_below="@id/divider3"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_marginEnd="16dp"
             android:layout_marginRight="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:text="@string/send" />
 
     </RelativeLayout>

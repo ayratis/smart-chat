@@ -56,7 +56,7 @@ class SocketApiImpl(
                         SocketEvent.Typing(senderId)
                     }
                     ServerEvent.READ -> {
-                        val messageIdsRaw = response.getJSONArray("messages_id").toString()
+                        val messageIdsRaw = response.getJSONArray("message_ids").toString()
                         val messageIds = gson.fromJson(messageIdsRaw, Array<Long>::class.java)
                         SocketEvent.MessageRead(messageIds.toList())
                     }
