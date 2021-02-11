@@ -1,9 +1,9 @@
 package gb.smartchat.ui.chat
 
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.jakewharton.rxrelay2.BehaviorRelay
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.entity.Message
@@ -34,8 +34,8 @@ class ChatViewModel(
 
     private val compositeDisposable = CompositeDisposable()
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
-    val viewState = MutableLiveData<State>()
-    val setInputText = MutableLiveData<SingleEvent<String>>()
+    val viewState = BehaviorRelay.create<State>()
+    val setInputText = BehaviorRelay.create<SingleEvent<String>>()
 
     init {
         setupStateMachine()
@@ -68,6 +68,7 @@ class ChatViewModel(
     }
 
     fun onChatItemBind(chatItem: ChatItem) {
+        Log.d(TAG, "onChatItemBind: $chatItem")
         if (chatItem is ChatItem.Incoming/*|| chatItem is ChatItem.System*/) {
             if (chatItem.message.readedIds?.contains(userId) != true) {
                 val requestBody = MessageReadRequest(
@@ -77,7 +78,9 @@ class ChatViewModel(
                 )
                 val d = socketApi.readMessage(requestBody)
                     .subscribe(
-                        { /*do nothing*/ },
+                        { /*do nothing*/
+                            Log.d(TAG, "onChatItemBind: success")
+                        },
                         { e ->
                             Log.e(TAG, "messageRead", e)
                         }
@@ -94,7 +97,7 @@ class ChatViewModel(
                 is SideEffect.TypingTimer -> startTypingTimer(sideEffect.senderId)
                 is SideEffect.EditMessage -> editMessage(sideEffect.message, sideEffect.newText)
                 is SideEffect.DeleteMessage -> deleteMessage(sideEffect.message)
-                is SideEffect.SetInputText -> setInputText.postValue(SingleEvent(sideEffect.text))
+                is SideEffect.SetInputText -> setInputText.accept(SingleEvent(sideEffect.text))
             }
         }
         compositeDisposable.add(
@@ -102,7 +105,7 @@ class ChatViewModel(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { state ->
                     Log.d(TAG, "viewState: $state")
-                    viewState.value = state
+                    viewState.accept(state)
                 }
         )
         compositeDisposable.add(

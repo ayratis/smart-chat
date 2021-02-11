@@ -14,6 +14,7 @@ import gb.smartchat.ui.chat.state_machine.Store
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.visible
+import io.reactivex.disposables.CompositeDisposable
 
 class ChatFragment : Fragment(R.layout.fragment_chat) {
 
@@ -45,6 +46,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
         )
     }
     private val binding by viewBinding(FragmentChatBinding::bind)
+    private val compositeDisposable = CompositeDisposable()
 
     private val chatAdapter by lazy {
         ChatAdapter(
@@ -85,28 +87,42 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
     override fun onStart() {
         super.onStart()
         viewModel.onStart()
-        viewModel.viewState.observe(this) { state ->
-            chatAdapter.submitList(state.chatItems) {
-                binding.rvChat.scrollToPosition(state.chatItems.lastIndex)
+        compositeDisposable.addAll(
+            viewModel.viewState
+                .map { it.chatItems }
+                .distinctUntilChanged()
+                .subscribe { chatItems ->
+                    chatAdapter.submitList(chatItems) {
+                        if (chatItems.lastOrNull() is ChatItem.Outgoing) {
+                            binding.rvChat.scrollToPosition(chatItems.lastIndex)
+                        }
+                    }
+                },
+            viewModel.viewState
+                .map { listOf(it.editingMessage) }
+                .distinctUntilChanged()
+                .subscribe {
+                    val editingMessage = it.first()
+                    binding.viewEditingMessage.visible(editingMessage != null)
+                    binding.tvEditingMessage.text = editingMessage?.text
+                    binding.btnMainAction.text =
+                        if (editingMessage != null) getString(R.string.edit)
+                        else getString(R.string.send)
+                },
+            viewModel.viewState
+                .map { it.typingSenderIds }
+                .distinctUntilChanged()
+                .subscribe { typingSenderIds ->
+                    binding.toolbar.subtitle =
+                        if (typingSenderIds.isEmpty()) ""
+                        else typingSenderIds.toString()
+                },
+            viewModel.setInputText.subscribe { singleEvent ->
+                singleEvent.getContentIfNotHandled()?.let {
+                    binding.etInput.setText(it)
+                    binding.etInput.setSelection(it.length)
+                }
             }
-            binding.viewEditingMessage.visible(state.editingMessage != null)
-
-            binding.tvEditingMessage.text = state.editingMessage?.text
-
-            binding.btnMainAction.text =
-                if (state.editingMessage != null) getString(R.string.edit)
-                else getString(R.string.send)
-
-            binding.toolbar.subtitle =
-                if (state.typingSenderIds.isEmpty()) ""
-                else state.typingSenderIds.toString()
-        }
-
-        viewModel.setInputText.observe(this) { singleEvent ->
-            singleEvent.getContentIfNotHandled()?.let {
-                binding.etInput.setText(it)
-                binding.etInput.setSelection(it.length)
-            }
-        }
+        )
     }
 }
