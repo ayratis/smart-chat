@@ -84,6 +84,14 @@ class ChatViewModel(
         store.accept(Action.ClientDetachFile)
     }
 
+    fun onQuoteMessage(message: Message) {
+        store.accept(Action.ClientQuoteMessage(message))
+    }
+
+    fun stopQuoting() {
+        store.accept(Action.ClientStopQuoting)
+    }
+
     fun onChatItemBind(chatItem: ChatItem) {
         Log.d(TAG, "onChatItemBind: $chatItem")
         if (chatItem is ChatItem.Incoming/*|| chatItem is ChatItem.System*/) {

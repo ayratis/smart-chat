@@ -12,7 +12,7 @@ data class MessageCreateRequest(
     @SerializedName("client_id")
     val clientId: String,
     @SerializedName("quoted_message_id")
-    val quotedMessageId: Long? = null,
+    val quotedMessageId: Long?,
 //    @SerializedName("mentions")
 //    val mentions: List<Mention> = emptyList(),
     @SerializedName("file_ids")

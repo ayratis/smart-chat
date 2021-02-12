@@ -1,5 +1,8 @@
 package gb.smartchat.ui.chat.view_holder
 
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.StyleSpan
 import android.util.Log
 import android.view.*
 import androidx.core.view.forEach
@@ -13,7 +16,8 @@ import gb.smartchat.utils.inflate
 class OutgoingViewHolder private constructor(
     itemView: View,
     private val onDeleteListener: (ChatItem) -> Unit,
-    private val onEditListener: (ChatItem) -> Unit
+    private val onEditListener: (ChatItem) -> Unit,
+    private val onQuoteListener: (ChatItem) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -22,12 +26,14 @@ class OutgoingViewHolder private constructor(
         fun create(
             parent: ViewGroup,
             onDeleteListener: (ChatItem) -> Unit,
-            onEditListener: (ChatItem) -> Unit
+            onEditListener: (ChatItem) -> Unit,
+            onQuoteListener: (ChatItem) -> Unit
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
                 onDeleteListener,
-                onEditListener
+                onEditListener,
+                onQuoteListener
             )
     }
 
@@ -50,8 +56,28 @@ class OutgoingViewHolder private constructor(
             ChatItem.OutgoingStatus.DELETING -> "deleting"
             ChatItem.OutgoingStatus.DELETED -> "deleted"
         }
-        val text = "${chatItem.message.text} ($statusString)"
-        binding.tvContent.text = text
+        val quotingMessage = chatItem.message.quotedMessageId?.toString()
+        if (quotingMessage != null) {
+            val text = "$quotingMessage\n\n${chatItem.message.text} ($statusString)"
+            val spannable = SpannableStringBuilder(text).apply {
+                setSpan(
+                    StyleSpan(android.graphics.Typeface.ITALIC),
+                    0,
+                    quotingMessage.length,
+                    Spannable.SPAN_INCLUSIVE_INCLUSIVE
+                )
+                setSpan(
+                    StyleSpan(android.graphics.Typeface.BOLD),
+                    0,
+                    quotingMessage.length,
+                    Spannable.SPAN_INCLUSIVE_INCLUSIVE
+                )
+            }
+            binding.tvContent.text = spannable
+        } else {
+            val text = "${chatItem.message.text} ($statusString)"
+            binding.tvContent.text = text
+        }
     }
 
     override fun onCreateContextMenu(
@@ -61,6 +87,7 @@ class OutgoingViewHolder private constructor(
     ) {
         val inflater = MenuInflater(itemView.context)
         inflater.inflate(R.menu.outgoing_message, menu)
+        inflater.inflate(R.menu.quote, menu)
         menu?.forEach {
             it.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
@@ -72,6 +99,11 @@ class OutgoingViewHolder private constructor(
                     R.id.action_edit -> {
                         Log.d(TAG, "onCreateContextMenu: edit")
                         onEditListener.invoke(chatItem)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.action_quote -> {
+                        Log.d(TAG, "onCreateContextMenu: quote")
+                        onQuoteListener.invoke(chatItem)
                         return@setOnMenuItemClickListener true
                     }
                 }

@@ -15,6 +15,8 @@ sealed class Action {
     object ClientDetachPhoto: Action()
     data class ClientAttachFile(val fileUri: Uri) : Action()
     object ClientDetachFile: Action()
+    data class ClientQuoteMessage(val message: Message): Action()
+    object ClientStopQuoting: Action()
 
     data class ServerMessageNew(val message: Message): Action()
     data class ServerMessageChange(val message: Message): Action()

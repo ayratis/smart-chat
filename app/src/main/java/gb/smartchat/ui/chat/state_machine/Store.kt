@@ -56,12 +56,21 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 //if sending new message
                 return if (state.currentText.isNotEmpty()) {
                     val clientId = System.currentTimeMillis().toString()
-                    val msg = createOutgoingMessage(clientId, state.currentText)
+                    val msg = Message(
+                        id = -1,
+                        chatId = 1,
+                        senderId = senderId,
+                        clientId = clientId,
+                        text = state.currentText,
+                        type = null,
+                        readedIds = emptyList(),
+                        quotedMessageId= state.quotingMessage?.id
+                    )
                     sideEffectListener.invoke(SideEffect.SendMessage(msg))
                     val list =
                         state.chatItems + ChatItem.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
                     sideEffectListener(SideEffect.SetInputText(""))
-                    state.copy(chatItems = list, currentText = "")
+                    state.copy(chatItems = list, currentText = "", quotingMessage = null)
                 } else {
                     state
                 }
@@ -237,19 +246,13 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             is Action.ClientDetachFile -> {
                 return state.copy(attachedPhoto = null, attachedFile = null)
             }
+            is Action.ClientQuoteMessage -> {
+                return state.copy(quotingMessage = action.message)
+            }
+            is Action.ClientStopQuoting -> {
+                return state.copy(quotingMessage = null)
+            }
         }
-    }
-
-    private fun createOutgoingMessage(clientId: String, text: String): Message {
-        return Message(
-            id = -1,
-            chatId = 1,
-            senderId = senderId,
-            clientId = clientId,
-            text = text,
-            type = null,
-            readedIds = emptyList()
-        )
     }
 
     private inline fun <T> MutableList<T>.replaceOrAddToEnd(item: T, predicate: (T) -> Boolean) {

@@ -11,7 +11,8 @@ import gb.smartchat.ui.chat.view_holder.SystemViewHolder
 class ChatAdapter(
     private val onItemBindListener: (ChatItem) -> Unit,
     private val onDeleteListener: (ChatItem) -> Unit,
-    private val onEditListener: (ChatItem) -> Unit
+    private val onEditListener: (ChatItem) -> Unit,
+    private val onQuoteListener: (ChatItem) -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()) {
 
     override fun getItemViewType(position: Int): Int {
@@ -25,9 +26,9 @@ class ChatAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             R.layout.item_chat_msg_outgoing ->
-                OutgoingViewHolder.create(parent, onDeleteListener, onEditListener)
+                OutgoingViewHolder.create(parent, onDeleteListener, onEditListener, onQuoteListener)
             R.layout.item_chat_msg_system -> SystemViewHolder.create(parent)
-            R.layout.item_chat_msg_incoming -> IncomingViewHolder.create(parent)
+            R.layout.item_chat_msg_incoming -> IncomingViewHolder.create(parent, onQuoteListener)
             else -> throw RuntimeException("unknown view type")
         }
     }

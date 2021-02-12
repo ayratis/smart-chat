@@ -20,9 +20,9 @@ data class Message(
     @SerializedName("type")
     val type: Type?,
     @SerializedName("readed_ids")
-    val readedIds: List<String>?
-//    @SerializedName("quoted_message_id")
-//    val quotedMessageId: Long,
+    val readedIds: List<String>?,
+    @SerializedName("quoted_message_id")
+    val quotedMessageId: Long?,
 //    @SerializedName("mentions")
 //    val mentions: List<Any>?,
 //    @SerializedName("file_ids")
@@ -43,6 +43,7 @@ data class Message(
                 senderId = senderId,
                 chatId = chatId,
                 clientId = clientId,
+                quotedMessageId = quotedMessageId
             )
         } else null
     }

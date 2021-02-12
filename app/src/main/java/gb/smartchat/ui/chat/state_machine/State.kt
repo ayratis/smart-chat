@@ -10,5 +10,6 @@ data class State(
     val editingMessage: Message? = null,
     val currentText: String = "",
     val attachedPhoto: Uri? = null,
-    val attachedFile: Uri? = null
+    val attachedFile: Uri? = null,
+    val quotingMessage: Message? = null
 )

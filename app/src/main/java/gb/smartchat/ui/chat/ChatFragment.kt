@@ -79,6 +79,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
             },
             onEditListener = { chatItem ->
                 viewModel.onEditMessageRequest(chatItem.message)
+            },
+            onQuoteListener = { chatItem ->
+                viewModel.onQuoteMessage(chatItem.message)
             }
         )
     }
@@ -114,6 +117,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         }
         binding.btnAttachPhotoClose.setOnClickListener {
             viewModel.detachPhoto()
+        }
+        binding.btnQuotedClose.setOnClickListener {
+            viewModel.stopQuoting()
         }
     }
 
@@ -188,6 +194,14 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                                 }
                             }
                     }
+                },
+            viewModel.viewState
+                .map { listOf(it.quotingMessage) }
+                .distinctUntilChanged()
+                .subscribe {
+                    val quotingMessage = it.first()
+                    binding.viewQuotedMessage.visible(quotingMessage != null)
+                    binding.tvQuotedMessage.text = quotingMessage?.text
                 },
             viewModel.setInputText
                 .subscribe { singleEvent ->

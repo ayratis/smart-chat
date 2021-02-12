@@ -49,13 +49,62 @@
         android:layout_above="@id/spacer_bottom">
 
         <LinearLayout
+            android:id="@+id/view_quoted_message"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="#0d99cc00"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="16dp"
+                android:layout_marginLeft="16dp"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                tools:text="Quot: " />
+
+            <TextView
+                android:id="@+id/tv_quoted_message"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="8dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                tools:text="Привет! Как дела?" />
+
+            <ImageButton
+                android:id="@+id/btn_quoted_close"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/actionBarItemBackground"
+                android:contentDescription="@string/cancel"
+                android:gravity="center"
+                android:src="@drawable/ic_baseline_close_24" />
+
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/view_editing_message"
             android:layout_width="match_parent"
             android:layout_height="40dp"
+            android:layout_below="@id/view_quoted_message"
             android:background="#0d000000"
             android:orientation="horizontal"
             android:visibility="gone"
             tools:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="16dp"
+                android:layout_marginLeft="16dp"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                tools:text="Edit: " />
 
             <TextView
                 android:id="@+id/tv_editing_message"
@@ -63,7 +112,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:paddingHorizontal="16dp"
+                android:layout_marginHorizontal="8dp"
                 android:paddingVertical="8dp"
                 tools:text="Привет! Как дела?" />
 
@@ -110,8 +159,8 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/view_attach_photo"
             android:orientation="horizontal"
-            android:paddingVertical="8dp"
             android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
             android:visibility="gone"
             tools:visibility="visible">
 
