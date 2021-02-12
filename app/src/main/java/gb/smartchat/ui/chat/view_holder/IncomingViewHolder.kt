@@ -32,6 +32,10 @@ class IncomingViewHolder private constructor(
     private val binding by viewBinding(ItemChatMsgIncomingBinding::bind)
     private lateinit var chatItem: ChatItem
 
+    init {
+        binding.root.setOnCreateContextMenuListener(this)
+    }
+
     fun bind(chatItem: ChatItem.Incoming) {
         this.chatItem = chatItem
         val quotingMessage = chatItem.message.quotedMessageId?.toString()
