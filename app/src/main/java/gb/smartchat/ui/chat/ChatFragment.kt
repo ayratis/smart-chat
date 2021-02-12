@@ -120,6 +120,10 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
     override fun onStart() {
         super.onStart()
         viewModel.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
         compositeDisposable.addAll(
             viewModel.viewState
                 .map { it.chatItems }
@@ -178,7 +182,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                             .query(uri, null, null, null, null)
                             ?.use { cursor ->
                                 if (cursor.moveToFirst()) {
-                                    val fileName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                                    val fileName =
+                                        cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
                                     binding.tvAttachFileName.text = fileName
                                 }
                             }
