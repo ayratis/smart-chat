@@ -24,6 +24,7 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
 class ChatViewModel(
@@ -43,9 +44,12 @@ class ChatViewModel(
     val viewState = BehaviorRelay.create<State>()
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
 
+    private var pageDisposable: Disposable? = null
+
     init {
         setupStateMachine()
         observeSocketEvents()
+        store.accept(Action.InternalRefreshHistory)
     }
 
     fun onStart() {
@@ -99,25 +103,15 @@ class ChatViewModel(
 
     fun onChatItemBind(chatItem: ChatItem) {
         Log.d(TAG, "onChatItemBind: $chatItem")
-        if (chatItem is ChatItem.Incoming/*|| chatItem is ChatItem.System*/) {
-            if (chatItem.message.readedIds?.contains(userId) != true) {
-                val requestBody = MessageReadRequest(
-                    messageIds = listOf(chatItem.message.id),
-                    chatId = chatId,
-                    senderId = userId,
-                )
-                val d = socketApi.readMessage(requestBody)
-                    .subscribe(
-                        { /*do nothing*/
-                            Log.d(TAG, "onChatItemBind: success")
-                        },
-                        { e ->
-                            Log.e(TAG, "messageRead", e)
-                        }
-                    )
-                compositeDisposable.add(d)
-            }
+        if (chatItem !is ChatItem.Outgoing &&
+            chatItem.message.readedIds?.contains(userId) != true
+        ) {
+            readMessage(chatItem.message)
         }
+    }
+
+    fun loadNextPage() {
+        store.accept(Action.InternalLoadMoreMessages)
     }
 
     private fun setupStateMachine() {
@@ -128,6 +122,10 @@ class ChatViewModel(
                 is SideEffect.EditMessage -> editMessage(sideEffect.message, sideEffect.newText)
                 is SideEffect.DeleteMessage -> deleteMessage(sideEffect.message)
                 is SideEffect.SetInputText -> setInputText.accept(SingleEvent(sideEffect.text))
+                is SideEffect.LoadPage -> fetchPage(sideEffect.fromMessageId)
+                is SideEffect.PageErrorEvent -> {
+                    Log.e(TAG, "PageErrorEvent", sideEffect.throwable)
+                }
             }
         }
         compositeDisposable.add(
@@ -255,6 +253,48 @@ class ChatViewModel(
         compositeDisposable.addAll(d)
     }
 
+    private fun readMessage(message: Message) {
+        val requestBody = MessageReadRequest(
+            messageIds = listOf(message.id),
+            chatId = chatId,
+            senderId = userId,
+        )
+        val d = socketApi.readMessage(requestBody)
+            .subscribe(
+                { /*do nothing*/
+                    Log.d(TAG, "onChatItemBind: success")
+                },
+                { e ->
+                    Log.e(TAG, "messageRead", e)
+                }
+            )
+        compositeDisposable.add(d)
+    }
+
+    private fun fetchPage(fromMessageId: Long?) {
+        pageDisposable?.dispose()
+        val d = httpApi
+            .getChatMessageHistory(
+                chatId = chatId,
+                pageSize = 20,
+                messageId = fromMessageId,
+                lookForward = false
+            )
+            .map { it.result }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { data ->
+                    store.accept(Action.ServerMessageNewPage(data))
+                },
+                { e ->
+                    store.accept(Action.ServerMessagePageError(e))
+                }
+            )
+        pageDisposable = d
+        compositeDisposable.add(d)
+    }
+
     override fun onCleared() {
         compositeDisposable.dispose()
         typingTimersDisposableMap.values.forEach { d ->
@@ -269,7 +309,7 @@ class ChatViewModel(
         private val userId: String,
         private val chatId: Long,
         private val url: String
-    ): ViewModelProvider.Factory {
+    ) : ViewModelProvider.Factory {
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {

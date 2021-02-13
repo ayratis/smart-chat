@@ -12,8 +12,11 @@ class ChatAdapter(
     private val onItemBindListener: (ChatItem) -> Unit,
     private val onDeleteListener: (ChatItem) -> Unit,
     private val onEditListener: (ChatItem) -> Unit,
-    private val onQuoteListener: (ChatItem) -> Unit
+    private val onQuoteListener: (ChatItem) -> Unit,
+    private val nextPageCallback: () -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()) {
+
+    var fullData = false
 
     override fun getItemViewType(position: Int): Int {
         return when(getItem(position)) {
@@ -41,6 +44,7 @@ class ChatAdapter(
             is ChatItem.System -> (holder as SystemViewHolder).bind(item)
         }
         onItemBindListener.invoke(item)
+        if (!fullData && position < 10) nextPageCallback.invoke()
     }
 
 }

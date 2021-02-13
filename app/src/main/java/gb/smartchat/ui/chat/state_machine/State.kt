@@ -11,5 +11,10 @@ data class State(
     val currentText: String = "",
     val attachedPhoto: Uri? = null,
     val attachedFile: Uri? = null,
-    val quotingMessage: Message? = null
+    val quotingMessage: Message? = null,
+    val pagingState: PagingState = PagingState.EMPTY
 )
+
+enum class PagingState {
+    EMPTY, EMPTY_PROGRESS, EMPTY_ERROR, DATA, REFRESH, NEW_PAGE_PROGRESS, FULL_DATA
+}

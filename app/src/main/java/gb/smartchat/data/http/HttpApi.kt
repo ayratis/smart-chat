@@ -1,6 +1,7 @@
 package gb.smartchat.data.http
 
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.response.BaseResponse
 import io.reactivex.Single
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -11,7 +12,7 @@ interface HttpApi {
     fun getChatMessageHistory(
         @Query("chat_id") chatId: Long,
         @Query("page_size") pageSize: Int,
-        @Query("message_id") messageId: Long,
+        @Query("message_id") messageId: Long?,
         @Query("look_forward") lookForward: Boolean
-    ): Single<List<Message>>
+    ): Single<BaseResponse<List<Message>>>
 }

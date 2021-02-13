@@ -64,7 +64,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                         text = state.currentText,
                         type = null,
                         readedIds = emptyList(),
-                        quotedMessageId= state.quotingMessage?.id
+                        quotedMessageId = state.quotingMessage?.id
                     )
                     sideEffectListener.invoke(SideEffect.SendMessage(msg))
                     val list =
@@ -96,18 +96,27 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 return state.copy(chatItems = list)
             }
             is Action.ServerMessageNew -> {
-                return if (action.message.senderId == senderId) {
-                    val newItem = ChatItem.Outgoing(action.message, ChatItem.OutgoingStatus.SENT_2)
-                    val list = state.chatItems.toMutableList().apply {
-                        replaceOrAddToEnd(newItem) { chatItem ->
-                            chatItem is ChatItem.Outgoing &&
-                                    chatItem.message.clientId == action.message.clientId
+                when {
+                    action.message.senderId == senderId -> {
+                        val newItem =
+                            ChatItem.Outgoing(action.message, ChatItem.OutgoingStatus.SENT_2)
+                        val list = state.chatItems.toMutableList().apply {
+                            replaceOrAddToEnd(newItem) { chatItem ->
+                                chatItem is ChatItem.Outgoing &&
+                                        chatItem.message.clientId == action.message.clientId
+                            }
                         }
+                        return state.copy(chatItems = list)
                     }
-                    state.copy(chatItems = list)
-                } else {
-                    val list = state.chatItems + ChatItem.Incoming(action.message)
-                    state.copy(chatItems = list)
+                    (action.message.type == Message.Type.SYSTEM ||
+                            action.message.type == Message.Type.DELETED) -> {
+                        val list = state.chatItems + ChatItem.System(action.message)
+                        return state.copy(chatItems = list)
+                    }
+                    else -> {
+                        val list = state.chatItems + ChatItem.Incoming(action.message)
+                        return state.copy(chatItems = list)
+                    }
                 }
             }
             is Action.ServerMessageChange -> {
@@ -154,9 +163,14 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 for (i in chatItems.lastIndex downTo 0) {
                     val chatItem = chatItems[i]
                     if (messageIds.contains(chatItem.message.id)) {
-                        val newItem = (chatItem as? ChatItem.Outgoing)
-                            ?.copy(status = ChatItem.OutgoingStatus.READ)
-                            ?: chatItem
+                        val newReadIds = (chatItem.message.readedIds ?: emptyList()) + senderId
+                        val newMessage = chatItem.message.copy(readedIds = newReadIds)
+                        val newItem = when(chatItem) {
+                            is ChatItem.Incoming -> ChatItem.Incoming(newMessage)
+                            is ChatItem.System -> ChatItem.System(newMessage)
+                            is ChatItem.Outgoing ->
+                                ChatItem.Outgoing(newMessage, ChatItem.OutgoingStatus.READ)
+                        }
                         chatItems[i] = newItem
                         messageIds.remove(chatItem.message.id)
                         if (messageIds.isEmpty()) {
@@ -251,6 +265,76 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             }
             is Action.ClientStopQuoting -> {
                 return state.copy(quotingMessage = null)
+            }
+            is Action.InternalRefreshHistory -> {
+                sideEffectListener(SideEffect.LoadPage(null))
+                val newPagingState = when (state.pagingState) {
+                    PagingState.EMPTY -> PagingState.EMPTY_PROGRESS
+                    PagingState.EMPTY_ERROR -> PagingState.EMPTY_PROGRESS
+                    PagingState.DATA -> PagingState.REFRESH
+                    PagingState.NEW_PAGE_PROGRESS -> PagingState.REFRESH
+                    PagingState.FULL_DATA -> PagingState.REFRESH
+                    else -> state.pagingState
+                }
+                return state.copy(pagingState = newPagingState)
+            }
+            is Action.InternalLoadMoreMessages -> {
+                return when (state.pagingState) {
+                    PagingState.DATA -> {
+                        val fromMessageId = state.chatItems.firstOrNull()?.message?.id
+                        sideEffectListener(SideEffect.LoadPage(fromMessageId))
+                        val newPagingState = PagingState.NEW_PAGE_PROGRESS
+                        state.copy(pagingState = newPagingState)
+
+                    }
+                    else -> state
+                }
+            }
+            is Action.ServerMessageNewPage -> {
+                when (state.pagingState) {
+                    PagingState.EMPTY_PROGRESS,
+                    PagingState.REFRESH,
+                    PagingState.NEW_PAGE_PROGRESS -> {
+                        if (action.items.isEmpty()) {
+                            return state.copy(pagingState = PagingState.FULL_DATA)
+                        } else {
+                            val list = state.chatItems.toMutableList()
+                            val newItems = action.items.map { message ->
+                                when {
+                                    message.senderId == senderId -> {
+                                        val status =
+                                            if (message.readedIds.isNullOrEmpty()) ChatItem.OutgoingStatus.SENT_2
+                                            else ChatItem.OutgoingStatus.READ
+                                        ChatItem.Outgoing(message, status)
+                                    }
+                                    (message.type == Message.Type.SYSTEM ||
+                                            message.type == Message.Type.DELETED) -> {
+                                        ChatItem.System(message)
+                                    }
+                                    else -> {
+                                        ChatItem.Incoming(message)
+                                    }
+                                }
+                            }
+                            list.addAll(0, newItems)
+                            return state.copy(chatItems = list, pagingState = PagingState.DATA)
+                        }
+
+                    }
+                    else -> return state
+                }
+            }
+            is Action.ServerMessagePageError -> {
+                return when (state.pagingState) {
+                    PagingState.EMPTY_PROGRESS -> {
+                        state.copy(pagingState = PagingState.EMPTY_ERROR)
+                    }
+                    PagingState.REFRESH, PagingState.NEW_PAGE_PROGRESS -> {
+                        sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
+                        state.copy(pagingState = PagingState.DATA)
+                    }
+                    else -> state
+                }
             }
         }
     }

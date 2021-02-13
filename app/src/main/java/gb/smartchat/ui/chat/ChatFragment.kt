@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -21,6 +22,7 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
+import gb.smartchat.ui.chat.state_machine.PagingState
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.visible
@@ -79,6 +81,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
             },
             onQuoteListener = { chatItem ->
                 viewModel.onQuoteMessage(chatItem.message)
+            },
+            nextPageCallback = {
+                viewModel.loadNextPage()
             }
         )
     }
@@ -88,10 +93,10 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         binding.spacerTop.addSystemTopPadding()
         binding.spacerBottom.addSystemBottomPadding()
         binding.rvChat.apply {
-            setHasFixedSize(true)
             layoutManager = LinearLayoutManager(context).apply {
                 stackFromEnd = true
             }
+            itemAnimator = null
             adapter = chatAdapter
         }
         binding.etInput.doAfterTextChanged {
@@ -135,9 +140,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                     val pos = (binding.rvChat.layoutManager as LinearLayoutManager)
                         .findLastVisibleItemPosition()
                     chatAdapter.submitList(chatItems) {
-                        if (chatItems.lastOrNull() is ChatItem.Outgoing ||
-                            pos == chatItems.lastIndex - 1
-                        ) {
+                        if (pos == chatItems.lastIndex - 1) {
                             binding.rvChat.scrollToPosition(chatItems.lastIndex)
                         }
                     }
@@ -199,6 +202,15 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                     val quotingMessage = it.first()
                     binding.viewQuotedMessage.visible(quotingMessage != null)
                     binding.tvQuotedMessage.text = quotingMessage?.text
+                },
+            viewModel.viewState
+                .map { it.pagingState }
+                .distinctUntilChanged()
+                .subscribe { pagingState ->
+                    Log.d(TAG, "pagingState: $pagingState")
+                    if (pagingState == PagingState.FULL_DATA) {
+                        chatAdapter.fullData = true
+                    }
                 },
             viewModel.setInputText
                 .subscribe { singleEvent ->
