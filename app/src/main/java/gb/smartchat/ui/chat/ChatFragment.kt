@@ -21,8 +21,6 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
-import gb.smartchat.di.InstanceFactory
-import gb.smartchat.ui.chat.state_machine.Store
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.visible
@@ -59,10 +57,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
     }
     private val viewModel by viewModels<ChatViewModel> {
         ChatViewModel.Factory(
-            store = Store(argUserId),
             userId = argUserId,
             chatId = argChatId,
-            socketApi = InstanceFactory.createSocketApi(argUserId)
+            url = "http://91.201.41.157:8000/"
         )
     }
     private val binding by viewBinding(FragmentChatBinding::bind)

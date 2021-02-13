@@ -4,9 +4,13 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.google.gson.Gson
 import com.jakewharton.rxrelay2.BehaviorRelay
+import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
+import gb.smartchat.data.socket.SocketApiImpl
 import gb.smartchat.data.socket.SocketEvent
+import gb.smartchat.di.InstanceFactory
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.TypingRequest
@@ -26,7 +30,8 @@ class ChatViewModel(
     private val store: Store,
     private val userId: String,
     private val chatId: Long,
-    private val socketApi: SocketApi
+    private val socketApi: SocketApi,
+    private val httpApi: HttpApi,
 ) : ViewModel() {
 
     companion object {
@@ -261,14 +266,20 @@ class ChatViewModel(
     }
 
     class Factory(
-        private val store: Store,
         private val userId: String,
         private val chatId: Long,
-        private val socketApi: SocketApi
+        private val url: String
     ): ViewModelProvider.Factory {
+
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return ChatViewModel(store, userId, chatId, socketApi) as T
+            val gson = Gson()
+            val okHttpClient = InstanceFactory.createHttpClient(userId)
+            val socket = InstanceFactory.createSocket(url, okHttpClient)
+            val socketApi = SocketApiImpl(socket, gson)
+            val httpApi = InstanceFactory.createHttpApi(okHttpClient, gson, url)
+            val store = Store(userId)
+            return ChatViewModel(store, userId, chatId, socketApi, httpApi) as T
         }
     }
 }
