@@ -1,11 +1,14 @@
 package gb.smartchat.ui.chat
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.gson.Gson
 import com.jakewharton.rxrelay2.BehaviorRelay
+import gb.smartchat.data.connection.ConnectionManager
+import gb.smartchat.data.connection.ConnectionManagerImpl
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketApiImpl
@@ -33,6 +36,7 @@ class ChatViewModel(
     private val chatId: Long,
     private val socketApi: SocketApi,
     private val httpApi: HttpApi,
+    connectionManager: ConnectionManager
 ) : ViewModel() {
 
     companion object {
@@ -50,6 +54,13 @@ class ChatViewModel(
         setupStateMachine()
         observeSocketEvents()
         store.accept(Action.InternalRefreshHistory)
+        compositeDisposable.add(
+            connectionManager.isOnline
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { isOnline ->
+                    store.accept(Action.InternalConnectionAvailable(isOnline))
+                }
+        )
     }
 
     fun onStart() {
@@ -308,7 +319,8 @@ class ChatViewModel(
     class Factory(
         private val userId: String,
         private val chatId: Long,
-        private val url: String
+        private val url: String,
+        private val context: Context
     ) : ViewModelProvider.Factory {
 
         @Suppress("UNCHECKED_CAST")
@@ -319,7 +331,8 @@ class ChatViewModel(
             val socketApi = SocketApiImpl(socket, gson)
             val httpApi = InstanceFactory.createHttpApi(okHttpClient, gson, url)
             val store = Store(userId)
-            return ChatViewModel(store, userId, chatId, socketApi, httpApi) as T
+            val connectionManager = ConnectionManagerImpl(context)
+            return ChatViewModel(store, userId, chatId, socketApi, httpApi, connectionManager) as T
         }
     }
 }

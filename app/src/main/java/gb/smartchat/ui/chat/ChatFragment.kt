@@ -61,7 +61,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         ChatViewModel.Factory(
             userId = argUserId,
             chatId = argChatId,
-            url = "http://91.201.41.157:8000/"
+            url = "http://91.201.41.157:8000/",
+            context = requireContext()
         )
     }
     private val binding by viewBinding(FragmentChatBinding::bind)
@@ -212,13 +213,21 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                         chatAdapter.fullData = true
                     }
                 },
+            viewModel.viewState
+                .map { it.isOnline }
+                .distinctUntilChanged()
+                .subscribe { isOnline ->
+                    binding.toolbar.title = "Online: $isOnline"
+                },
+
+
             viewModel.setInputText
                 .subscribe { singleEvent ->
                     singleEvent.getContentIfNotHandled()?.let {
                         binding.etInput.setText(it)
                         binding.etInput.setSelection(it.length)
                     }
-                }
+                },
         )
     }
 

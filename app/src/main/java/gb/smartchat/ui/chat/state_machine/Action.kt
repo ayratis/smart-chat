@@ -36,4 +36,5 @@ sealed class Action {
     object InternalRefreshHistory: Action()
     object InternalLoadMoreMessages: Action()
     data class InternalTypingTimeIsUp(val senderId: String) : Action()
+    data class InternalConnectionAvailable(val isOnline: Boolean) : Action()
 }

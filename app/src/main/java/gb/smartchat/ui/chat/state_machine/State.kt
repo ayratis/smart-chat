@@ -12,7 +12,8 @@ data class State(
     val attachedPhoto: Uri? = null,
     val attachedFile: Uri? = null,
     val quotingMessage: Message? = null,
-    val pagingState: PagingState = PagingState.EMPTY
+    val pagingState: PagingState = PagingState.EMPTY,
+    val isOnline: Boolean = true
 )
 
 enum class PagingState {

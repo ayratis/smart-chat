@@ -165,7 +165,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     if (messageIds.contains(chatItem.message.id)) {
                         val newReadIds = (chatItem.message.readedIds ?: emptyList()) + senderId
                         val newMessage = chatItem.message.copy(readedIds = newReadIds)
-                        val newItem = when(chatItem) {
+                        val newItem = when (chatItem) {
                             is ChatItem.Incoming -> ChatItem.Incoming(newMessage)
                             is ChatItem.System -> ChatItem.System(newMessage)
                             is ChatItem.Outgoing ->
@@ -291,35 +291,47 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 }
             }
             is Action.ServerMessageNewPage -> {
-                when (state.pagingState) {
-                    PagingState.EMPTY_PROGRESS,
-                    PagingState.REFRESH,
-                    PagingState.NEW_PAGE_PROGRESS -> {
-                        if (action.items.isEmpty()) {
-                            return state.copy(pagingState = PagingState.FULL_DATA)
-                        } else {
-                            val list = state.chatItems.toMutableList()
-                            val newItems = action.items.map { message ->
-                                when {
-                                    message.senderId == senderId -> {
-                                        val status =
-                                            if (message.readedIds.isNullOrEmpty()) ChatItem.OutgoingStatus.SENT_2
-                                            else ChatItem.OutgoingStatus.READ
-                                        ChatItem.Outgoing(message, status)
-                                    }
-                                    (message.type == Message.Type.SYSTEM ||
-                                            message.type == Message.Type.DELETED) -> {
-                                        ChatItem.System(message)
-                                    }
-                                    else -> {
-                                        ChatItem.Incoming(message)
-                                    }
-                                }
-                            }
-                            list.addAll(0, newItems)
-                            return state.copy(chatItems = list, pagingState = PagingState.DATA)
+                val newItems = action.items.map { message ->
+                    when {
+                        message.senderId == senderId -> {
+                            val status =
+                                if (message.readedIds.isNullOrEmpty()) ChatItem.OutgoingStatus.SENT_2
+                                else ChatItem.OutgoingStatus.READ
+                            ChatItem.Outgoing(message, status)
                         }
-
+                        (message.type == Message.Type.SYSTEM ||
+                                message.type == Message.Type.DELETED) -> {
+                            ChatItem.System(message)
+                        }
+                        else -> {
+                            ChatItem.Incoming(message)
+                        }
+                    }
+                }
+                when (state.pagingState) {
+                    PagingState.EMPTY_PROGRESS -> {
+                        return if (newItems.isEmpty()) {
+                            state.copy(chatItems = emptyList(), pagingState = PagingState.EMPTY)
+                        } else {
+                            state.copy(chatItems = newItems, pagingState = PagingState.DATA)
+                        }
+                    }
+                    PagingState.REFRESH -> {
+                        return if (newItems.isEmpty()) {
+                            state.copy(chatItems = emptyList(), pagingState = PagingState.EMPTY)
+                        } else {
+                            state.copy(chatItems = newItems, pagingState = PagingState.DATA)
+                        }
+                    }
+                    PagingState.NEW_PAGE_PROGRESS -> {
+                        return if (action.items.isEmpty()) {
+                            state.copy(pagingState = PagingState.FULL_DATA)
+                        } else {
+                            state.copy(
+                                chatItems = newItems + state.chatItems,
+                                pagingState = PagingState.DATA
+                            )
+                        }
                     }
                     else -> return state
                 }
@@ -335,6 +347,13 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     }
                     else -> state
                 }
+            }
+            is Action.InternalConnectionAvailable -> {
+                if (action.isOnline) {
+                    sideEffectListener(SideEffect.LoadPage(null))
+                    return state.copy(isOnline = action.isOnline, pagingState = PagingState.REFRESH)
+                }
+                return state.copy(isOnline = action.isOnline)
             }
         }
     }
