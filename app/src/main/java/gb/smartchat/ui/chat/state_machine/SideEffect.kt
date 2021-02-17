@@ -10,4 +10,7 @@ sealed class SideEffect {
     data class SetInputText(val text: String) : SideEffect()
     data class LoadPage(val fromMessageId: Long?) : SideEffect()
     data class PageErrorEvent(val throwable: Throwable) : SideEffect()
+
+    data class LoadSpecificPart(val fromMessageId: Long): SideEffect()
+    data class InstaScrollTo(val position: Int): SideEffect()
 }

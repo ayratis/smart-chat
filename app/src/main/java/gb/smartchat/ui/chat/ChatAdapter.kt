@@ -1,5 +1,6 @@
 package gb.smartchat.ui.chat
 
+import android.util.Log
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -13,13 +14,14 @@ class ChatAdapter(
     private val onDeleteListener: (ChatItem) -> Unit,
     private val onEditListener: (ChatItem) -> Unit,
     private val onQuoteListener: (ChatItem) -> Unit,
-    private val nextPageCallback: () -> Unit
+    private val nextPageCallback: () -> Unit,
+    private val onMessageClickListener: (ChatItem) -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()) {
 
     var fullData = false
 
     override fun getItemViewType(position: Int): Int {
-        return when(getItem(position)) {
+        return when (getItem(position)) {
             is ChatItem.Outgoing -> R.layout.item_chat_msg_outgoing
             is ChatItem.Incoming -> R.layout.item_chat_msg_incoming
             is ChatItem.System -> R.layout.item_chat_msg_system
@@ -29,9 +31,23 @@ class ChatAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             R.layout.item_chat_msg_outgoing ->
-                OutgoingViewHolder.create(parent, onDeleteListener, onEditListener, onQuoteListener)
-            R.layout.item_chat_msg_system -> SystemViewHolder.create(parent)
-            R.layout.item_chat_msg_incoming -> IncomingViewHolder.create(parent, onQuoteListener)
+                OutgoingViewHolder.create(
+                    parent,
+                    onDeleteListener,
+                    onEditListener,
+                    onQuoteListener,
+                    onMessageClickListener
+                )
+            R.layout.item_chat_msg_system ->
+                SystemViewHolder.create(
+                    parent,
+                    onMessageClickListener
+                )
+            R.layout.item_chat_msg_incoming -> IncomingViewHolder.create(
+                parent,
+                onQuoteListener,
+                onMessageClickListener
+            )
             else -> throw RuntimeException("unknown view type")
         }
     }
@@ -44,6 +60,7 @@ class ChatAdapter(
             is ChatItem.System -> (holder as SystemViewHolder).bind(item)
         }
         onItemBindListener.invoke(item)
+        Log.d("ChatFragment", "onBindViewHolder: $position")
         if (!fullData && position < 10) nextPageCallback.invoke()
     }
 

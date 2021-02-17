@@ -5,6 +5,7 @@ import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
+import gb.smartchat.utils.SingleEvent
 import io.reactivex.ObservableSource
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -70,7 +71,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     val list =
                         state.chatItems + ChatItem.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
                     sideEffectListener(SideEffect.SetInputText(""))
-                    state.copy(chatItems = list, currentText = "", quotingMessage = null)
+                    state.copy(chatItems = list, currentText = "", quotingMessage = null, withScrollTo = SingleEvent(list.lastIndex + 12))
                 } else {
                     state
                 }
@@ -355,6 +356,31 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 }
                 return state.copy(isOnline = action.isOnline)
             }
+
+            is Action.ClientScrollToMessage -> {
+                val position = state.chatItems.indexOfLast { it.message.id == action.messageId }
+                return if (position != -1) {
+                    sideEffectListener(SideEffect.InstaScrollTo(position))
+                    state
+                } else {
+                    sideEffectListener(SideEffect.LoadSpecificPart(action.messageId))
+                    state
+                }
+            }
+
+            is Action.ServerSpecificPartSuccess -> {
+                val newItems = action.items.mapIntoChatItems()
+                val targetPosition = newItems.indexOfFirst { it.message.id == action.targetMessageId }
+                return state.copy(
+                    chatItems = newItems,
+                    pagingState = PagingState.DATA,
+                    withScrollTo = SingleEvent(targetPosition)
+                )
+            }
+            is Action.ServerSpecificPartError -> {
+                sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
+                return state
+            }
         }
     }
 
@@ -374,6 +400,26 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             list[position] = item
         }
         return list
+    }
+
+    private fun List<Message>.mapIntoChatItems(): List<ChatItem> {
+        return map { message ->
+            when {
+                message.senderId == senderId -> {
+                    val status =
+                        if (message.readedIds.isNullOrEmpty()) ChatItem.OutgoingStatus.SENT_2
+                        else ChatItem.OutgoingStatus.READ
+                    ChatItem.Outgoing(message, status)
+                }
+                (message.type == Message.Type.SYSTEM ||
+                        message.type == Message.Type.DELETED) -> {
+                    ChatItem.System(message)
+                }
+                else -> {
+                    ChatItem.Incoming(message)
+                }
+            }
+        }
     }
 
     override fun accept(t: Action) {

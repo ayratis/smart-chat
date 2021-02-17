@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.gson.Gson
 import com.jakewharton.rxrelay2.BehaviorRelay
+import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.data.connection.ConnectionManager
 import gb.smartchat.data.connection.ConnectionManagerImpl
 import gb.smartchat.data.http.HttpApi
@@ -47,6 +48,7 @@ class ChatViewModel(
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
     val viewState = BehaviorRelay.create<State>()
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
+    val instaScrollTo = PublishRelay.create<Int>()
 
     private var pageDisposable: Disposable? = null
 
@@ -137,6 +139,8 @@ class ChatViewModel(
                 is SideEffect.PageErrorEvent -> {
                     Log.e(TAG, "PageErrorEvent", sideEffect.throwable)
                 }
+                is SideEffect.LoadSpecificPart -> loadSpecificPart(sideEffect.fromMessageId)
+                is SideEffect.InstaScrollTo -> instaScrollTo.accept(sideEffect.position)
             }
         }
         compositeDisposable.add(
@@ -287,7 +291,7 @@ class ChatViewModel(
         val d = httpApi
             .getChatMessageHistory(
                 chatId = chatId,
-                pageSize = 20,
+                pageSize = 40,
                 messageId = fromMessageId,
                 lookForward = false
             )
@@ -314,6 +318,31 @@ class ChatViewModel(
             }
         }
         socketApi.disconnect()
+    }
+
+    fun onMessageClick(chatItem: ChatItem) {
+        if (chatItem.message.quotedMessageId != null) {
+            store.accept(Action.ClientScrollToMessage(chatItem.message.quotedMessageId))
+        }
+//        store.accept(Action.ClientScrollToMessage(285)) //debug
+    }
+
+    private fun loadSpecificPart(fromMessageId: Long) {
+        val d = httpApi
+            .getChatMessageHistory(
+                chatId = chatId,
+                pageSize = 40,
+                messageId = fromMessageId + 20,
+                lookForward = false
+            )
+            .map { it.result }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { store.accept(Action.ServerSpecificPartSuccess(it, fromMessageId)) },
+                { store.accept(Action.ServerSpecificPartError(it)) }
+            )
+        compositeDisposable.add(d)
     }
 
     class Factory(

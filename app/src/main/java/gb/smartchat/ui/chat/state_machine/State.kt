@@ -3,6 +3,7 @@ package gb.smartchat.ui.chat.state_machine
 import android.net.Uri
 import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
+import gb.smartchat.utils.SingleEvent
 
 data class State(
     val chatItems: List<ChatItem> = emptyList(),
@@ -13,7 +14,9 @@ data class State(
     val attachedFile: Uri? = null,
     val quotingMessage: Message? = null,
     val pagingState: PagingState = PagingState.EMPTY,
-    val isOnline: Boolean = true
+    val isOnline: Boolean = true,
+    val chatEnabled: Boolean = true,
+    val withScrollTo: SingleEvent<Int>? = null,
 )
 
 enum class PagingState {

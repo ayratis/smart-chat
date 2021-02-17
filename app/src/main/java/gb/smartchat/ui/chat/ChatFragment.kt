@@ -23,11 +23,13 @@ import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.ui.chat.state_machine.PagingState
+import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.visible
 import io.reactivex.disposables.CompositeDisposable
 import java.io.File
+import kotlin.math.min
 
 
 class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment.OnOptionSelected {
@@ -85,6 +87,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
             },
             nextPageCallback = {
                 viewModel.loadNextPage()
+            },
+            onMessageClickListener = { chatItem ->
+                viewModel.onMessageClick(chatItem)
             }
         )
     }
@@ -131,6 +136,11 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         viewModel.onStart()
     }
 
+    private var scrollToPosition: SingleEvent<Int>? = null
+    private val defaultOffset: Int by lazy {
+        resources.displayMetrics.heightPixels / 3
+    }
+
     override fun onResume() {
         super.onResume()
         compositeDisposable.addAll(
@@ -138,11 +148,24 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                 .map { it.chatItems }
                 .distinctUntilChanged()
                 .subscribe { chatItems ->
-                    val pos = (binding.rvChat.layoutManager as LinearLayoutManager)
-                        .findLastVisibleItemPosition()
+                    Log.d(TAG, "chatItemsSize: ${chatItems.size}")
+                    Log.d(TAG, "chatItem10: ${chatItems.getOrNull(19)}")
+                    Log.d(
+                        TAG,
+                        "need to scroll to position: ${scrollToPosition?.getContentIfNotHandled()}"
+                    )
                     chatAdapter.submitList(chatItems) {
-                        if (pos == chatItems.lastIndex - 1) {
-                            binding.rvChat.scrollToPosition(chatItems.lastIndex)
+                        scrollToPosition?.getContentIfNotHandled()?.let { pos ->
+                            Log.d(TAG, "scrolling to position: $pos")
+                            val targetPosition = min(pos, chatItems.lastIndex)
+                            if (targetPosition != chatItems.lastIndex) {
+                                (binding.rvChat.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+                                    targetPosition,
+                                    defaultOffset
+                                )
+                            } else {
+                                binding.rvChat.scrollToPosition(targetPosition)
+                            }
                         }
                     }
                 },
@@ -218,6 +241,19 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                 .distinctUntilChanged()
                 .subscribe { isOnline ->
                     binding.toolbar.title = "Online: $isOnline"
+                },
+            viewModel.viewState
+                .map { listOf(it.withScrollTo) }
+                .distinctUntilChanged()
+                .subscribe { event ->
+                    scrollToPosition = event.first()
+                },
+            viewModel.instaScrollTo
+                .subscribe {
+                    (binding.rvChat.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+                        it,
+                        defaultOffset
+                    )
                 },
 
 

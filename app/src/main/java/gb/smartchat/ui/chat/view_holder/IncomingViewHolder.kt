@@ -19,14 +19,23 @@ import gb.smartchat.utils.inflate
 
 class IncomingViewHolder private constructor(
     itemView: View,
-    private val onQuoteListener: (ChatItem) -> Unit
+    private val onQuoteListener: (ChatItem) -> Unit,
+    private val onMessageClickListener: (ChatItem) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
         private const val TAG = "IncomingViewHolder"
 
-        fun create(parent: ViewGroup, onQuoteListener: (ChatItem) -> Unit) =
-            IncomingViewHolder(parent.inflate(R.layout.item_chat_msg_incoming), onQuoteListener)
+        fun create(
+            parent: ViewGroup,
+            onQuoteListener: (ChatItem) -> Unit,
+            onMessageClickListener: (ChatItem) -> Unit
+        ) =
+            IncomingViewHolder(
+                parent.inflate(R.layout.item_chat_msg_incoming),
+                onQuoteListener,
+                onMessageClickListener
+            )
     }
 
     private val binding by viewBinding(ItemChatMsgIncomingBinding::bind)
@@ -34,6 +43,9 @@ class IncomingViewHolder private constructor(
 
     init {
         binding.root.setOnCreateContextMenuListener(this)
+        binding.tvContent.setOnClickListener {
+            onMessageClickListener.invoke(chatItem)
+        }
     }
 
     fun bind(chatItem: ChatItem.Incoming) {

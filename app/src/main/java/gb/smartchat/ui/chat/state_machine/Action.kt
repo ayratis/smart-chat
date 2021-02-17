@@ -37,4 +37,8 @@ sealed class Action {
     object InternalLoadMoreMessages: Action()
     data class InternalTypingTimeIsUp(val senderId: String) : Action()
     data class InternalConnectionAvailable(val isOnline: Boolean) : Action()
+
+    data class ClientScrollToMessage(val messageId: Long) : Action()
+    data class ServerSpecificPartSuccess(val items: List<Message>, val targetMessageId: Long) : Action()
+    data class ServerSpecificPartError(val throwable: Throwable) : Action()
 }

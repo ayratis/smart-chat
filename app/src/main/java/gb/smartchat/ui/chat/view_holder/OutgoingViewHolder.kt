@@ -17,7 +17,8 @@ class OutgoingViewHolder private constructor(
     itemView: View,
     private val onDeleteListener: (ChatItem) -> Unit,
     private val onEditListener: (ChatItem) -> Unit,
-    private val onQuoteListener: (ChatItem) -> Unit
+    private val onQuoteListener: (ChatItem) -> Unit,
+    private val onMessageClickListener: (ChatItem) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -27,13 +28,15 @@ class OutgoingViewHolder private constructor(
             parent: ViewGroup,
             onDeleteListener: (ChatItem) -> Unit,
             onEditListener: (ChatItem) -> Unit,
-            onQuoteListener: (ChatItem) -> Unit
+            onQuoteListener: (ChatItem) -> Unit,
+            onMessageClickListener: (ChatItem) -> Unit
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
                 onDeleteListener,
                 onEditListener,
-                onQuoteListener
+                onQuoteListener,
+                onMessageClickListener
             )
     }
 
@@ -42,6 +45,9 @@ class OutgoingViewHolder private constructor(
 
     init {
         binding.root.setOnCreateContextMenuListener(this)
+        binding.tvContent.setOnClickListener {
+            onMessageClickListener.invoke(chatItem)
+        }
     }
 
     fun bind(chatItem: ChatItem.Outgoing) {
