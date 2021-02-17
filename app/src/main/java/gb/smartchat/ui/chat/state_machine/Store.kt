@@ -80,7 +80,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                         chatItems = list,
                         currentText = "",
                         quotingMessage = null,
-                        withScrollTo = SingleEvent(list.lastIndex + 12)
+                        withScrollTo = SingleEvent(list.lastIndex)
                     )
                 } else {
                     state
