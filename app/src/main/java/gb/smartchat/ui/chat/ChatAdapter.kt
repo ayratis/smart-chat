@@ -14,11 +14,13 @@ class ChatAdapter(
     private val onDeleteListener: (ChatItem) -> Unit,
     private val onEditListener: (ChatItem) -> Unit,
     private val onQuoteListener: (ChatItem) -> Unit,
-    private val nextPageCallback: () -> Unit,
+    private val nextPageUpCallback: () -> Unit,
+    private val nextPageDownCallback: () -> Unit,
     private val onMessageClickListener: (ChatItem) -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()) {
 
-    var fullData = false
+    var fullDataUp = false
+    var fullDataDown = false
 
     override fun getItemViewType(position: Int): Int {
         return when (getItem(position)) {
@@ -61,7 +63,8 @@ class ChatAdapter(
         }
         onItemBindListener.invoke(item)
         Log.d("ChatFragment", "onBindViewHolder: $position")
-        if (!fullData && position < 10) nextPageCallback.invoke()
+        if (!fullDataUp && position < 10) nextPageUpCallback.invoke()
+        if (!fullDataDown && position >= itemCount - 10) nextPageDownCallback.invoke()
     }
 
 }

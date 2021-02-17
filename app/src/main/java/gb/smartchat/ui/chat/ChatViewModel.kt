@@ -50,8 +50,6 @@ class ChatViewModel(
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
     val instaScrollTo = PublishRelay.create<Int>()
 
-    private var pageDisposable: Disposable? = null
-
     init {
         setupStateMachine()
         observeSocketEvents()
@@ -123,8 +121,11 @@ class ChatViewModel(
         }
     }
 
-    fun loadNextPage() {
-        store.accept(Action.InternalLoadMoreMessages)
+    fun loadNextPage(forward: Boolean) {
+        store.accept(
+            if (forward) Action.InternalLoadMoreDownMessages
+            else Action.InternalLoadMoreUpMessages
+        )
     }
 
     private fun setupStateMachine() {
@@ -135,7 +136,7 @@ class ChatViewModel(
                 is SideEffect.EditMessage -> editMessage(sideEffect.message, sideEffect.newText)
                 is SideEffect.DeleteMessage -> deleteMessage(sideEffect.message)
                 is SideEffect.SetInputText -> setInputText.accept(SingleEvent(sideEffect.text))
-                is SideEffect.LoadPage -> fetchPage(sideEffect.fromMessageId)
+                is SideEffect.LoadPage -> fetchPage(sideEffect.fromMessageId, sideEffect.forward)
                 is SideEffect.PageErrorEvent -> {
                     Log.e(TAG, "PageErrorEvent", sideEffect.throwable)
                 }
@@ -286,27 +287,25 @@ class ChatViewModel(
         compositeDisposable.add(d)
     }
 
-    private fun fetchPage(fromMessageId: Long?) {
-        pageDisposable?.dispose()
+    private fun fetchPage(fromMessageId: Long?, forward: Boolean) {
         val d = httpApi
             .getChatMessageHistory(
                 chatId = chatId,
                 pageSize = 40,
                 messageId = fromMessageId,
-                lookForward = false
+                lookForward = forward
             )
             .map { it.result }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { data ->
-                    store.accept(Action.ServerMessageNewPage(data))
+                    store.accept(Action.ServerMessageNewPage(data, fromMessageId))
                 },
                 { e ->
-                    store.accept(Action.ServerMessagePageError(e))
+                    store.accept(Action.ServerMessagePageError(e, fromMessageId))
                 }
             )
-        pageDisposable = d
         compositeDisposable.add(d)
     }
 
@@ -331,7 +330,7 @@ class ChatViewModel(
         val d = httpApi
             .getChatMessageHistory(
                 chatId = chatId,
-                pageSize = 40,
+                pageSize = 20,
                 messageId = fromMessageId + 20,
                 lookForward = false
             )

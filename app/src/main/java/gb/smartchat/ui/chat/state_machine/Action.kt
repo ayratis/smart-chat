@@ -30,11 +30,13 @@ sealed class Action {
     data class ServerMessageDeleteSuccess(val message: Message) : Action()
     data class ServerMessageDeleteError(val message: Message) : Action()
 
-    data class ServerMessageNewPage(val items: List<Message>) : Action()
-    data class ServerMessagePageError(val throwable: Throwable) : Action()
+    data class ServerMessageNewPage(val items: List<Message>, val fromMessageId: Long?) : Action()
+    data class ServerMessagePageError(val throwable: Throwable, val fromMessageId: Long?) : Action()
 
     object InternalRefreshHistory: Action()
-    object InternalLoadMoreMessages: Action()
+    object InternalLoadMoreUpMessages: Action()
+    object InternalLoadMoreDownMessages: Action()
+
     data class InternalTypingTimeIsUp(val senderId: String) : Action()
     data class InternalConnectionAvailable(val isOnline: Boolean) : Action()
 

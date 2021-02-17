@@ -50,6 +50,8 @@ class IncomingViewHolder private constructor(
 
     fun bind(chatItem: ChatItem.Incoming) {
         this.chatItem = chatItem
+//        binding.tvContent.text = chatItem.message.id.toString() //debug
+//        return
         val quotingMessage = chatItem.message.quotedMessageId?.toString()
         if (quotingMessage != null) {
             val text = "$quotingMessage\n\n${chatItem.message.text}"

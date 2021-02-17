@@ -17,8 +17,17 @@ data class State(
     val isOnline: Boolean = true,
     val chatEnabled: Boolean = true,
     val withScrollTo: SingleEvent<Int>? = null,
+    val fullDataUp: Boolean = false,
+    val fullDataDown: Boolean = false
 )
 
 enum class PagingState {
-    EMPTY, EMPTY_PROGRESS, EMPTY_ERROR, DATA, REFRESH, NEW_PAGE_PROGRESS, FULL_DATA
+    EMPTY,
+    EMPTY_PROGRESS,
+    EMPTY_ERROR,
+    DATA,
+    REFRESH,
+    NEW_PAGE_UP_PROGRESS,
+    NEW_PAGE_DOWN_PROGRESS,
+    NEW_PAGE_UP_DOWN_PROGRESS,
 }

@@ -52,6 +52,8 @@ class OutgoingViewHolder private constructor(
 
     fun bind(chatItem: ChatItem.Outgoing) {
         this.chatItem = chatItem
+//        binding.tvContent.text = chatItem.message.id.toString() //debug
+//        return
         val statusString = when (chatItem.status) {
             ChatItem.OutgoingStatus.SENDING -> "`"
             ChatItem.OutgoingStatus.SENT -> "+"

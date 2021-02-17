@@ -22,7 +22,6 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
-import gb.smartchat.ui.chat.state_machine.PagingState
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
@@ -85,8 +84,11 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
             onQuoteListener = { chatItem ->
                 viewModel.onQuoteMessage(chatItem.message)
             },
-            nextPageCallback = {
-                viewModel.loadNextPage()
+            nextPageUpCallback = {
+                viewModel.loadNextPage(false)
+            },
+            nextPageDownCallback = {
+                viewModel.loadNextPage(true)
             },
             onMessageClickListener = { chatItem ->
                 viewModel.onMessageClick(chatItem)
@@ -231,10 +233,16 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                 .map { it.pagingState }
                 .distinctUntilChanged()
                 .subscribe { pagingState ->
-                    Log.d(TAG, "pagingState: $pagingState")
-                    if (pagingState == PagingState.FULL_DATA) {
-                        chatAdapter.fullData = true
-                    }
+                    val fullDataUp = viewModel.viewState.value!!.fullDataUp
+                    val fullDataDown = viewModel.viewState.value!!.fullDataDown
+                    Log.d(TAG, "pagingState: $pagingState, fullDataUp: $fullDataUp, fullDataDown: $fullDataDown")
+                },
+            viewModel.viewState
+                .map { it.fullDataUp to it.fullDataDown }
+                .distinctUntilChanged()
+                .subscribe { (fullDataUp, fullDataDown) ->
+                    chatAdapter.fullDataUp = fullDataUp
+                    chatAdapter.fullDataDown = fullDataDown
                 },
             viewModel.viewState
                 .map { it.isOnline }
@@ -255,7 +263,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                         defaultOffset
                     )
                 },
-
 
             viewModel.setInputText
                 .subscribe { singleEvent ->
