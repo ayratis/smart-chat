@@ -31,7 +31,10 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             }
 //            Log.d(TAG, "action: $action")
             val newState = reduce(viewState.value!!, action)
-            Log.d(TAG, "pagingState: ${newState.pagingState}, fullDataUp: ${newState.fullDataUp}, fullDataDown: ${newState.fullDataDown}") //paging debug
+            Log.d(
+                TAG,
+                "pagingState: ${newState.pagingState}, fullDataUp: ${newState.fullDataUp}, fullDataDown: ${newState.fullDataDown}"
+            ) //paging debug
 //            Log.d(TAG, "state: $newState")
             viewState.accept(newState)
         }
@@ -309,7 +312,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             is Action.ServerMessageNewPage -> {
                 val newItems = action.items.mapIntoChatItems()
                 when (state.pagingState) {
-                    PagingState.EMPTY_PROGRESS, PagingState.REFRESH -> {
+                    PagingState.EMPTY_PROGRESS -> {
                         return if (newItems.isEmpty()) {
                             state.copy(chatItems = emptyList(), pagingState = PagingState.EMPTY)
                         } else {
@@ -378,7 +381,6 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     PagingState.EMPTY_PROGRESS -> {
                         state.copy(pagingState = PagingState.EMPTY_ERROR)
                     }
-                    PagingState.REFRESH,
                     PagingState.NEW_PAGE_UP_PROGRESS,
                     PagingState.NEW_PAGE_DOWN_PROGRESS -> {
                         sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
@@ -398,21 +400,17 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             }
             is Action.InternalConnected -> {
                 if (action.isOnline) {
-                    sideEffectListener(SideEffect.LoadPage(null, false))
-                    val newPagingState = when (state.pagingState) {
-                        PagingState.EMPTY -> PagingState.EMPTY_PROGRESS
-                        PagingState.EMPTY_ERROR -> PagingState.EMPTY_PROGRESS
-                        PagingState.DATA -> PagingState.REFRESH
-                        PagingState.NEW_PAGE_UP_PROGRESS -> PagingState.REFRESH
-                        PagingState.NEW_PAGE_DOWN_PROGRESS -> PagingState.REFRESH
-                        PagingState.NEW_PAGE_UP_DOWN_PROGRESS -> PagingState.REFRESH
-                        else -> state.pagingState
+                    return when (state.pagingState) {
+                        PagingState.EMPTY, PagingState.EMPTY_ERROR -> {
+                            sideEffectListener(SideEffect.LoadPage(null, false))
+                            state.copy(
+                                isOnline = true,
+                                pagingState = PagingState.EMPTY_PROGRESS,
+                                fullDataDown = false
+                            )
+                        }
+                        else -> state.copy(isOnline = true)
                     }
-                    return state.copy(
-                        isOnline = action.isOnline,
-                        pagingState = newPagingState,
-                        fullDataDown = false
-                    )
                 }
                 return state.copy(isOnline = action.isOnline)
             }
