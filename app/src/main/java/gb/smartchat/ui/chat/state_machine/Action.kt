@@ -42,4 +42,10 @@ sealed class Action {
     data class ClientScrollToMessage(val messageId: Long) : Action()
     data class ServerSpecificPartSuccess(val items: List<Message>, val targetMessageId: Long) : Action()
     data class ServerSpecificPartError(val throwable: Throwable) : Action()
+
+    data class ServerLoadNewMessagesSuccess(val items: List<Message>): Action()
+    data class ServerLoadNewMessagesError(val throwable: Throwable) : Action()
+
+    data class InternalAtBottom(val atBottom: Boolean): Action()
+    object ScrollToBottom: Action()
 }

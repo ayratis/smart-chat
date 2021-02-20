@@ -93,6 +93,7 @@ class ChatViewModel(
                 }
                 is SideEffect.LoadSpecificPart -> loadSpecificPart(sideEffect.fromMessageId)
                 is SideEffect.InstaScrollTo -> instaScrollTo.accept(sideEffect.position)
+                is SideEffect.LoadNewMessages -> loadNewMessages(sideEffect.fromMessageId)
             }
         }
         compositeDisposable.add(
@@ -284,6 +285,24 @@ class ChatViewModel(
         compositeDisposable.add(d)
     }
 
+    private fun loadNewMessages(fromMessageId: Long) {
+        val d = httpApi
+            .getChatMessageHistory(
+                chatId = chatId,
+                pageSize = 20,
+                messageId = fromMessageId,
+                lookForward = true
+            )
+            .map { it.result }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { store.accept(Action.ServerLoadNewMessagesSuccess(it)) },
+                { store.accept(Action.ServerLoadNewMessagesError(it)) }
+            )
+        compositeDisposable.add(d)
+    }
+
     fun onStart() {
         socketApi.connect()
     }
@@ -354,5 +373,13 @@ class ChatViewModel(
             store.accept(Action.ClientScrollToMessage(chatItem.message.quotedMessageId))
         }
 //        store.accept(Action.ClientScrollToMessage(285)) //debug
+    }
+
+    fun atBottomOfChat(atBottom: Boolean) {
+        store.accept(Action.InternalAtBottom(atBottom))
+    }
+
+    fun scrollToBottom() {
+        store.accept(Action.ScrollToBottom)
     }
 }

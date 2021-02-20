@@ -109,27 +109,44 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             }
             is Action.ServerMessageNew -> {
                 if (state.fullDataDown) {
-                    return when {
+                    val list = when {
                         action.message.senderId == senderId -> {
                             val newItem =
                                 ChatItem.Outgoing(action.message, ChatItem.OutgoingStatus.SENT_2)
-                            val list = state.chatItems.replaceLastWith(newItem) { chatItem ->
+                            state.chatItems.replaceLastWith(newItem) { chatItem ->
                                 chatItem.message.clientId == action.message.clientId
                             }
-                            state.copy(chatItems = list)
                         }
                         (action.message.type == Message.Type.SYSTEM ||
                                 action.message.type == Message.Type.DELETED) -> {
-                            val list = state.chatItems + ChatItem.System(action.message)
-                            state.copy(chatItems = list)
+                            state.chatItems + ChatItem.System(action.message)
                         }
                         else -> {
-                            val list = state.chatItems + ChatItem.Incoming(action.message)
-                            state.copy(chatItems = list)
+                            state.chatItems + ChatItem.Incoming(action.message)
                         }
                     }
+                    return if (state.atBottom) {
+                        state.copy(
+                            chatItems = list,
+                            lastMessageId = list.last().message.id,
+                            unreadMessageCount = 0,
+                            withScrollTo = SingleEvent(list.lastIndex)
+                        )
+                    } else {
+                        state.copy(
+                            chatItems = list,
+                            lastMessageId = list.last().message.id,
+                            unreadMessageCount = state.unreadMessageCount + 1
+                        )
+                    }
                 } else {
-                    return state
+                    val unreadMessageCount =
+                        if (state.unreadMessageCount == State.UNREAD_OVER_MAX_COUNT) {
+                            State.UNREAD_OVER_MAX_COUNT
+                        } else {
+                            state.unreadMessageCount + 1
+                        }
+                    return state.copy(unreadMessageCount = unreadMessageCount)
                 }
             }
             is Action.ServerMessageChange -> {
@@ -314,11 +331,16 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 when (state.pagingState) {
                     PagingState.EMPTY_PROGRESS -> {
                         return if (newItems.isEmpty()) {
-                            state.copy(chatItems = emptyList(), pagingState = PagingState.EMPTY)
+                            state.copy(
+                                chatItems = emptyList(),
+                                pagingState = PagingState.EMPTY,
+                                lastMessageId = null
+                            )
                         } else {
                             state.copy(
                                 chatItems = newItems,
                                 pagingState = PagingState.DATA,
+                                lastMessageId = newItems.last().message.id,
                                 fullDataDown = true,
                                 withScrollTo = SingleEvent(newItems.lastIndex)
                             )
@@ -409,7 +431,19 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                                 fullDataDown = false
                             )
                         }
-                        else -> state.copy(isOnline = true)
+                        else -> {
+                            if (state.lastMessageId != null) {
+                                sideEffectListener(SideEffect.LoadNewMessages(state.lastMessageId))
+                                state.copy(isOnline = true)
+                            } else {
+                                sideEffectListener(SideEffect.LoadPage(null, false))
+                                state.copy(
+                                    isOnline = true,
+                                    pagingState = PagingState.EMPTY_PROGRESS,
+                                    fullDataDown = false
+                                )
+                            }
+                        }
                     }
                 }
                 return state.copy(isOnline = action.isOnline)
@@ -439,6 +473,54 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             is Action.ServerSpecificPartError -> {
                 sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
                 return state
+            }
+            is Action.ServerLoadNewMessagesSuccess -> {
+                if (action.items.size < State.DEFAULT_PAGE_SIZE) {
+                    return if (state.fullDataDown) {
+                        val list = state.chatItems + action.items.mapIntoChatItems()
+                        if (state.atBottom) {
+                            state.copy(
+                                chatItems = list,
+                                withScrollTo = SingleEvent(list.lastIndex)
+                            )
+                        } else {
+                            state.copy(chatItems = list)
+                        }
+                    } else {
+                        state.copy(unreadMessageCount = action.items.size)
+                    }
+                } else {
+                    return if (state.fullDataDown) {
+                        val list = state.chatItems + action.items.mapIntoChatItems()
+                        state.copy(
+                            chatItems = list,
+                            fullDataDown = false,
+                            unreadMessageCount = State.UNREAD_OVER_MAX_COUNT
+                        )
+                    } else {
+                        state.copy(unreadMessageCount = State.UNREAD_OVER_MAX_COUNT)
+                    }
+                }
+            }
+            is Action.ServerLoadNewMessagesError -> {
+                sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
+                return state
+            }
+            is Action.InternalAtBottom -> {
+                return state.copy(atBottom = action.atBottom)
+            }
+            is Action.ScrollToBottom -> {
+                return if (state.fullDataDown) {
+                    sideEffectListener(SideEffect.InstaScrollTo(state.chatItems.lastIndex))
+                    state.copy(unreadMessageCount = 0)
+                } else {
+                    sideEffectListener(SideEffect.LoadPage(null, false))
+                    state.copy(
+                        pagingState = PagingState.EMPTY_PROGRESS,
+                        fullDataDown = false,
+                        unreadMessageCount = 0
+                    )
+                }
             }
         }
     }

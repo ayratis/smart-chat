@@ -35,6 +35,18 @@
         android:paddingVertical="8dp"
         tools:listitem="@layout/item_chat_msg_outgoing" />
 
+    <TextView
+        android:id="@+id/tv_unread_message_count"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@color/purple_200"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        android:layout_margin="16dp"
+        android:layout_above="@id/divider2"
+        tools:visibility="visible" />
+
     <View
         android:id="@+id/divider2"
         android:layout_width="match_parent"
@@ -110,9 +122,9 @@
                 android:id="@+id/tv_editing_message"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
+                android:layout_marginHorizontal="8dp"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:layout_marginHorizontal="8dp"
                 android:paddingVertical="8dp"
                 tools:text="Привет! Как дела?" />
 

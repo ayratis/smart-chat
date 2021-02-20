@@ -18,8 +18,16 @@ data class State(
     val chatEnabled: Boolean = true,
     val withScrollTo: SingleEvent<Int>? = null,
     val fullDataUp: Boolean = false,
-    val fullDataDown: Boolean = false
-)
+    val fullDataDown: Boolean = false,
+    val unreadMessageCount: Int = 0,
+    val lastMessageId: Long? = null,
+    val atBottom: Boolean = true
+) {
+    companion object {
+        const val UNREAD_OVER_MAX_COUNT = -1
+        const val DEFAULT_PAGE_SIZE = 20
+    }
+}
 
 enum class PagingState {
     EMPTY,

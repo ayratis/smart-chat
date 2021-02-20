@@ -18,10 +18,12 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
+import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
@@ -130,6 +132,20 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         binding.btnQuotedClose.setOnClickListener {
             viewModel.stopQuoting()
         }
+        binding.rvChat.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            private var atBottom: Boolean = true
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                val pos = (recyclerView.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                val isBottom = pos == chatAdapter.itemCount - 1
+                if (atBottom != isBottom) {
+                    atBottom = isBottom
+                    viewModel.atBottomOfChat(isBottom)
+                }
+            }
+        })
+        binding.tvUnreadMessageCount.setOnClickListener {
+            viewModel.scrollToBottom()
+        }
     }
 
     override fun onStart() {
@@ -234,7 +250,10 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                 .subscribe { pagingState ->
                     val fullDataUp = viewModel.viewState.value!!.fullDataUp
                     val fullDataDown = viewModel.viewState.value!!.fullDataDown
-                    Log.d(TAG, "pagingState: $pagingState, fullDataUp: $fullDataUp, fullDataDown: $fullDataDown")
+                    Log.d(
+                        TAG,
+                        "pagingState: $pagingState, fullDataUp: $fullDataUp, fullDataDown: $fullDataDown"
+                    )
                 },
             viewModel.viewState
                 .map { it.fullDataUp to it.fullDataDown }
@@ -254,6 +273,19 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                 .distinctUntilChanged()
                 .subscribe { event ->
                     scrollToPosition = event.first()
+                },
+            viewModel.viewState
+                .map { it.unreadMessageCount }
+                .distinctUntilChanged()
+                .subscribe { unreadMessageCount ->
+                    val text =
+                        if (unreadMessageCount == State.UNREAD_OVER_MAX_COUNT) {
+                            "${State.DEFAULT_PAGE_SIZE}+"
+                        } else {
+                            unreadMessageCount.toString()
+                        }
+                    binding.tvUnreadMessageCount.visible(unreadMessageCount != 0)
+                    binding.tvUnreadMessageCount.text = text
                 },
             viewModel.instaScrollTo
                 .subscribe {
