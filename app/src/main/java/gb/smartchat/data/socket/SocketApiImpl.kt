@@ -7,7 +7,6 @@ import gb.smartchat.BuildConfig
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.*
 import gb.smartchat.utils.emitSingle
-import gb.smartchat.utils.setSystemListeners
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.socket.client.Socket
@@ -25,10 +24,18 @@ class SocketApiImpl(
     private val socketEventsRelay = PublishRelay.create<SocketEvent>()
 
     init {
-        if (BuildConfig.DEBUG) {
-            socket.setSystemListeners {
-                log(it)
-            }
+//        if (BuildConfig.DEBUG) {
+//            socket.setSystemListeners {
+//                log(it)
+//            }
+//        }
+        socket.on(Socket.EVENT_CONNECT) {
+            Log.d(TAG, "connect")
+            socketEventsRelay.accept(SocketEvent.Connected)
+        }
+        socket.on(Socket.EVENT_DISCONNECT) {
+            Log.d(TAG, "disconnect")
+            socketEventsRelay.accept(SocketEvent.Disconnected)
         }
         ServerEvent.values().forEach {
             setServerEventListener(it)

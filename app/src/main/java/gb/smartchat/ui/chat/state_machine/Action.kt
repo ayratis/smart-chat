@@ -33,12 +33,11 @@ sealed class Action {
     data class ServerMessageNewPage(val items: List<Message>, val fromMessageId: Long?) : Action()
     data class ServerMessagePageError(val throwable: Throwable, val fromMessageId: Long?) : Action()
 
-    object InternalRefreshHistory: Action()
     object InternalLoadMoreUpMessages: Action()
     object InternalLoadMoreDownMessages: Action()
 
     data class InternalTypingTimeIsUp(val senderId: String) : Action()
-    data class InternalConnectionAvailable(val isOnline: Boolean) : Action()
+    data class InternalConnected(val isOnline: Boolean) : Action()
 
     data class ClientScrollToMessage(val messageId: Long) : Action()
     data class ServerSpecificPartSuccess(val items: List<Message>, val targetMessageId: Long) : Action()

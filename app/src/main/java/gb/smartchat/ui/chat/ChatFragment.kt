@@ -63,7 +63,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
             userId = argUserId,
             chatId = argChatId,
             url = "http://91.201.41.157:8000/",
-            context = requireContext()
         )
     }
     private val binding by viewBinding(FragmentChatBinding::bind)

@@ -14,7 +14,7 @@ data class State(
     val attachedFile: Uri? = null,
     val quotingMessage: Message? = null,
     val pagingState: PagingState = PagingState.EMPTY,
-    val isOnline: Boolean = true,
+    val isOnline: Boolean = false,
     val chatEnabled: Boolean = true,
     val withScrollTo: SingleEvent<Int>? = null,
     val fullDataUp: Boolean = false,

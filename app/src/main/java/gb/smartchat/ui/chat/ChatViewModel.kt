@@ -1,6 +1,5 @@
 package gb.smartchat.ui.chat
 
-import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -8,8 +7,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.gson.Gson
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
-import gb.smartchat.data.connection.ConnectionManager
-import gb.smartchat.data.connection.ConnectionManagerImpl
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketApiImpl
@@ -37,8 +34,25 @@ class ChatViewModel(
     private val chatId: Long,
     private val socketApi: SocketApi,
     private val httpApi: HttpApi,
-    connectionManager: ConnectionManager
 ) : ViewModel() {
+
+    class Factory(
+        private val userId: String,
+        private val chatId: Long,
+        private val url: String,
+    ) : ViewModelProvider.Factory {
+
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            val gson = Gson()
+            val okHttpClient = InstanceFactory.createHttpClient(userId)
+            val socket = InstanceFactory.createSocket(url, okHttpClient)
+            val socketApi = SocketApiImpl(socket, gson)
+            val httpApi = InstanceFactory.createHttpApi(okHttpClient, gson, url)
+            val store = Store(userId)
+            return ChatViewModel(store, userId, chatId, socketApi, httpApi, /*connectionManager*/) as T
+        }
+    }
 
     companion object {
         const val TAG = "ChatViewModel"
@@ -53,79 +67,16 @@ class ChatViewModel(
     init {
         setupStateMachine()
         observeSocketEvents()
-        store.accept(Action.InternalRefreshHistory)
-        compositeDisposable.add(
-            connectionManager.isOnline
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { isOnline ->
-                    store.accept(Action.InternalConnectionAvailable(isOnline))
-                }
-        )
     }
 
-    fun onStart() {
-        socketApi.connect()
-    }
-
-    fun onTextChanged(text: String) {
-        Log.d(TAG, "onTextChanged: $text")
-        store.accept(Action.ClientTextChanged(text))
-    }
-
-    fun onSendClick() {
-        store.accept(Action.ClientActionWithMessage)
-    }
-
-    fun onEditMessageRequest(message: Message) {
-        store.accept(Action.ClientEditMessageRequest(message))
-    }
-
-    fun onEditMessageReject() {
-        store.accept(Action.ClientEditMessageReject)
-    }
-
-    fun onDeleteMessage(message: Message) {
-        store.accept(Action.ClientDeleteMessage(message))
-    }
-
-    fun attachPhoto(photoUri: Uri) {
-        store.accept(Action.ClientAttachPhoto(photoUri))
-    }
-
-    fun detachPhoto() {
-        store.accept(Action.ClientDetachPhoto)
-    }
-
-    fun attachFile(fileUri: Uri) {
-        store.accept(Action.ClientAttachFile(fileUri))
-    }
-
-    fun detachFile() {
-        store.accept(Action.ClientDetachFile)
-    }
-
-    fun onQuoteMessage(message: Message) {
-        store.accept(Action.ClientQuoteMessage(message))
-    }
-
-    fun stopQuoting() {
-        store.accept(Action.ClientStopQuoting)
-    }
-
-    fun onChatItemBind(chatItem: ChatItem) {
-        Log.d(TAG, "onChatItemBind: $chatItem")
-        if (chatItem !is ChatItem.Outgoing &&
-            chatItem.message.readedIds?.contains(userId) != true
-        ) {
-            readMessage(chatItem.message)
+    override fun onCleared() {
+        compositeDisposable.dispose()
+        typingTimersDisposableMap.values.forEach { d ->
+            if (!d.isDisposed) {
+                d.dispose()
+            }
         }
-    }
-
-    fun loadNextPage(forward: Boolean) {
-        store.accept(
-            if (forward) Action.InternalLoadMoreDownMessages
-            else Action.InternalLoadMoreUpMessages
-        )
+        socketApi.disconnect()
     }
 
     private fun setupStateMachine() {
@@ -148,7 +99,6 @@ class ChatViewModel(
             Observable.wrap(store)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { state ->
-                    Log.d(TAG, "viewState: $state")
                     viewState.accept(state)
                 }
         )
@@ -170,6 +120,12 @@ class ChatViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { event ->
                 when (event) {
+                    is SocketEvent.Connected -> {
+                        store.accept(Action.InternalConnected(true))
+                    }
+                    is SocketEvent.Disconnected -> {
+                        store.accept(Action.InternalConnected(false))
+                    }
                     is SocketEvent.MessageNew -> {
                         store.accept(Action.ServerMessageNew(event.message))
                     }
@@ -288,11 +244,12 @@ class ChatViewModel(
     }
 
     private fun fetchPage(fromMessageId: Long?, forward: Boolean) {
+        val messageId = if (fromMessageId == -1L) null else fromMessageId
         val d = httpApi
             .getChatMessageHistory(
                 chatId = chatId,
-                pageSize = 40,
-                messageId = fromMessageId,
+                pageSize = 20,
+                messageId = messageId,
                 lookForward = forward
             )
             .map { it.result }
@@ -300,30 +257,13 @@ class ChatViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { data ->
-                    store.accept(Action.ServerMessageNewPage(data, fromMessageId))
+                    store.accept(Action.ServerMessageNewPage(data, messageId))
                 },
                 { e ->
-                    store.accept(Action.ServerMessagePageError(e, fromMessageId))
+                    store.accept(Action.ServerMessagePageError(e, messageId))
                 }
             )
         compositeDisposable.add(d)
-    }
-
-    override fun onCleared() {
-        compositeDisposable.dispose()
-        typingTimersDisposableMap.values.forEach { d ->
-            if (!d.isDisposed) {
-                d.dispose()
-            }
-        }
-        socketApi.disconnect()
-    }
-
-    fun onMessageClick(chatItem: ChatItem) {
-        if (chatItem.message.quotedMessageId != null) {
-            store.accept(Action.ClientScrollToMessage(chatItem.message.quotedMessageId))
-        }
-//        store.accept(Action.ClientScrollToMessage(285)) //debug
     }
 
     private fun loadSpecificPart(fromMessageId: Long) {
@@ -331,7 +271,7 @@ class ChatViewModel(
             .getChatMessageHistory(
                 chatId = chatId,
                 pageSize = 20,
-                messageId = fromMessageId + 20,
+                messageId = fromMessageId + 10,
                 lookForward = false
             )
             .map { it.result }
@@ -344,23 +284,75 @@ class ChatViewModel(
         compositeDisposable.add(d)
     }
 
-    class Factory(
-        private val userId: String,
-        private val chatId: Long,
-        private val url: String,
-        private val context: Context
-    ) : ViewModelProvider.Factory {
+    fun onStart() {
+        socketApi.connect()
+    }
 
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            val gson = Gson()
-            val okHttpClient = InstanceFactory.createHttpClient(userId)
-            val socket = InstanceFactory.createSocket(url, okHttpClient)
-            val socketApi = SocketApiImpl(socket, gson)
-            val httpApi = InstanceFactory.createHttpApi(okHttpClient, gson, url)
-            val store = Store(userId)
-            val connectionManager = ConnectionManagerImpl(context)
-            return ChatViewModel(store, userId, chatId, socketApi, httpApi, connectionManager) as T
+    fun onTextChanged(text: String) {
+        Log.d(TAG, "onTextChanged: $text")
+        store.accept(Action.ClientTextChanged(text))
+    }
+
+    fun onSendClick() {
+        store.accept(Action.ClientActionWithMessage)
+    }
+
+    fun onEditMessageRequest(message: Message) {
+        store.accept(Action.ClientEditMessageRequest(message))
+    }
+
+    fun onEditMessageReject() {
+        store.accept(Action.ClientEditMessageReject)
+    }
+
+    fun onDeleteMessage(message: Message) {
+        store.accept(Action.ClientDeleteMessage(message))
+    }
+
+    fun attachPhoto(photoUri: Uri) {
+        store.accept(Action.ClientAttachPhoto(photoUri))
+    }
+
+    fun detachPhoto() {
+        store.accept(Action.ClientDetachPhoto)
+    }
+
+    fun attachFile(fileUri: Uri) {
+        store.accept(Action.ClientAttachFile(fileUri))
+    }
+
+    fun detachFile() {
+        store.accept(Action.ClientDetachFile)
+    }
+
+    fun onQuoteMessage(message: Message) {
+        store.accept(Action.ClientQuoteMessage(message))
+    }
+
+    fun stopQuoting() {
+        store.accept(Action.ClientStopQuoting)
+    }
+
+    fun onChatItemBind(chatItem: ChatItem) {
+        Log.d(TAG, "onChatItemBind: $chatItem")
+        if (chatItem !is ChatItem.Outgoing &&
+            chatItem.message.readedIds?.contains(userId) != true
+        ) {
+            readMessage(chatItem.message)
         }
+    }
+
+    fun loadNextPage(forward: Boolean) {
+        store.accept(
+            if (forward) Action.InternalLoadMoreDownMessages
+            else Action.InternalLoadMoreUpMessages
+        )
+    }
+
+    fun onMessageClick(chatItem: ChatItem) {
+        if (chatItem.message.quotedMessageId != null) {
+            store.accept(Action.ClientScrollToMessage(chatItem.message.quotedMessageId))
+        }
+//        store.accept(Action.ClientScrollToMessage(285)) //debug
     }
 }
