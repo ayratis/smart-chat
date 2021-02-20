@@ -25,7 +25,7 @@ data class State(
 ) {
     companion object {
         const val UNREAD_OVER_MAX_COUNT = -1
-        const val DEFAULT_PAGE_SIZE = 20
+        const val DEFAULT_PAGE_SIZE = 30
     }
 }
 

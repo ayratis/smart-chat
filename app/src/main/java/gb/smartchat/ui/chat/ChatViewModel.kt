@@ -249,7 +249,7 @@ class ChatViewModel(
         val d = httpApi
             .getChatMessageHistory(
                 chatId = chatId,
-                pageSize = 20,
+                pageSize = State.DEFAULT_PAGE_SIZE,
                 messageId = messageId,
                 lookForward = forward
             )
@@ -271,8 +271,8 @@ class ChatViewModel(
         val d = httpApi
             .getChatMessageHistory(
                 chatId = chatId,
-                pageSize = 20,
-                messageId = fromMessageId + 10,
+                pageSize = State.DEFAULT_PAGE_SIZE,
+                messageId = fromMessageId + (State.DEFAULT_PAGE_SIZE / 2),
                 lookForward = false
             )
             .map { it.result }
@@ -289,7 +289,7 @@ class ChatViewModel(
         val d = httpApi
             .getChatMessageHistory(
                 chatId = chatId,
-                pageSize = 20,
+                pageSize = State.DEFAULT_PAGE_SIZE,
                 messageId = fromMessageId,
                 lookForward = true
             )
@@ -381,5 +381,9 @@ class ChatViewModel(
 
     fun scrollToBottom() {
         store.accept(Action.ScrollToBottom)
+    }
+
+    fun emptyRetry() {
+        store.accept(Action.EmptyRetry)
     }
 }

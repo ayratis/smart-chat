@@ -48,4 +48,5 @@ sealed class Action {
 
     data class InternalAtBottom(val atBottom: Boolean): Action()
     object ScrollToBottom: Action()
+    object EmptyRetry: Action()
 }

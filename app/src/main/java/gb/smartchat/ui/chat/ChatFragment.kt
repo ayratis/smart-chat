@@ -23,7 +23,9 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
+import gb.smartchat.ui.chat.state_machine.PagingState
 import gb.smartchat.ui.chat.state_machine.State
+import gb.smartchat.ui.custom.ProgressDialog
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
@@ -37,6 +39,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
 
     companion object {
         private const val TAG = "ChatFragment"
+        private const val PROGRESS_TAG = "progress_tag"
         private const val ARG_USER_ID = "arg_user_id"
         private const val ARG_CHAT_ID = "arg_chat_id"
 
@@ -45,6 +48,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         private const val REQUEST_CODE_PHOTO = 1
         private const val REQUEST_CODE_GALLERY = 2
         private const val REQUEST_CODE_FILE = 3
+
 
         fun create(userId: String, chatId: Long) = ChatFragment().apply {
             arguments = Bundle().apply {
@@ -145,6 +149,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         })
         binding.tvUnreadMessageCount.setOnClickListener {
             viewModel.scrollToBottom()
+        }
+        binding.btnEmptyRetry.setOnClickListener {
+            viewModel.emptyRetry()
         }
     }
 
@@ -248,12 +255,20 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                 .map { it.pagingState }
                 .distinctUntilChanged()
                 .subscribe { pagingState ->
-                    val fullDataUp = viewModel.viewState.value!!.fullDataUp
-                    val fullDataDown = viewModel.viewState.value!!.fullDataDown
-                    Log.d(
-                        TAG,
-                        "pagingState: $pagingState, fullDataUp: $fullDataUp, fullDataDown: $fullDataDown"
-                    )
+                    when(pagingState) {
+                        PagingState.EMPTY_ERROR -> {
+                            binding.viewEmptyError.visible(true)
+                            showProgressDialog(false)
+                        }
+                        PagingState.EMPTY_PROGRESS -> {
+                            binding.viewEmptyError.visible(false)
+                            showProgressDialog(true)
+                        }
+                        else -> {
+                            showProgressDialog(false)
+                            binding.viewEmptyError.visible(false)
+                        }
+                    }
                 },
             viewModel.viewState
                 .map { it.fullDataUp to it.fullDataDown }
@@ -393,5 +408,18 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
             return true
         }
         return false
+    }
+
+    private fun showProgressDialog(progress: Boolean) {
+        if (!isAdded) return
+
+        val fragment = childFragmentManager.findFragmentByTag(PROGRESS_TAG)
+        if (fragment != null && !progress) {
+            (fragment as ProgressDialog).dismissAllowingStateLoss()
+            childFragmentManager.executePendingTransactions()
+        } else if (fragment == null && progress) {
+            ProgressDialog().show(childFragmentManager, PROGRESS_TAG)
+            childFragmentManager.executePendingTransactions()
+        }
     }
 }

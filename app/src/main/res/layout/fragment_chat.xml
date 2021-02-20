@@ -39,12 +39,12 @@
         android:id="@+id/tv_unread_message_count"
         android:layout_width="40dp"
         android:layout_height="40dp"
+        android:layout_above="@id/divider2"
+        android:layout_margin="16dp"
         android:background="@color/purple_200"
         android:gravity="center"
         android:textColor="@color/white"
         android:visibility="gone"
-        android:layout_margin="16dp"
-        android:layout_above="@id/divider2"
         tools:visibility="visible" />
 
     <View
@@ -266,6 +266,35 @@
             android:src="@drawable/ic_baseline_send_24" />
 
     </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/view_empty_error"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/spacer_bottom"
+        android:layout_below="@id/toolbar"
+        android:background="@color/white"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="CONNECTION ERROR" />
+
+        <Button
+            android:visibility="gone"
+            android:id="@+id/btn_empty_retry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:text="retry" />
+
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/spacer_bottom"

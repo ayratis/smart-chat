@@ -516,11 +516,19 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 } else {
                     sideEffectListener(SideEffect.LoadPage(null, false))
                     state.copy(
+                        chatItems = emptyList(),
                         pagingState = PagingState.EMPTY_PROGRESS,
                         fullDataDown = false,
                         unreadMessageCount = 0
                     )
                 }
+            }
+            is Action.EmptyRetry -> {
+                sideEffectListener(SideEffect.LoadPage(null, false))
+                return state.copy(
+                    pagingState = PagingState.EMPTY_PROGRESS,
+                    fullDataDown = false
+                )
             }
         }
     }
