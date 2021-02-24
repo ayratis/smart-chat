@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import gb.smartchat.R
+import gb.smartchat.di.Component
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.utils.configureSystemBars
 

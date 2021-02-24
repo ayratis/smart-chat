@@ -1,4 +1,4 @@
-package gb.smartchat.ui
+package gb.smartchat.di
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -17,7 +17,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URI
 import java.util.*
 
-//uses as di component (singletone for library)
+//uses as di component (singletone for library created by activity)
 class Component(val userId: String, private val baseUrl: String) : ViewModel() {
 
     class Factory(
