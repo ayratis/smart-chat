@@ -1,24 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingHorizontal="8dp"
+    android:paddingHorizontal="16dp"
     android:paddingVertical="4dp">
 
-    <gb.smartchat.ui.custom.WrapWidthTextView
-        android:id="@+id/tv_content"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
         android:layout_gravity="end"
         android:background="@drawable/bg_msg_outgoing"
-        android:gravity="end"
-        android:paddingHorizontal="16dp"
+        android:minWidth="80dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="12dp"
         android:paddingVertical="8dp"
-        android:textColor="@color/black"
-        android:textSize="16sp"
-        tools:text="1" />
+        tools:ignore="UselessParent">
 
-</RelativeLayout>
+        <LinearLayout
+            android:id="@+id/view_quoted_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="4dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <View
+                android:layout_width="2dp"
+                android:layout_height="match_parent"
+                android:background="@color/purple_heart"
+                android:duplicateParentState="true" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_quoted_person"
+                    style="@style/Caption1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:maxWidth="260dp"
+                    android:minWidth="50dp"
+                    android:textColor="@color/purple_heart"
+                    tools:text="Андрей" />
+
+                <TextView
+                    android:id="@+id/tv_quoted_message"
+                    style="@style/Body2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:maxWidth="260dp"
+                    android:minWidth="50dp"
+                    tools:text="Привет! Как дела?" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:maxWidth="266dp"
+            android:minWidth="56dp"
+            android:paddingVertical="8dp"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            tools:text="Ты считаешь, что это настолько важно?!" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:gravity="center_vertical"
+            tools:ignore="UseCompoundDrawables">
+
+            <ImageView
+                android:id="@+id/iv_status"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="4dp"
+                android:contentDescription="@string/outgoing_status"
+                android:src="@drawable/ic_one_check_12" />
+
+            <TextView
+                android:id="@+id/tv_time"
+                style="@style/Caption1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gray"
+                tools:text="9:00" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

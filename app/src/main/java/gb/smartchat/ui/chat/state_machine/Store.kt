@@ -11,6 +11,7 @@ import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Consumer
+import java.util.*
 
 class Store(private val senderId: String) : ObservableSource<State>, Consumer<Action>, Disposable {
 
@@ -65,16 +66,17 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 //if sending new message
                 if (state.currentText.isBlank()) return state
 
-                val clientId = System.currentTimeMillis().toString()
+                val currentTime = System.currentTimeMillis()
                 val msg = Message(
                     id = -1,
                     chatId = 1,
                     senderId = senderId,
-                    clientId = clientId,
+                    clientId = currentTime.toString(),
                     text = state.currentText,
                     type = null,
                     readedIds = emptyList(),
-                    quotedMessageId = state.quotingMessage?.id
+                    quotedMessage = state.quotingMessage?.toQuotedMessage(),
+                    timeCreated = Date(currentTime)
                 )
                 sideEffectListener.invoke(SideEffect.SendMessage(msg))
                 sideEffectListener(SideEffect.SetInputText(""))

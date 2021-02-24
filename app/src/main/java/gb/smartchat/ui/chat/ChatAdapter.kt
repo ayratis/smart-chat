@@ -16,7 +16,7 @@ class ChatAdapter(
     private val onQuoteListener: (ChatItem) -> Unit,
     private val nextPageUpCallback: () -> Unit,
     private val nextPageDownCallback: () -> Unit,
-    private val onMessageClickListener: (ChatItem) -> Unit
+    private val onQuotedMsgClickListener: (ChatItem) -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()) {
 
     var fullDataUp = false
@@ -38,17 +38,14 @@ class ChatAdapter(
                     onDeleteListener,
                     onEditListener,
                     onQuoteListener,
-                    onMessageClickListener
+                    onQuotedMsgClickListener
                 )
             R.layout.item_chat_msg_system ->
-                SystemViewHolder.create(
-                    parent,
-                    onMessageClickListener
-                )
+                SystemViewHolder.create(parent)
             R.layout.item_chat_msg_incoming -> IncomingViewHolder.create(
                 parent,
                 onQuoteListener,
-                onMessageClickListener
+                onQuotedMsgClickListener
             )
             else -> throw RuntimeException("unknown view type")
         }

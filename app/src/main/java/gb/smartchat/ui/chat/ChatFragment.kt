@@ -14,6 +14,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -35,7 +36,7 @@ import java.io.File
 import kotlin.math.min
 
 
-class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment.OnOptionSelected {
+class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOptionSelected {
 
     companion object {
         private const val TAG = "ChatFragment"
@@ -95,15 +96,15 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
             nextPageDownCallback = {
                 viewModel.loadNextPage(true)
             },
-            onMessageClickListener = { chatItem ->
-                viewModel.onMessageClick(chatItem)
+            onQuotedMsgClickListener = { chatItem ->
+                viewModel.onQuotedMessageClick(chatItem)
             }
         )
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.spacerTop.addSystemTopPadding()
+        binding.appBarLayout.addSystemTopPadding()
         binding.spacerBottom.addSystemBottomPadding()
         binding.rvChat.apply {
             layoutManager = LinearLayoutManager(context).apply {
@@ -114,6 +115,11 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         }
         binding.etInput.doAfterTextChanged {
             viewModel.onTextChanged(it?.toString() ?: "")
+            val tintColor = ContextCompat.getColor(
+                requireContext(),
+                if (it?.toString()?.isBlank() == false) R.color.purple_heart else R.color.gray
+            )
+            DrawableCompat.setTint(binding.btnMainAction.drawable, tintColor)
         }
         binding.btnMainAction.setOnClickListener {
             viewModel.onSendClick()
@@ -121,14 +127,11 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         binding.btnEditingClose.setOnClickListener {
             viewModel.onEditMessageReject()
         }
-        binding.btnAttachFile.setOnClickListener {
-            takeFile()
+        binding.btnAttach.setOnClickListener {
+            AttachDialogFragment().show(childFragmentManager, null)
         }
         binding.btnAttachFileClose.setOnClickListener {
             viewModel.detachFile()
-        }
-        binding.btnAttachPhoto.setOnClickListener {
-            TakePictureDialogFragment().show(childFragmentManager, null)
         }
         binding.btnAttachPhotoClose.setOnClickListener {
             viewModel.detachPhoto()
@@ -139,7 +142,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
         binding.rvChat.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             private var atBottom: Boolean = true
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                val pos = (recyclerView.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                val pos =
+                    (recyclerView.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
                 val isBottom = pos == chatAdapter.itemCount - 1
                 if (atBottom != isBottom) {
                     atBottom = isBottom
@@ -202,16 +206,16 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                     binding.tvEditingMessage.text = editingMessage?.text
                     binding.btnMainAction.setImageResource(
                         if (editingMessage != null) R.drawable.ic_baseline_check_24
-                        else R.drawable.ic_baseline_send_24
+                        else R.drawable.ic_send_24
                     )
                 },
             viewModel.viewState
                 .map { it.typingSenderIds }
                 .distinctUntilChanged()
                 .subscribe { typingSenderIds ->
-                    binding.toolbar.subtitle =
-                        if (typingSenderIds.isEmpty()) ""
-                        else "typing: $typingSenderIds"
+//                    binding.toolbar.subtitle =
+//                        if (typingSenderIds.isEmpty()) ""
+//                        else "typing: $typingSenderIds"
                 },
             viewModel.viewState
                 .map { listOf(it.attachedPhoto) }
@@ -255,7 +259,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                 .map { it.pagingState }
                 .distinctUntilChanged()
                 .subscribe { pagingState ->
-                    when(pagingState) {
+                    when (pagingState) {
                         PagingState.EMPTY_ERROR -> {
                             binding.viewEmptyError.visible(true)
                             showProgressDialog(false)
@@ -281,7 +285,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
                 .map { it.isOnline }
                 .distinctUntilChanged()
                 .subscribe { isOnline ->
-                    binding.toolbar.title = "Online: $isOnline"
+                    binding.toolbar.title = if (isOnline) "Снабжение" else "Online: $isOnline"
                 },
             viewModel.viewState
                 .map { listOf(it.withScrollTo) }
@@ -348,6 +352,10 @@ class ChatFragment : Fragment(R.layout.fragment_chat), TakePictureDialogFragment
     override fun onSelectFromGallery() {
         val pickPhoto = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         startActivityForResult(pickPhoto, REQUEST_CODE_GALLERY)
+    }
+
+    override fun onAttachFile() {
+        takeFile()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -5,7 +5,7 @@ import android.app.Dialog
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
 
-class TakePictureDialogFragment : DialogFragment() {
+class AttachDialogFragment : DialogFragment() {
 
     private val clickListener
         get() = when {
@@ -14,15 +14,15 @@ class TakePictureDialogFragment : DialogFragment() {
             else -> object : OnOptionSelected {}
         }
 
-    private val options = arrayOf<CharSequence>("Take Photo", "Choose from Gallery", "Cancel")
+    private val options = arrayOf<CharSequence>("Take Photo", "Gallery", "File")
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         AlertDialog.Builder(requireContext()).apply {
             setItems(options) { _, which ->
-                if (options[which] == "Take Photo") {
-                    clickListener.onTakePhoto()
-                } else {
-                    clickListener.onSelectFromGallery()
+                when (which) {
+                    0 -> clickListener.onTakePhoto()
+                    1 -> clickListener.onSelectFromGallery()
+                    else -> clickListener.onAttachFile()
                 }
             }
         }.create()
@@ -31,5 +31,6 @@ class TakePictureDialogFragment : DialogFragment() {
     interface OnOptionSelected {
         fun onTakePhoto() {}
         fun onSelectFromGallery() {}
+        fun onAttachFile() {}
     }
 }

@@ -1,8 +1,5 @@
 package gb.smartchat.ui.chat.view_holder
 
-import android.text.Spannable
-import android.text.SpannableStringBuilder
-import android.text.style.StyleSpan
 import android.util.Log
 import android.view.*
 import androidx.core.view.forEach
@@ -12,13 +9,16 @@ import gb.smartchat.R
 import gb.smartchat.databinding.ItemChatMsgOutgoingBinding
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.inflate
+import gb.smartchat.utils.visible
+import java.text.SimpleDateFormat
+import java.util.*
 
 class OutgoingViewHolder private constructor(
     itemView: View,
     private val onDeleteListener: (ChatItem) -> Unit,
     private val onEditListener: (ChatItem) -> Unit,
     private val onQuoteListener: (ChatItem) -> Unit,
-    private val onMessageClickListener: (ChatItem) -> Unit
+    private val onQuotedMsgClickListener: (ChatItem) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -29,24 +29,25 @@ class OutgoingViewHolder private constructor(
             onDeleteListener: (ChatItem) -> Unit,
             onEditListener: (ChatItem) -> Unit,
             onQuoteListener: (ChatItem) -> Unit,
-            onMessageClickListener: (ChatItem) -> Unit
+            onQuotedMsgClickListener: (ChatItem) -> Unit
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
                 onDeleteListener,
                 onEditListener,
                 onQuoteListener,
-                onMessageClickListener
+                onQuotedMsgClickListener
             )
     }
 
     private val binding by viewBinding(ItemChatMsgOutgoingBinding::bind)
     private lateinit var chatItem: ChatItem
+    private val sdf = SimpleDateFormat("h:mm", Locale.getDefault())
 
     init {
         binding.root.setOnCreateContextMenuListener(this)
-        binding.tvContent.setOnClickListener {
-            onMessageClickListener.invoke(chatItem)
+        binding.viewQuotedMessage.setOnClickListener {
+            onQuotedMsgClickListener.invoke(chatItem)
         }
     }
 
@@ -54,38 +55,29 @@ class OutgoingViewHolder private constructor(
         this.chatItem = chatItem
 //        binding.tvContent.text = chatItem.message.id.toString() //debug
 //        return
-        val statusString = when (chatItem.status) {
-            ChatItem.OutgoingStatus.SENDING -> "`"
-            ChatItem.OutgoingStatus.SENT -> "+"
-            ChatItem.OutgoingStatus.SENT_2 -> "++"
-            ChatItem.OutgoingStatus.READ -> "+++"
-            ChatItem.OutgoingStatus.FAILURE -> "error"
-            ChatItem.OutgoingStatus.EDITING -> "editing"
-            ChatItem.OutgoingStatus.DELETING -> "deleting"
-            ChatItem.OutgoingStatus.DELETED -> "deleted"
-        }
-        val quotingMessage = chatItem.message.quotedMessageId?.toString()
-        if (quotingMessage != null) {
-            val text = "$quotingMessage\n\n${chatItem.message.text} ($statusString)"
-            val spannable = SpannableStringBuilder(text).apply {
-                setSpan(
-                    StyleSpan(android.graphics.Typeface.ITALIC),
-                    0,
-                    quotingMessage.length,
-                    Spannable.SPAN_INCLUSIVE_INCLUSIVE
-                )
-                setSpan(
-                    StyleSpan(android.graphics.Typeface.BOLD),
-                    0,
-                    quotingMessage.length,
-                    Spannable.SPAN_INCLUSIVE_INCLUSIVE
-                )
+//        val statusString = when (chatItem.status) {
+//            ChatItem.OutgoingStatus.SENDING -> "`"
+//            ChatItem.OutgoingStatus.SENT -> "+"
+//            ChatItem.OutgoingStatus.SENT_2 -> "++"
+//            ChatItem.OutgoingStatus.READ -> "+++"
+//            ChatItem.OutgoingStatus.FAILURE -> "error"
+//            ChatItem.OutgoingStatus.EDITING -> "editing"
+//            ChatItem.OutgoingStatus.DELETING -> "deleting"
+//            ChatItem.OutgoingStatus.DELETED -> "deleted"
+//        }
+
+        binding.viewQuotedMessage.visible(chatItem.message.quotedMessage != null)
+        binding.tvQuotedMessage.text = chatItem.message.quotedMessage?.text
+        binding.ivStatus.setImageResource(
+            when (chatItem.status) {
+                ChatItem.OutgoingStatus.SENT_2 -> R.drawable.ic_double_check_12
+                ChatItem.OutgoingStatus.READ -> R.drawable.ic_double_check_colored_12
+                else -> R.drawable.ic_one_check_12
             }
-            binding.tvContent.text = spannable
-        } else {
-            val text = "${chatItem.message.text} ($statusString)"
-            binding.tvContent.text = text
-        }
+        )
+
+        binding.tvContent.text = chatItem.message.text
+        binding.tvTime.text = chatItem.message.timeCreated?.let { sdf.format(it) }
     }
 
     override fun onCreateContextMenu(

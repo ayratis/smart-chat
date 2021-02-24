@@ -4,9 +4,10 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
+import gb.smartchat.data.gson.GsonDateAdapter
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketApiImpl
@@ -26,7 +27,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.collections.HashMap
 
 class ChatViewModel(
     private val store: Store,
@@ -44,7 +47,9 @@ class ChatViewModel(
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            val gson = Gson()
+            val gson = GsonBuilder()
+                .registerTypeAdapter(Date::class.java, GsonDateAdapter())
+                .create()
             val okHttpClient = InstanceFactory.createHttpClient(userId)
             val socket = InstanceFactory.createSocket(url, okHttpClient)
             val socketApi = SocketApiImpl(socket, gson)
@@ -368,11 +373,10 @@ class ChatViewModel(
         )
     }
 
-    fun onMessageClick(chatItem: ChatItem) {
-        if (chatItem.message.quotedMessageId != null) {
-            store.accept(Action.ClientScrollToMessage(chatItem.message.quotedMessageId))
+    fun onQuotedMessageClick(chatItem: ChatItem) {
+        chatItem.message.quotedMessage?.messageId?.let {
+            store.accept(Action.ClientScrollToMessage(it))
         }
-//        store.accept(Action.ClientScrollToMessage(285)) //debug
     }
 
     fun atBottomOfChat(atBottom: Boolean) {
