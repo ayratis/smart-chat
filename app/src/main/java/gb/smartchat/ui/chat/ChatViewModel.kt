@@ -4,15 +4,11 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.google.gson.GsonBuilder
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
-import gb.smartchat.data.gson.GsonDateAdapter
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
-import gb.smartchat.data.socket.SocketApiImpl
 import gb.smartchat.data.socket.SocketEvent
-import gb.smartchat.di.InstanceFactory
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.TypingRequest
@@ -27,9 +23,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.collections.HashMap
 
 class ChatViewModel(
     private val store: Store,
@@ -42,20 +36,15 @@ class ChatViewModel(
     class Factory(
         private val userId: String,
         private val chatId: Long,
-        private val url: String,
+        private val socketApi: SocketApi,
+        private val httpApi: HttpApi,
     ) : ViewModelProvider.Factory {
+
+        private val store = Store(userId)
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            val gson = GsonBuilder()
-                .registerTypeAdapter(Date::class.java, GsonDateAdapter())
-                .create()
-            val okHttpClient = InstanceFactory.createHttpClient(userId)
-            val socket = InstanceFactory.createSocket(url, okHttpClient)
-            val socketApi = SocketApiImpl(socket, gson)
-            val httpApi = InstanceFactory.createHttpApi(okHttpClient, gson, url)
-            val store = Store(userId)
-            return ChatViewModel(store, userId, chatId, socketApi, httpApi, /*connectionManager*/) as T
+            return ChatViewModel(store, userId, chatId, socketApi, httpApi) as T
         }
     }
 

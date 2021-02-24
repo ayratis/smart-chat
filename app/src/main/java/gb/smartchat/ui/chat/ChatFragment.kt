@@ -24,6 +24,7 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
+import gb.smartchat.ui.SmartChatActivity
 import gb.smartchat.ui.chat.state_machine.PagingState
 import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.custom.ProgressDialog
@@ -41,7 +42,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
     companion object {
         private const val TAG = "ChatFragment"
         private const val PROGRESS_TAG = "progress_tag"
-        private const val ARG_USER_ID = "arg_user_id"
         private const val ARG_CHAT_ID = "arg_chat_id"
 
         private const val REQUEST_CODE_PERMISSIONS = 10
@@ -51,25 +51,25 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
         private const val REQUEST_CODE_FILE = 3
 
 
-        fun create(userId: String, chatId: Long) = ChatFragment().apply {
+        fun create(chatId: Long) = ChatFragment().apply {
             arguments = Bundle().apply {
-                putString(ARG_USER_ID, userId)
                 putLong(ARG_CHAT_ID, chatId)
             }
         }
     }
 
-    private val argUserId: String by lazy {
-        requireArguments().getString(ARG_USER_ID)!!
-    }
     private val argChatId: Long by lazy {
         requireArguments().getLong(ARG_CHAT_ID)
     }
+    private val component by lazy {
+        (requireActivity() as SmartChatActivity).component
+    }
     private val viewModel by viewModels<ChatViewModel> {
         ChatViewModel.Factory(
-            userId = argUserId,
+            userId = component.userId,
             chatId = argChatId,
-            url = "http://91.201.41.157:8000/",
+            socketApi = component.socketApi,
+            httpApi = component.httpApi
         )
     }
     private val binding by viewBinding(FragmentChatBinding::bind)
