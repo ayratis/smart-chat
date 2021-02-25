@@ -1,5 +1,6 @@
 package gb.smartchat.ui.chat
 
+import android.content.ContentResolver
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -16,6 +17,7 @@ import gb.smartchat.ui.chat.state_machine.Action
 import gb.smartchat.ui.chat.state_machine.SideEffect
 import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.chat.state_machine.Store
+import gb.smartchat.utils.ContentUriRequestBody
 import gb.smartchat.utils.SingleEvent
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -23,6 +25,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import okhttp3.MediaType
 import java.util.concurrent.TimeUnit
 
 class ChatViewModel(
@@ -293,6 +296,19 @@ class ChatViewModel(
             .subscribe(
                 { store.accept(Action.ServerLoadNewMessagesSuccess(it)) },
                 { store.accept(Action.ServerLoadNewMessagesError(it)) }
+            )
+        compositeDisposable.add(d)
+    }
+
+    fun uploadFile(uri: Uri, contentResolver: ContentResolver) {
+        val fileBody = ContentUriRequestBody(MediaType.parse("*/*")!!, contentResolver, uri)
+        val d = httpApi
+            .postUploadFile(fileBody)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { Log.d(TAG, "uploadFile: success: $it") },
+                { Log.d(TAG, "uploadFile: error", it) }
             )
         compositeDisposable.add(d)
     }
