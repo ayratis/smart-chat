@@ -1,24 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:paddingHorizontal="8dp"
-    android:paddingVertical="4dp"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="4dp">
 
-    <gb.smartchat.ui.custom.WrapWidthTextView
-        android:id="@+id/tv_content"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:layout_gravity="end"
         android:background="@drawable/bg_msg_incoming"
-        android:gravity="start"
-        android:paddingHorizontal="16dp"
+        android:minWidth="80dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="12dp"
         android:paddingVertical="8dp"
-        android:textColor="@color/black"
-        android:textSize="16sp"
-        tools:text="1" />
+        tools:ignore="UselessParent">
 
-</RelativeLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:ignore="UseCompoundDrawables">
+
+            <ImageView
+                android:id="@+id/iv_avatar"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginBottom="2dp"
+                android:contentDescription="@null"
+                android:src="@drawable/profile_avatar_placeholder" />
+
+            <TextView
+                style="@style/Body1"
+                android:layout_width="wrap_content"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:ellipsize="end"
+                android:gravity="center_vertical"
+                android:lines="1"
+                android:maxWidth="234dp"
+                android:minWidth="24dp"
+                android:textColor="@color/purple_heart"
+                tools:text="Андрей" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/view_quoted_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <View
+                android:layout_width="2dp"
+                android:layout_height="match_parent"
+                android:background="@color/purple_heart"
+                android:duplicateParentState="true" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_quoted_person"
+                    style="@style/Caption1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:maxWidth="260dp"
+                    android:minWidth="50dp"
+                    android:textColor="@color/purple_heart"
+                    tools:text="Андрей" />
+
+                <TextView
+                    android:id="@+id/tv_quoted_message"
+                    style="@style/Body2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:maxWidth="260dp"
+                    android:minWidth="50dp"
+                    tools:text="Привет! Как дела?" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxWidth="266dp"
+            android:minWidth="56dp"
+            android:paddingVertical="4dp"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            tools:text="Идейные соображения высшего порядка, а также сложившаяся структура организации в значительной степени обуславливает создание направлений прогрессивного развития." />
+
+        <TextView
+            android:id="@+id/tv_time"
+            style="@style/Caption1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:paddingTop="2dp"
+            android:textColor="@color/gray"
+            tools:text="9:00" />
+
+    </LinearLayout>
+
+
+</FrameLayout>

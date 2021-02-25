@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 import gb.smartchat.entity.request.MessageCreateRequest
 import gb.smartchat.entity.request.MessageDeleteRequest
 import gb.smartchat.entity.request.MessageEditRequest
+import java.util.*
 
 data class Message(
     @SerializedName("id")
@@ -21,8 +22,11 @@ data class Message(
     val type: Type?,
     @SerializedName("readed_ids")
     val readedIds: List<String>?,
-    @SerializedName("quoted_message_id")
-    val quotedMessageId: Long?,
+    @SerializedName("quoted_message")
+    val quotedMessage: QuotedMessage?,
+    @SerializedName("time_created")
+    val timeCreated: Date?
+
 //    @SerializedName("mentions")
 //    val mentions: List<Any>?,
 //    @SerializedName("file_ids")
@@ -43,7 +47,7 @@ data class Message(
                 senderId = senderId,
                 chatId = chatId,
                 clientId = clientId,
-                quotedMessageId = quotedMessageId
+                quotedMessageId = quotedMessage?.messageId
             )
         } else null
     }
@@ -68,5 +72,13 @@ data class Message(
                 senderId = senderId,
             )
         } else null
+    }
+
+    fun toQuotedMessage(): QuotedMessage {
+        return QuotedMessage(
+            messageId = id,
+            text = text,
+            senderId = senderId,
+        )
     }
 }

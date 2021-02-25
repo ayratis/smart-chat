@@ -13,7 +13,7 @@ class WrapWidthTextView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
 
-    private val usrMaxWidth = resources.displayMetrics.widthPixels * 0.8f
+    private val usrMaxWidth = resources.displayMetrics.widthPixels * 0.7f
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)

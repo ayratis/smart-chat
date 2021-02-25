@@ -1,9 +1,5 @@
 package gb.smartchat.ui.chat.view_holder
 
-import android.graphics.Typeface
-import android.text.Spannable
-import android.text.SpannableStringBuilder
-import android.text.style.StyleSpan
 import android.util.Log
 import android.view.ContextMenu
 import android.view.MenuInflater
@@ -16,11 +12,14 @@ import gb.smartchat.R
 import gb.smartchat.databinding.ItemChatMsgIncomingBinding
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.inflate
+import gb.smartchat.utils.visible
+import java.text.SimpleDateFormat
+import java.util.*
 
 class IncomingViewHolder private constructor(
     itemView: View,
     private val onQuoteListener: (ChatItem) -> Unit,
-    private val onMessageClickListener: (ChatItem) -> Unit
+    private val onQuotedMsgClickListener: (ChatItem) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -29,51 +28,34 @@ class IncomingViewHolder private constructor(
         fun create(
             parent: ViewGroup,
             onQuoteListener: (ChatItem) -> Unit,
-            onMessageClickListener: (ChatItem) -> Unit
+            onQuotedMsgClickListener: (ChatItem) -> Unit
         ) =
             IncomingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_incoming),
                 onQuoteListener,
-                onMessageClickListener
+                onQuotedMsgClickListener
             )
     }
 
+    private val sdf = SimpleDateFormat("h:mm", Locale.getDefault())
     private val binding by viewBinding(ItemChatMsgIncomingBinding::bind)
     private lateinit var chatItem: ChatItem
 
     init {
         binding.root.setOnCreateContextMenuListener(this)
-        binding.tvContent.setOnClickListener {
-            onMessageClickListener.invoke(chatItem)
+        binding.viewQuotedMessage.setOnClickListener {
+            onQuotedMsgClickListener.invoke(chatItem)
         }
     }
 
     fun bind(chatItem: ChatItem.Incoming) {
         this.chatItem = chatItem
-//        binding.tvContent.text = chatItem.message.id.toString() //debug
-//        return
-        val quotingMessage = chatItem.message.quotedMessageId?.toString()
-        if (quotingMessage != null) {
-            val text = "$quotingMessage\n\n${chatItem.message.text}"
-            val spannable = SpannableStringBuilder(text).apply {
-                setSpan(
-                    StyleSpan(Typeface.ITALIC),
-                    0,
-                    quotingMessage.length,
-                    Spannable.SPAN_INCLUSIVE_INCLUSIVE
-                )
-                setSpan(
-                    StyleSpan(Typeface.BOLD),
-                    0,
-                    quotingMessage.length,
-                    Spannable.SPAN_INCLUSIVE_INCLUSIVE
-                )
-            }
-            binding.tvContent.text = spannable
-        } else {
-            val text = chatItem.message.text
-            binding.tvContent.text = text
-        }
+        //        binding.tvContent.text = chatItem.message.id.toString() //debug
+        //        return
+        binding.viewQuotedMessage.visible(chatItem.message.quotedMessage != null)
+        binding.tvQuotedMessage.text = chatItem.message.quotedMessage?.text
+        binding.tvContent.text = chatItem.message.text
+        binding.tvTime.text = chatItem.message.timeCreated?.let { sdf.format(it) }
     }
 
     override fun onCreateContextMenu(

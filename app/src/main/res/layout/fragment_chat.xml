@@ -5,31 +5,47 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <FrameLayout
-        android:id="@+id/spacer_top"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/spacer_top"
-        app:title="@string/app_name" />
+        android:background="@color/white">
 
-    <View
-        android:id="@+id/divider1"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_below="@id/toolbar"
-        android:background="@color/divider" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:navigationIcon="@drawable/ic_baseline_arrow_back_24"
+                app:subtitle="158579 ООО Мясокомбинат"
+                app:subtitleTextColor="@color/razzmatazz"
+                app:title="@string/app_name" />
+
+            <ImageButton
+                android:layout_width="40dp"
+                android:padding="2dp"
+                android:layout_height="40dp"
+                android:scaleType="fitCenter"
+                android:layout_gravity="center_vertical"
+                android:layout_marginHorizontal="14dp"
+                android:background="?attr/actionBarItemBackground"
+                android:src="@drawable/group_avatar_placeholder" />
+
+        </LinearLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_chat"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/divider2"
-        android:layout_below="@id/divider1"
+        android:layout_above="@id/layout_input"
+        android:layout_below="@id/app_bar_layout"
         android:clipToPadding="false"
         android:overScrollMode="never"
         android:paddingVertical="8dp"
@@ -39,7 +55,7 @@
         android:id="@+id/tv_unread_message_count"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_above="@id/divider2"
+        android:layout_above="@id/layout_input"
         android:layout_margin="16dp"
         android:background="@color/purple_200"
         android:gravity="center"
@@ -47,46 +63,63 @@
         android:visibility="gone"
         tools:visibility="visible" />
 
-    <View
-        android:id="@+id/divider2"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_above="@id/layout_input"
-        android:background="@color/divider" />
-
     <RelativeLayout
         android:id="@+id/layout_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/spacer_bottom">
 
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider" />
+
         <LinearLayout
             android:id="@+id/view_quoted_message"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:background="#0d99cc00"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/divider"
             android:orientation="horizontal"
+            android:paddingHorizontal="48dp"
+            android:paddingVertical="8dp"
             android:visibility="gone"
             tools:visibility="visible">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginStart="16dp"
-                android:layout_marginLeft="16dp"
-                android:gravity="center_vertical"
-                android:paddingVertical="8dp"
-                tools:text="Quot: " />
-
-            <TextView
-                android:id="@+id/tv_quoted_message"
-                android:layout_width="0dp"
+            <View
+                android:id="@+id/view_quot"
+                android:layout_width="2dp"
                 android:layout_height="match_parent"
                 android:layout_marginHorizontal="8dp"
+                android:background="@color/purple_heart"
+                android:duplicateParentState="true" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:paddingVertical="8dp"
-                tools:text="Привет! Как дела?" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_quoted_person"
+                    style="@style/Caption1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:textColor="@color/purple_heart"
+                    tools:text="Андрей" />
+
+                <TextView
+                    android:id="@+id/tv_quoted_message"
+                    style="@style/Body2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    tools:text="Привет! Как дела?" />
+
+            </LinearLayout>
 
             <ImageButton
                 android:id="@+id/btn_quoted_close"
@@ -94,7 +127,6 @@
                 android:layout_height="40dp"
                 android:background="?attr/actionBarItemBackground"
                 android:contentDescription="@string/cancel"
-                android:gravity="center"
                 android:src="@drawable/ic_baseline_close_24" />
 
         </LinearLayout>
@@ -107,13 +139,12 @@
             android:background="#0d000000"
             android:orientation="horizontal"
             android:visibility="gone"
-            tools:visibility="visible">
+            tools:visibility="gone">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="16dp"
-                android:layout_marginLeft="16dp"
                 android:gravity="center_vertical"
                 android:paddingVertical="8dp"
                 tools:text="Edit: " />
@@ -147,12 +178,13 @@
             android:orientation="horizontal"
             android:paddingHorizontal="16dp"
             android:visibility="gone"
-            tools:visibility="visible">
+            tools:visibility="gone">
 
             <ImageView
                 android:id="@+id/iv_photo"
                 android:layout_width="80dp"
-                android:layout_height="80dp" />
+                android:layout_height="80dp"
+                android:contentDescription="@null" />
 
             <ImageButton
                 android:id="@+id/btn_attach_photo_close"
@@ -174,14 +206,14 @@
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp"
             android:visibility="gone"
-            tools:visibility="visible">
+            tools:visibility="gone">
 
             <ImageView
                 android:id="@+id/iv_file"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="30dp"
-                android:layout_marginLeft="30dp"
+                android:contentDescription="@null"
                 android:src="@drawable/ic_baseline_insert_drive_file_24" />
 
             <TextView
@@ -197,9 +229,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="30dp"
-                android:layout_marginLeft="30dp"
                 android:layout_toEndOf="@id/iv_file"
-                android:layout_toRightOf="@id/iv_file"
                 android:background="?attr/actionBarItemBackground"
                 android:contentDescription="@string/cancel"
                 android:gravity="center"
@@ -207,63 +237,41 @@
 
         </RelativeLayout>
 
-        <View
-            android:id="@+id/divider3"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
+        <ImageButton
+            android:id="@+id/btn_attach"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_below="@id/view_attach_file"
-            android:background="@color/divider" />
+            android:layout_margin="4dp"
+            android:background="?attr/actionBarItemBackground"
+            android:contentDescription="@string/attach"
+            android:src="@drawable/ic_attach_24" />
 
         <EditText
             android:id="@+id/et_input"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_below="@id/divider3"
-            android:layout_marginStart="16dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_marginBottom="8dp"
-            android:layout_toStartOf="@id/btn_attach_file"
-            android:layout_toLeftOf="@id/btn_attach_file"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_attach_file"
+            android:layout_marginVertical="4dp"
+            android:layout_toStartOf="@id/btn_main_action"
+            android:layout_toEndOf="@id/btn_attach"
+            android:background="@null"
+            android:hint="@string/message"
+            android:maxLines="6"
+            android:minHeight="48dp"
+            android:paddingHorizontal="16dp"
             tools:ignore="Autofill,LabelFor,TextFields" />
 
         <ImageButton
-            android:id="@+id/btn_attach_file"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_below="@id/divider3"
-            android:layout_marginVertical="8dp"
-            android:layout_toStartOf="@id/btn_attach_photo"
-            android:layout_toLeftOf="@id/btn_attach_photo"
-            android:background="?attr/actionBarItemBackground"
-            android:src="@drawable/ic_baseline_attach_file_24" />
-
-        <ImageButton
-            android:id="@+id/btn_attach_photo"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_below="@id/divider3"
-            android:layout_marginVertical="8dp"
-            android:layout_toStartOf="@id/btn_main_action"
-            android:layout_toLeftOf="@id/btn_main_action"
-            android:background="?attr/actionBarItemBackground"
-            android:src="@drawable/ic_baseline_photo_camera_24" />
-
-        <ImageButton
             android:id="@+id/btn_main_action"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_below="@id/divider3"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_below="@id/view_attach_file"
             android:layout_alignParentEnd="true"
-            android:layout_alignParentRight="true"
-            android:layout_marginVertical="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
+            android:layout_margin="4dp"
             android:background="?attr/actionBarItemBackground"
             android:contentDescription="@string/send"
-            android:src="@drawable/ic_baseline_send_24" />
+            android:src="@drawable/ic_send_24" />
 
     </RelativeLayout>
 
@@ -272,27 +280,27 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/spacer_bottom"
-        android:layout_below="@id/toolbar"
+        android:layout_below="@id/app_bar_layout"
         android:background="@color/white"
         android:clickable="true"
         android:focusable="true"
-        android:visibility="gone"
         android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="CONNECTION ERROR" />
+            android:text="@string/connection_error" />
 
         <Button
-            android:visibility="gone"
             android:id="@+id/btn_empty_retry"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:text="retry" />
+            android:text="@string/retry"
+            android:visibility="gone" />
 
     </LinearLayout>
 
