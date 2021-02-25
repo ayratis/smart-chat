@@ -1,13 +1,12 @@
 package gb.smartchat.ui.chat
 
-import android.content.ContentResolver
 import android.net.Uri
-import android.provider.OpenableColumns
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
+import gb.smartchat.data.content.ContentHelper
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
@@ -37,6 +36,7 @@ class ChatViewModel(
     private val chatId: Long,
     private val socketApi: SocketApi,
     private val httpApi: HttpApi,
+    private val contentHelper: ContentHelper
 ) : ViewModel() {
 
     class Factory(
@@ -44,13 +44,14 @@ class ChatViewModel(
         private val chatId: Long,
         private val socketApi: SocketApi,
         private val httpApi: HttpApi,
+        private val contentHelper: ContentHelper
     ) : ViewModelProvider.Factory {
 
         private val store = Store(userId)
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return ChatViewModel(store, userId, chatId, socketApi, httpApi) as T
+            return ChatViewModel(store, userId, chatId, socketApi, httpApi, contentHelper) as T
         }
     }
 
@@ -60,6 +61,7 @@ class ChatViewModel(
 
     private val compositeDisposable = CompositeDisposable()
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
+    private var uploadDisposable: Disposable? = null
     val viewState = BehaviorRelay.create<State>()
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
     val instaScrollTo = PublishRelay.create<Int>()
@@ -94,6 +96,11 @@ class ChatViewModel(
                 is SideEffect.LoadSpecificPart -> loadSpecificPart(sideEffect.fromMessageId)
                 is SideEffect.InstaScrollTo -> instaScrollTo.accept(sideEffect.position)
                 is SideEffect.LoadNewMessages -> loadNewMessages(sideEffect.fromMessageId)
+                is SideEffect.CancelUploadFile -> {
+                    uploadDisposable?.dispose()
+                    uploadDisposable = null
+                }
+                is SideEffect.UploadFile -> uploadFile(sideEffect.contentUri)
             }
         }
         compositeDisposable.add(
@@ -303,30 +310,29 @@ class ChatViewModel(
         compositeDisposable.add(d)
     }
 
-    fun uploadFile(uri: Uri, contentResolver: ContentResolver) {
-        val mimeType = contentResolver.getType(uri) ?: "*/*"
-        Log.d(TAG, "uploadFile: mimeType: $mimeType")
-        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
-                Log.d(TAG, "uploadFile: displayName: $displayName")
-                val size = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE))
-                Log.d(TAG, "uploadFile: size: $size")
-                val inputStream = contentResolver.openInputStream(uri) ?: return
-                val fileBody = InputStreamRequestBody(MediaType.parse(mimeType), inputStream)
-                val filePart = MultipartBody.Part.createFormData("upload_file", displayName, fileBody)
-                val d = httpApi
-                    .postUploadFile(filePart)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        { Log.d(TAG, "uploadFile: success: $it") },
-                        { Log.d(TAG, "uploadFile: error", it) }
-                    )
-                compositeDisposable.add(d)
+    private fun uploadFile(contentUri: Uri) {
+        uploadDisposable?.dispose()
+        val inputStream = contentHelper.inputStream(contentUri) ?: return
+        val (name, size) = contentHelper.nameSize(contentUri) ?: return
+        val mimeType = contentHelper.mimeType(contentUri) ?: "*/*"
+        Log.d(TAG, "uploadFile: name: $name, size: $size, mimeType: $mimeType")
+        val filePart = MultipartBody.Part.createFormData(
+            "upload_file",
+            name,
+            InputStreamRequestBody(MediaType.parse(mimeType), inputStream)
+        )
+        httpApi
+            .postUploadFile(filePart)
+            .map { it.result.fileId }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { store.accept(Action.ServerUploadFileSuccess(it)) },
+                { store.accept(Action.ServerUploadFileError(it)) }
+            ).also {
+                uploadDisposable = it
+                compositeDisposable.add(it)
             }
-        }
-
     }
 
     fun onStart() {
@@ -354,20 +360,12 @@ class ChatViewModel(
         store.accept(Action.ClientDeleteMessage(message))
     }
 
-    fun attachPhoto(photoUri: Uri) {
-        store.accept(Action.ClientAttachPhoto(photoUri))
+    fun attach(contentUri: Uri) {
+        store.accept(Action.ClientAttach(contentUri))
     }
 
-    fun detachPhoto() {
-        store.accept(Action.ClientDetachPhoto)
-    }
-
-    fun attachFile(fileUri: Uri) {
-        store.accept(Action.ClientAttachFile(fileUri))
-    }
-
-    fun detachFile() {
-        store.accept(Action.ClientDetachFile)
+    fun detach() {
+        store.accept(Action.ClientDetach)
     }
 
     fun onQuoteMessage(message: Message) {
@@ -405,10 +403,10 @@ class ChatViewModel(
     }
 
     fun scrollToBottom() {
-        store.accept(Action.ScrollToBottom)
+        store.accept(Action.ClientScrollToBottom)
     }
 
     fun emptyRetry() {
-        store.accept(Action.EmptyRetry)
+        store.accept(Action.ClientEmptyRetry)
     }
 }

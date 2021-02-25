@@ -1,8 +1,11 @@
 package gb.smartchat.di
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.gson.GsonBuilder
+import gb.smartchat.data.content.ContentHelper
+import gb.smartchat.data.content.ContentHelperImpl
 import gb.smartchat.data.gson.GsonDateAdapter
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
@@ -18,15 +21,20 @@ import java.net.URI
 import java.util.*
 
 //uses as di component (singletone for library created by activity)
-class Component(val userId: String, private val baseUrl: String) : ViewModel() {
+class Component constructor(
+    private val applicationContext: Application,
+    val userId: String,
+    private val baseUrl: String
+) : ViewModel() {
 
     class Factory(
+        private val applicationContext: Application,
         private val userId: String,
-        private val baseUrl: String
+        private val baseUrl: String,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return Component(userId, baseUrl) as T
+            return Component(applicationContext, userId, baseUrl) as T
         }
     }
 
@@ -78,5 +86,9 @@ class Component(val userId: String, private val baseUrl: String) : ViewModel() {
             baseUrl(baseUrl)
             build().create(HttpApi::class.java)
         }
+    }
+
+    val contentHelper: ContentHelper by lazy {
+        ContentHelperImpl(applicationContext)
     }
 }

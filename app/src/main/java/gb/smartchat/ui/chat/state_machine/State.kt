@@ -10,8 +10,7 @@ data class State(
     val typingSenderIds: List<String> = emptyList(),
     val editingMessage: Message? = null,
     val currentText: String = "",
-    val attachedPhoto: Uri? = null,
-    val attachedFile: Uri? = null,
+    val attachmentState: AttachmentState = AttachmentState.Empty,
     val quotingMessage: Message? = null,
     val pagingState: PagingState = PagingState.EMPTY,
     val isOnline: Boolean = false,
@@ -27,6 +26,12 @@ data class State(
         const val UNREAD_OVER_MAX_COUNT = -1
         const val DEFAULT_PAGE_SIZE = 30
     }
+}
+
+sealed class AttachmentState {
+    object Empty : AttachmentState()
+    data class Uploading(val uri: Uri) : AttachmentState()
+    data class UploadSuccess(val uri: Uri, val fileId: Long) : AttachmentState()
 }
 
 enum class PagingState {
