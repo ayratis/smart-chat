@@ -2,6 +2,7 @@ package gb.smartchat.ui.chat
 
 import android.content.ContentResolver
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -17,7 +18,7 @@ import gb.smartchat.ui.chat.state_machine.Action
 import gb.smartchat.ui.chat.state_machine.SideEffect
 import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.chat.state_machine.Store
-import gb.smartchat.utils.ContentUriRequestBody
+import gb.smartchat.utils.InputStreamRequestBody
 import gb.smartchat.utils.SingleEvent
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -26,7 +27,9 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import okhttp3.MediaType
+import okhttp3.MultipartBody
 import java.util.concurrent.TimeUnit
+
 
 class ChatViewModel(
     private val store: Store,
@@ -301,16 +304,29 @@ class ChatViewModel(
     }
 
     fun uploadFile(uri: Uri, contentResolver: ContentResolver) {
-        val fileBody = ContentUriRequestBody(MediaType.parse("*/*")!!, contentResolver, uri)
-        val d = httpApi
-            .postUploadFile(fileBody)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { Log.d(TAG, "uploadFile: success: $it") },
-                { Log.d(TAG, "uploadFile: error", it) }
-            )
-        compositeDisposable.add(d)
+        val mimeType = contentResolver.getType(uri) ?: "*/*"
+        Log.d(TAG, "uploadFile: mimeType: $mimeType")
+        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                Log.d(TAG, "uploadFile: displayName: $displayName")
+                val size = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE))
+                Log.d(TAG, "uploadFile: size: $size")
+                val inputStream = contentResolver.openInputStream(uri) ?: return
+                val fileBody = InputStreamRequestBody(MediaType.parse(mimeType), inputStream)
+                val filePart = MultipartBody.Part.createFormData("upload_file", displayName, fileBody)
+                val d = httpApi
+                    .postUploadFile(filePart)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        { Log.d(TAG, "uploadFile: success: $it") },
+                        { Log.d(TAG, "uploadFile: error", it) }
+                    )
+                compositeDisposable.add(d)
+            }
+        }
+
     }
 
     fun onStart() {

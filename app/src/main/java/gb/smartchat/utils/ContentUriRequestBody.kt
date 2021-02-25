@@ -10,12 +10,12 @@ import java.io.IOException
 
 
 class ContentUriRequestBody(
-    private val contentType: MediaType,
+    private val contentType: MediaType?,
     private val contentResolver: ContentResolver,
     private val uri: Uri
 ) : RequestBody() {
 
-    override fun contentType(): MediaType {
+    override fun contentType(): MediaType? {
         return contentType
     }
 

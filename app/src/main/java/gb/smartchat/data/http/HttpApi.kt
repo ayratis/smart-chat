@@ -5,7 +5,7 @@ import gb.smartchat.entity.Recipient
 import gb.smartchat.entity.response.BaseResponse
 import gb.smartchat.entity.response.FileUploadResponse
 import io.reactivex.Single
-import okhttp3.RequestBody
+import okhttp3.MultipartBody
 import retrofit2.http.*
 
 interface HttpApi {
@@ -26,6 +26,6 @@ interface HttpApi {
     @Multipart
     @POST("chat/file/upload")
     fun postUploadFile(
-        @Part("upload_file") file: RequestBody
+        @Part file: MultipartBody.Part
     ): Single<BaseResponse<FileUploadResponse>>
 }

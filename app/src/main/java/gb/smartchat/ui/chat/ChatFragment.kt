@@ -369,9 +369,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
                     data?.data?.let { viewModel.attachPhoto(it) }
                 }
                 REQUEST_CODE_FILE -> {
-                    data?.data?.also { returnUri ->
-                        viewModel.uploadFile(returnUri, requireContext().contentResolver)
-                    }
+                    data?.data?.let { viewModel.attachFile(it) }
                 }
             }
         }
