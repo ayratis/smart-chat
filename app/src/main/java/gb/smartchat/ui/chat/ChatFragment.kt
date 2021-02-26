@@ -8,7 +8,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -22,16 +21,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.ui.SmartChatActivity
+import gb.smartchat.ui.chat.state_machine.AttachmentState
 import gb.smartchat.ui.chat.state_machine.PagingState
 import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.custom.ProgressDialog
-import gb.smartchat.utils.SingleEvent
-import gb.smartchat.utils.addSystemBottomPadding
-import gb.smartchat.utils.addSystemTopPadding
-import gb.smartchat.utils.visible
+import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 import java.io.File
 import kotlin.math.min
@@ -64,12 +63,16 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
+    private val contentHelper by lazy {
+        component.contentHelper
+    }
     private val viewModel by viewModels<ChatViewModel> {
         ChatViewModel.Factory(
             userId = component.userId,
             chatId = argChatId,
             socketApi = component.socketApi,
-            httpApi = component.httpApi
+            httpApi = component.httpApi,
+            contentHelper = contentHelper
         )
     }
     private val binding by viewBinding(FragmentChatBinding::bind)
@@ -130,11 +133,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
         binding.btnAttach.setOnClickListener {
             AttachDialogFragment().show(childFragmentManager, null)
         }
-        binding.btnAttachFileClose.setOnClickListener {
-            viewModel.detachFile()
-        }
-        binding.btnAttachPhotoClose.setOnClickListener {
-            viewModel.detachPhoto()
+        binding.btnDetach.setOnClickListener {
+            viewModel.detach()
         }
         binding.btnQuotedClose.setOnClickListener {
             viewModel.stopQuoting()
@@ -218,33 +218,45 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
 //                        else "typing: $typingSenderIds"
                 },
             viewModel.viewState
-                .map { listOf(it.attachedPhoto) }
+                .map { it.attachmentState }
                 .distinctUntilChanged()
-                .subscribe {
-                    val uri = it.first()
-                    binding.viewAttachPhoto.visible(uri != null)
-                    Glide.with(binding.ivPhoto)
-                        .load(uri)
-                        .centerCrop()
-                        .into(binding.ivPhoto)
-                },
-            viewModel.viewState
-                .map { listOf(it.attachedFile) }
-                .distinctUntilChanged()
-                .subscribe {
-                    val uri = it.first()
-                    binding.viewAttachFile.visible(uri != null)
-                    binding.tvAttachFileName.text = null
-                    if (uri?.scheme == "content") {
-                        requireContext().contentResolver
-                            .query(uri, null, null, null, null)
-                            ?.use { cursor ->
-                                if (cursor.moveToFirst()) {
-                                    val fileName =
-                                        cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
-                                    binding.tvAttachFileName.text = fileName
-                                }
-                            }
+                .subscribe { attachmentState ->
+                    Log.d(TAG, "attachmentState: $attachmentState")
+                    fun showContent(uri: Uri, isProgress: Boolean) {
+                        val mimeType = contentHelper.mimeType(uri)
+                        val isImage = mimeType?.startsWith("image") == true
+                        if (isImage) {
+                            binding.viewFileAttachment.visible(false)
+                            binding.progressBarPhoto.visible(isProgress)
+                            binding.ivAttachmentPhoto.visible(true)
+                            Glide.with(binding.ivAttachmentPhoto)
+                                .load(uri)
+                                .transform(CenterCrop(), RoundedCorners(12.dp(binding.ivAttachmentPhoto)))
+                                .into(binding.ivAttachmentPhoto)
+                        } else {
+                            binding.viewFileAttachment.visible(true)
+                            binding.progressBarPhoto.visible(false)
+                            binding.ivAttachmentPhoto.visible(false)
+                            val nameSize = contentHelper.nameSize(uri)
+                            binding.ivFile.visible(!isProgress)
+                            binding.progressBarFile.visible(isProgress)
+                            binding.tvFileName.text = nameSize?.first
+                            binding.tvFileSize.text =
+                                nameSize?.second?.let { "${it / 1000} Kb" }
+                        }
+                    }
+                    when (attachmentState) {
+                        is AttachmentState.Empty -> {
+                            binding.viewAttachment.visible(false)
+                        }
+                        is AttachmentState.Uploading -> {
+                            binding.viewAttachment.visible(true)
+                            showContent(attachmentState.uri, true)
+                        }
+                        is AttachmentState.UploadSuccess -> {
+                            binding.viewAttachment.visible(true)
+                            showContent(attachmentState.uri, false)
+                        }
                     }
                 },
             viewModel.viewState
@@ -363,13 +375,13 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
         if (resultCode == RESULT_OK) {
             when (requestCode) {
                 REQUEST_CODE_PHOTO -> {
-                    takePhotoUri?.let { viewModel.attachPhoto(it) }
+                    takePhotoUri?.let { viewModel.attach(it) }
                 }
                 REQUEST_CODE_GALLERY -> {
-                    data?.data?.let { viewModel.attachPhoto(it) }
+                    data?.data?.let { viewModel.attach(it) }
                 }
                 REQUEST_CODE_FILE -> {
-                    data?.data?.let { viewModel.attachFile(it) }
+                    data?.data?.let { viewModel.attach(it) }
                 }
             }
         }

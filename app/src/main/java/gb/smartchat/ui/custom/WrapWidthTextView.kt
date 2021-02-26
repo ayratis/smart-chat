@@ -39,5 +39,4 @@ class WrapWidthTextView @JvmOverloads constructor(
 //        return maxWidth
         return if (maxWidth <= usrMaxWidth) maxWidth else usrMaxWidth
     }
-
 }

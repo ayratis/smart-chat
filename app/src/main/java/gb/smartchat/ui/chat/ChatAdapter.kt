@@ -63,5 +63,4 @@ class ChatAdapter(
         if (!fullDataUp && position < 10) nextPageUpCallback.invoke()
         if (!fullDataDown && position >= itemCount - 10) nextPageDownCallback.invoke()
     }
-
 }

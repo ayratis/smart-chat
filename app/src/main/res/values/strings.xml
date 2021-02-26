@@ -7,7 +7,8 @@
     <string name="ok">OK</string>
     <string name="quote">Quote</string>
     <string name="message">Сообщение</string>
-    <string name="attach">Приложить</string>
+    <string name="attach">Прикрепить</string>
+    <string name="detach">Открепить</string>
     <string name="outgoing_status">Статус отправки</string>
     <string name="connection_error">Ошибка соединения</string>
     <string name="retry">Повторить</string>

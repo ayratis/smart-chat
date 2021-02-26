@@ -280,17 +280,29 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             is Action.ClientTextChanged -> {
                 return state.copy(currentText = action.text)
             }
-            is Action.ClientAttachPhoto -> {
-                return state.copy(attachedPhoto = action.photoUri, attachedFile = null)
+            is Action.ClientAttach -> {
+                sideEffectListener(SideEffect.UploadFile(action.contentUri))
+                return state.copy(
+                    attachmentState = AttachmentState.Uploading(action.contentUri)
+                )
             }
-            is Action.ClientDetachPhoto -> {
-                return state.copy(attachedPhoto = null, attachedFile = null)
+            is Action.ClientDetach -> {
+                sideEffectListener(SideEffect.CancelUploadFile)
+                return state.copy(attachmentState = AttachmentState.Empty)
             }
-            is Action.ClientAttachFile -> {
-                return state.copy(attachedPhoto = null, attachedFile = action.fileUri)
+            is Action.ServerUploadFileSuccess -> {
+                return when (state.attachmentState) {
+                    is AttachmentState.Uploading -> state.copy(
+                        attachmentState = AttachmentState.UploadSuccess(
+                            state.attachmentState.uri,
+                            action.fileId
+                        )
+                    )
+                    else -> state
+                }
             }
-            is Action.ClientDetachFile -> {
-                return state.copy(attachedPhoto = null, attachedFile = null)
+            is Action.ServerUploadFileError -> {
+                return state.copy(attachmentState = AttachmentState.Empty)
             }
             is Action.ClientQuoteMessage -> {
                 return state.copy(quotingMessage = action.message)
@@ -511,7 +523,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             is Action.InternalAtBottom -> {
                 return state.copy(atBottom = action.atBottom)
             }
-            is Action.ScrollToBottom -> {
+            is Action.ClientScrollToBottom -> {
                 return if (state.fullDataDown) {
                     sideEffectListener(SideEffect.InstaScrollTo(state.chatItems.lastIndex))
                     state.copy(unreadMessageCount = 0)
@@ -525,7 +537,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     )
                 }
             }
-            is Action.EmptyRetry -> {
+            is Action.ClientEmptyRetry -> {
                 sideEffectListener(SideEffect.LoadPage(null, false))
                 return state.copy(
                     pagingState = PagingState.EMPTY_PROGRESS,

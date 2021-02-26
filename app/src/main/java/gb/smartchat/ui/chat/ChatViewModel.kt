@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
+import gb.smartchat.data.content.ContentHelper
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
@@ -16,6 +17,7 @@ import gb.smartchat.ui.chat.state_machine.Action
 import gb.smartchat.ui.chat.state_machine.SideEffect
 import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.chat.state_machine.Store
+import gb.smartchat.utils.InputStreamRequestBody
 import gb.smartchat.utils.SingleEvent
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -23,7 +25,10 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import okhttp3.MediaType
+import okhttp3.MultipartBody
 import java.util.concurrent.TimeUnit
+
 
 class ChatViewModel(
     private val store: Store,
@@ -31,6 +36,7 @@ class ChatViewModel(
     private val chatId: Long,
     private val socketApi: SocketApi,
     private val httpApi: HttpApi,
+    private val contentHelper: ContentHelper
 ) : ViewModel() {
 
     class Factory(
@@ -38,13 +44,14 @@ class ChatViewModel(
         private val chatId: Long,
         private val socketApi: SocketApi,
         private val httpApi: HttpApi,
+        private val contentHelper: ContentHelper
     ) : ViewModelProvider.Factory {
 
         private val store = Store(userId)
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return ChatViewModel(store, userId, chatId, socketApi, httpApi) as T
+            return ChatViewModel(store, userId, chatId, socketApi, httpApi, contentHelper) as T
         }
     }
 
@@ -54,6 +61,7 @@ class ChatViewModel(
 
     private val compositeDisposable = CompositeDisposable()
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
+    private var uploadDisposable: Disposable? = null
     val viewState = BehaviorRelay.create<State>()
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
     val instaScrollTo = PublishRelay.create<Int>()
@@ -88,6 +96,11 @@ class ChatViewModel(
                 is SideEffect.LoadSpecificPart -> loadSpecificPart(sideEffect.fromMessageId)
                 is SideEffect.InstaScrollTo -> instaScrollTo.accept(sideEffect.position)
                 is SideEffect.LoadNewMessages -> loadNewMessages(sideEffect.fromMessageId)
+                is SideEffect.CancelUploadFile -> {
+                    uploadDisposable?.dispose()
+                    uploadDisposable = null
+                }
+                is SideEffect.UploadFile -> uploadFile(sideEffect.contentUri)
             }
         }
         compositeDisposable.add(
@@ -297,6 +310,31 @@ class ChatViewModel(
         compositeDisposable.add(d)
     }
 
+    private fun uploadFile(contentUri: Uri) {
+        uploadDisposable?.dispose()
+        val inputStream = contentHelper.inputStream(contentUri) ?: return
+        val (name, size) = contentHelper.nameSize(contentUri) ?: return
+        val mimeType = contentHelper.mimeType(contentUri) ?: "*/*"
+        Log.d(TAG, "uploadFile: name: $name, size: $size, mimeType: $mimeType")
+        val filePart = MultipartBody.Part.createFormData(
+            "upload_file",
+            name,
+            InputStreamRequestBody(MediaType.parse(mimeType), inputStream)
+        )
+        httpApi
+            .postUploadFile(filePart)
+            .map { it.result.fileId }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { store.accept(Action.ServerUploadFileSuccess(it)) },
+                { store.accept(Action.ServerUploadFileError(it)) }
+            ).also {
+                uploadDisposable = it
+                compositeDisposable.add(it)
+            }
+    }
+
     fun onStart() {
         socketApi.connect()
     }
@@ -322,20 +360,12 @@ class ChatViewModel(
         store.accept(Action.ClientDeleteMessage(message))
     }
 
-    fun attachPhoto(photoUri: Uri) {
-        store.accept(Action.ClientAttachPhoto(photoUri))
+    fun attach(contentUri: Uri) {
+        store.accept(Action.ClientAttach(contentUri))
     }
 
-    fun detachPhoto() {
-        store.accept(Action.ClientDetachPhoto)
-    }
-
-    fun attachFile(fileUri: Uri) {
-        store.accept(Action.ClientAttachFile(fileUri))
-    }
-
-    fun detachFile() {
-        store.accept(Action.ClientDetachFile)
+    fun detach() {
+        store.accept(Action.ClientDetach)
     }
 
     fun onQuoteMessage(message: Message) {
@@ -373,10 +403,10 @@ class ChatViewModel(
     }
 
     fun scrollToBottom() {
-        store.accept(Action.ScrollToBottom)
+        store.accept(Action.ClientScrollToBottom)
     }
 
     fun emptyRetry() {
-        store.accept(Action.EmptyRetry)
+        store.accept(Action.ClientEmptyRetry)
     }
 }

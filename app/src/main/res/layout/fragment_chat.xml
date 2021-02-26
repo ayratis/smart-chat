@@ -28,12 +28,12 @@
 
             <ImageButton
                 android:layout_width="40dp"
-                android:padding="2dp"
                 android:layout_height="40dp"
-                android:scaleType="fitCenter"
                 android:layout_gravity="center_vertical"
                 android:layout_marginHorizontal="14dp"
                 android:background="?attr/actionBarItemBackground"
+                android:padding="2dp"
+                android:scaleType="fitCenter"
                 android:src="@drawable/group_avatar_placeholder" />
 
         </LinearLayout>
@@ -61,7 +61,7 @@
         android:gravity="center"
         android:textColor="@color/white"
         android:visibility="gone"
-        tools:visibility="visible" />
+        tools:visibility="gone" />
 
     <RelativeLayout
         android:id="@+id/layout_input"
@@ -84,7 +84,7 @@
             android:paddingHorizontal="48dp"
             android:paddingVertical="8dp"
             android:visibility="gone"
-            tools:visibility="visible">
+            tools:visibility="gone">
 
             <View
                 android:id="@+id/view_quot"
@@ -170,78 +170,109 @@
 
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/view_attach_photo"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
+        <FrameLayout
+            android:id="@+id/view_attachment"
+            android:layout_width="wrap_content"
+            android:layout_height="110dp"
             android:layout_below="@id/view_editing_message"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginVertical="8dp"
+            android:background="@drawable/bg_attachment"
+            android:minWidth="110dp"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
             android:visibility="gone"
-            tools:visibility="gone">
+            tools:visibility="visible">
 
             <ImageView
-                android:id="@+id/iv_photo"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:contentDescription="@null" />
-
-            <ImageButton
-                android:id="@+id/btn_attach_photo_close"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/actionBarItemBackground"
-                android:contentDescription="@string/cancel"
-                android:gravity="center"
-                android:src="@drawable/ic_baseline_close_24" />
-
-        </LinearLayout>
-
-        <RelativeLayout
-            android:id="@+id/view_attach_file"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/view_attach_photo"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:visibility="gone"
-            tools:visibility="gone">
-
-            <ImageView
-                android:id="@+id/iv_file"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="30dp"
+                android:id="@+id/iv_attachment_photo"
+                android:layout_width="108dp"
+                android:layout_height="108dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_photo_attachment"
                 android:contentDescription="@null"
-                android:src="@drawable/ic_baseline_insert_drive_file_24" />
+                android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/tv_attach_file_name"
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/iv_file"
-                android:ellipsize="end"
-                android:lines="1" />
+            <ProgressBar
+                android:id="@+id/progress_bar_photo"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_photo_progress"
+                android:padding="2dp"
+                android:theme="@style/ProgressDialogTheme"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/view_file_attachment"
+                android:layout_width="wrap_content"
+                android:layout_height="108dp"
+                android:layout_gravity="center"
+                android:minWidth="108dp"
+                android:orientation="vertical"
+                android:padding="8dp"
+                android:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/iv_file"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_doc_40" />
+
+                <ProgressBar
+                    android:id="@+id/progress_bar_file"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_doc_progress"
+                    android:padding="4dp"
+                    android:theme="@style/ProgressDialogTheme"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tv_file_name"
+                    style="@style/Body3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="5"
+                    android:ellipsize="end"
+                    android:gravity="bottom"
+                    android:lines="1"
+                    android:maxWidth="140dp"
+                    android:minWidth="92dp"
+                    tools:text="File_name_1z53cgasd.jpg" />
+
+                <TextView
+                    android:id="@+id/tv_file_size"
+                    style="@style/Caption1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="4"
+                    android:ellipsize="end"
+                    android:gravity="bottom"
+                    android:lines="1"
+                    android:maxWidth="140dp"
+                    android:minWidth="92dp"
+                    android:textColor="@color/gray"
+                    tools:text="48 Kb" />
+
+            </LinearLayout>
 
             <ImageButton
-                android:id="@+id/btn_attach_file_close"
+                android:id="@+id/btn_detach"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginStart="30dp"
-                android:layout_toEndOf="@id/iv_file"
-                android:background="?attr/actionBarItemBackground"
-                android:contentDescription="@string/cancel"
-                android:gravity="center"
-                android:src="@drawable/ic_baseline_close_24" />
+                android:layout_gravity="end"
+                android:background="@null"
+                android:contentDescription="@string/detach"
+                android:src="@drawable/ic_delete_24" />
 
-        </RelativeLayout>
+        </FrameLayout>
 
         <ImageButton
             android:id="@+id/btn_attach"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_below="@id/view_attach_file"
+            android:layout_below="@id/view_attachment"
             android:layout_margin="4dp"
             android:background="?attr/actionBarItemBackground"
             android:contentDescription="@string/attach"
@@ -251,7 +282,7 @@
             android:id="@+id/et_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/view_attach_file"
+            android:layout_below="@id/view_attachment"
             android:layout_marginVertical="4dp"
             android:layout_toStartOf="@id/btn_main_action"
             android:layout_toEndOf="@id/btn_attach"
@@ -266,7 +297,7 @@
             android:id="@+id/btn_main_action"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_below="@id/view_attach_file"
+            android:layout_below="@id/view_attachment"
             android:layout_alignParentEnd="true"
             android:layout_margin="4dp"
             android:background="?attr/actionBarItemBackground"
