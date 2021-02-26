@@ -284,7 +284,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/view_attachment"
             android:layout_marginVertical="4dp"
-            android:layout_toStartOf="@id/btn_main_action"
+            android:layout_toStartOf="@id/btn_send"
             android:layout_toEndOf="@id/btn_attach"
             android:background="@null"
             android:hint="@string/message"
@@ -294,7 +294,7 @@
             tools:ignore="Autofill,LabelFor,TextFields" />
 
         <ImageButton
-            android:id="@+id/btn_main_action"
+            android:id="@+id/btn_send"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_below="@id/view_attachment"
@@ -302,7 +302,7 @@
             android:layout_margin="4dp"
             android:background="?attr/actionBarItemBackground"
             android:contentDescription="@string/send"
-            android:src="@drawable/ic_send_24" />
+            android:src="@drawable/btn_send" />
 
     </RelativeLayout>
 

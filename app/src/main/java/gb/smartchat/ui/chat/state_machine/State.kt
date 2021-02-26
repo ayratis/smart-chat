@@ -20,7 +20,8 @@ data class State(
     val fullDataDown: Boolean = false,
     val unreadMessageCount: Int = 0,
     val lastMessageId: Long? = null,
-    val atBottom: Boolean = true
+    val atBottom: Boolean = true,
+    val sendEnabled: Boolean = false
 ) {
     companion object {
         const val UNREAD_OVER_MAX_COUNT = -1

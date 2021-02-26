@@ -64,7 +64,9 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     return state.copy(editingMessage = null)
                 }
                 //if sending new message
-                if (state.currentText.isBlank()) return state
+                if (state.currentText.isBlank() ||
+                    state.attachmentState is AttachmentState.Uploading
+                ) return state
 
                 val currentTime = System.currentTimeMillis()
                 val msg = Message(
@@ -214,7 +216,10 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             }
             is Action.ClientEditMessageRequest -> {
                 sideEffectListener(SideEffect.SetInputText(action.message.text ?: ""))
-                return state.copy(editingMessage = action.message)
+                return state.copy(
+                    editingMessage = action.message,
+                    attachmentState = AttachmentState.Empty
+                )
             }
             is Action.ClientEditMessageReject -> {
                 sideEffectListener(SideEffect.SetInputText(""))
@@ -278,17 +283,24 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 return state.copy(chatItems = list)
             }
             is Action.ClientTextChanged -> {
-                return state.copy(currentText = action.text)
+                val sendEnabled = action.text.isNotBlank() &&
+                        state.attachmentState !is AttachmentState.Uploading
+                return state.copy(currentText = action.text, sendEnabled = sendEnabled)
             }
             is Action.ClientAttach -> {
+                if (state.editingMessage != null) return state
                 sideEffectListener(SideEffect.UploadFile(action.contentUri))
                 return state.copy(
-                    attachmentState = AttachmentState.Uploading(action.contentUri)
+                    attachmentState = AttachmentState.Uploading(action.contentUri),
+                    sendEnabled = false
                 )
             }
             is Action.ClientDetach -> {
                 sideEffectListener(SideEffect.CancelUploadFile)
-                return state.copy(attachmentState = AttachmentState.Empty)
+                return state.copy(
+                    attachmentState = AttachmentState.Empty,
+                    sendEnabled = state.currentText.isNotBlank()
+                )
             }
             is Action.ServerUploadFileSuccess -> {
                 return when (state.attachmentState) {
@@ -296,13 +308,17 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                         attachmentState = AttachmentState.UploadSuccess(
                             state.attachmentState.uri,
                             action.fileId
-                        )
+                        ),
+                        sendEnabled = true
                     )
                     else -> state
                 }
             }
             is Action.ServerUploadFileError -> {
-                return state.copy(attachmentState = AttachmentState.Empty)
+                return state.copy(
+                    attachmentState = AttachmentState.Empty,
+                    sendEnabled = state.currentText.isNotBlank()
+                )
             }
             is Action.ClientQuoteMessage -> {
                 return state.copy(quotingMessage = action.message)
