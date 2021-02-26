@@ -24,5 +24,4 @@ class ProgressDialog : DialogFragment() {
     ): View {
         return LayoutInflater.from(context).inflate(R.layout.fragment_progress, null)
     }
-
 }

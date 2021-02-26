@@ -144,5 +144,4 @@ class SocketApiImpl(
             Log.d(TAG, msg)
         }
     }
-
 }

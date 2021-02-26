@@ -3,6 +3,7 @@ package gb.smartchat.di
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import gb.smartchat.data.content.ContentHelper
 import gb.smartchat.data.content.ContentHelperImpl
@@ -12,6 +13,7 @@ import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketApiImpl
 import io.socket.client.IO
 import io.socket.client.Manager
+import io.socket.client.Socket
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -22,23 +24,23 @@ import java.util.*
 
 //uses as di component (singletone for library created by activity)
 class Component constructor(
-    private val applicationContext: Application,
+    private val application: Application,
+    private val baseUrl: String,
     val userId: String,
-    private val baseUrl: String
 ) : ViewModel() {
 
     class Factory(
-        private val applicationContext: Application,
-        private val userId: String,
+        private val application: Application,
         private val baseUrl: String,
+        private val userId: String,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return Component(applicationContext, userId, baseUrl) as T
+            return Component(application, userId, baseUrl) as T
         }
     }
 
-    val gson by lazy {
+    val gson: Gson by lazy {
         GsonBuilder()
             .registerTypeAdapter(Date::class.java, GsonDateAdapter())
             .create()
@@ -62,7 +64,7 @@ class Component constructor(
         }
     }
 
-    val socket by lazy {
+    val socket: Socket by lazy {
         val options = IO.Options().apply {
             callFactory = okHttpClient
             webSocketFactory = okHttpClient
@@ -89,6 +91,6 @@ class Component constructor(
     }
 
     val contentHelper: ContentHelper by lazy {
-        ContentHelperImpl(applicationContext)
+        ContentHelperImpl(application)
     }
 }

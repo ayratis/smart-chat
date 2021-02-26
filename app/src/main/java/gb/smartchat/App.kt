@@ -13,5 +13,4 @@ class App : Application() {
             MultiDex.install(this)
         }
     }
-
 }
