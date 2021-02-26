@@ -2,6 +2,7 @@ package gb.smartchat.entity
 
 
 import com.google.gson.annotations.SerializedName
+import gb.smartchat.data.download.DownloadStatus
 
 data class File(
     @SerializedName("id")
@@ -14,6 +15,8 @@ data class File(
     val name: String?,
     @SerializedName("type")
     val type: String?,
+
+    val downloadStatus: DownloadStatus = DownloadStatus.Empty
 //    @SerializedName("preview")
 //    val preview: Any?
 )

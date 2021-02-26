@@ -16,4 +16,7 @@ sealed class SideEffect {
     data class LoadNewMessages(val fromMessageId: Long) : SideEffect()
     data class UploadFile(val contentUri: Uri) : SideEffect()
     object CancelUploadFile : SideEffect()
+    data class DownloadFile(val message: Message) : SideEffect()
+    data class CancelDownloadFile(val message: Message) : SideEffect()
+    data class OpenFile(val contentUri: Uri) : SideEffect()
 }

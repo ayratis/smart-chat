@@ -2,11 +2,14 @@ package gb.smartchat.ui.chat
 
 import android.net.Uri
 import android.util.Log
+import android.util.LongSparseArray
+import androidx.core.util.forEach
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.data.content.ContentHelper
+import gb.smartchat.data.download.FileDownloadHelper
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
@@ -34,7 +37,8 @@ class ChatViewModel(
     private val chatId: Long,
     private val socketApi: SocketApi,
     private val httpApi: HttpApi,
-    private val contentHelper: ContentHelper
+    private val contentHelper: ContentHelper,
+    private val downloadHelper: FileDownloadHelper,
 ) : ViewModel() {
 
     class Factory(
@@ -42,14 +46,23 @@ class ChatViewModel(
         private val chatId: Long,
         private val socketApi: SocketApi,
         private val httpApi: HttpApi,
-        private val contentHelper: ContentHelper
+        private val contentHelper: ContentHelper,
+        private val downloadHelper: FileDownloadHelper
     ) : ViewModelProvider.Factory {
 
         private val store = Store(userId)
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return ChatViewModel(store, userId, chatId, socketApi, httpApi, contentHelper) as T
+            return ChatViewModel(
+                store,
+                userId,
+                chatId,
+                socketApi,
+                httpApi,
+                contentHelper,
+                downloadHelper
+            ) as T
         }
     }
 
@@ -60,9 +73,12 @@ class ChatViewModel(
     private val compositeDisposable = CompositeDisposable()
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
     private var uploadDisposable: Disposable? = null
+    private val downloadStatusDisposableMap = LongSparseArray<Disposable>()
+
     val viewState = BehaviorRelay.create<State>()
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
     val instaScrollTo = PublishRelay.create<Int>()
+    val openFile = BehaviorRelay.create<SingleEvent<Uri>>()
 
     init {
         setupStateMachine()
@@ -72,6 +88,11 @@ class ChatViewModel(
     override fun onCleared() {
         compositeDisposable.dispose()
         typingTimersDisposableMap.values.forEach { d ->
+            if (!d.isDisposed) {
+                d.dispose()
+            }
+        }
+        downloadStatusDisposableMap.forEach { _, d ->
             if (!d.isDisposed) {
                 d.dispose()
             }
@@ -99,6 +120,9 @@ class ChatViewModel(
                     uploadDisposable = null
                 }
                 is SideEffect.UploadFile -> uploadFile(sideEffect.contentUri)
+                is SideEffect.DownloadFile -> downloadMessageFile(sideEffect.message)
+                is SideEffect.CancelDownloadFile -> cancelDownloadMessageFile(sideEffect.message)
+                is SideEffect.OpenFile -> openFile.accept(SingleEvent(sideEffect.contentUri))
             }
         }
         compositeDisposable.add(
@@ -119,6 +143,27 @@ class ChatViewModel(
                     sendTyping(text)
                 }
         )
+    }
+
+    private fun downloadMessageFile(message: Message) {
+        val d = downloadStatusDisposableMap[message.id]
+        if (d?.isDisposed == false) {
+            d.dispose()
+        }
+        message.file?.url?.let { url ->
+            downloadHelper.download(url)
+                .subscribe { downloadStatus ->
+                    val newMessage =
+                        message.copy(file = message.file.copy(downloadStatus = downloadStatus))
+                    store.accept(Action.ServerMessageChange(newMessage))
+                }.also {
+                    downloadStatusDisposableMap.put(message.id, it)
+                }
+        }
+    }
+
+    private fun cancelDownloadMessageFile(message: Message) {
+        message.file?.url?.let { downloadHelper.cancelDownload(it) }
     }
 
     private fun observeSocketEvents() {
@@ -258,7 +303,18 @@ class ChatViewModel(
                 messageId = messageId,
                 lookForward = forward
             )
-            .map { it.result }
+            .map { response ->
+                response.result.map { msg ->
+                    if (msg.file?.url != null) {
+                        val newFile = msg.file.copy(
+                            downloadStatus = downloadHelper.getDownloadStatus(msg.file.url)
+                        )
+                        msg.copy(file = newFile)
+                    } else {
+                        msg
+                    }
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -280,7 +336,18 @@ class ChatViewModel(
                 messageId = fromMessageId + (State.DEFAULT_PAGE_SIZE / 2),
                 lookForward = false
             )
-            .map { it.result }
+            .map { response ->
+                response.result.map { msg ->
+                    if (msg.file?.url != null) {
+                        val newFile = msg.file.copy(
+                            downloadStatus = downloadHelper.getDownloadStatus(msg.file.url)
+                        )
+                        msg.copy(file = newFile)
+                    } else {
+                        msg
+                    }
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -298,7 +365,18 @@ class ChatViewModel(
                 messageId = fromMessageId,
                 lookForward = true
             )
-            .map { it.result }
+            .map { response ->
+                response.result.map { msg ->
+                    if (msg.file?.url != null) {
+                        val newFile = msg.file.copy(
+                            downloadStatus = downloadHelper.getDownloadStatus(msg.file.url)
+                        )
+                        msg.copy(file = newFile)
+                    } else {
+                        msg
+                    }
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -402,5 +480,9 @@ class ChatViewModel(
 
     fun emptyRetry() {
         store.accept(Action.ClientEmptyRetry)
+    }
+
+    fun onFileClick(chatItem: ChatItem) {
+        store.accept(Action.ClientFileClick(chatItem.message))
     }
 }

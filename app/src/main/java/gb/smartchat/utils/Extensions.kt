@@ -1,6 +1,7 @@
 package gb.smartchat.utils
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Rect
@@ -201,4 +202,21 @@ fun Disposable.disposeOnPause(lifecycleOwner: LifecycleOwner) {
             lifecycleOwner.lifecycle.removeObserver(this)
         }
     })
+}
+
+fun Intent.toLogsString(): String {
+    val stringBuilder = StringBuilder()
+    val bundle = extras
+    if (bundle != null) {
+        var first = true
+        for (key in bundle.keySet()) {
+            if (first) {
+                first = false
+            } else {
+                stringBuilder.append("\n")
+            }
+            stringBuilder.append(key + " : " + if (bundle.get(key) != null) bundle.get(key) else "NULL")
+        }
+    }
+    return stringBuilder.toString()
 }
