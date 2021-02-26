@@ -25,12 +25,11 @@ data class Message(
     @SerializedName("quoted_message")
     val quotedMessage: QuotedMessage?,
     @SerializedName("time_created")
-    val timeCreated: Date?
-
+    val timeCreated: Date?,
+    @SerializedName("file")
+    val file: File?,
 //    @SerializedName("mentions")
 //    val mentions: List<Any>?,
-//    @SerializedName("file_ids")
-//    val fileIds: List<String>?,
 ) {
     enum class Type {
         @SerializedName("system")
@@ -47,7 +46,8 @@ data class Message(
                 senderId = senderId,
                 chatId = chatId,
                 clientId = clientId,
-                quotedMessageId = quotedMessage?.messageId
+                quotedMessageId = quotedMessage?.messageId,
+                fileId = file?.id
             )
         } else null
     }

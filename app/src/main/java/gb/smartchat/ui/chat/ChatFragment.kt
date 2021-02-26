@@ -13,7 +13,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -118,13 +117,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
         }
         binding.etInput.doAfterTextChanged {
             viewModel.onTextChanged(it?.toString() ?: "")
-            val tintColor = ContextCompat.getColor(
-                requireContext(),
-                if (it?.toString()?.isBlank() == false) R.color.purple_heart else R.color.gray
-            )
-            DrawableCompat.setTint(binding.btnMainAction.drawable, tintColor)
         }
-        binding.btnMainAction.setOnClickListener {
+        binding.btnSend.setOnClickListener {
             viewModel.onSendClick()
         }
         binding.btnEditingClose.setOnClickListener {
@@ -202,11 +196,12 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
                 .distinctUntilChanged()
                 .subscribe {
                     val editingMessage = it.first()
+                    binding.btnAttach.visible(editingMessage == null)
                     binding.viewEditingMessage.visible(editingMessage != null)
                     binding.tvEditingMessage.text = editingMessage?.text
-                    binding.btnMainAction.setImageResource(
+                    binding.btnSend.setImageResource(
                         if (editingMessage != null) R.drawable.ic_baseline_check_24
-                        else R.drawable.ic_send_24
+                        else R.drawable.btn_send
                     )
                 },
             viewModel.viewState
@@ -231,7 +226,10 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
                             binding.ivAttachmentPhoto.visible(true)
                             Glide.with(binding.ivAttachmentPhoto)
                                 .load(uri)
-                                .transform(CenterCrop(), RoundedCorners(12.dp(binding.ivAttachmentPhoto)))
+                                .transform(
+                                    CenterCrop(),
+                                    RoundedCorners(12.dp(binding.ivAttachmentPhoto))
+                                )
                                 .into(binding.ivAttachmentPhoto)
                         } else {
                             binding.viewFileAttachment.visible(true)
@@ -318,6 +316,14 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
                     binding.tvUnreadMessageCount.visible(unreadMessageCount != 0)
                     binding.tvUnreadMessageCount.text = text
                 },
+            viewModel.viewState
+                .map { it.sendEnabled }
+                .distinctUntilChanged()
+                .subscribe { enabled ->
+                    binding.btnSend.isEnabled = enabled
+                },
+
+
             viewModel.instaScrollTo
                 .subscribe {
                     (binding.rvChat.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(

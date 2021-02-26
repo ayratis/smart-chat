@@ -44,6 +44,61 @@
 
         </LinearLayout>
 
+        <RelativeLayout
+            android:id="@+id/view_doc_attachment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:id="@+id/iv_doc_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_centerVertical="true"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_doc_40" />
+
+            <TextView
+                android:id="@+id/tv_doc_name"
+                style="@style/Body3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_toEndOf="@id/iv_doc_icon"
+                android:ellipsize="end"
+                android:maxWidth="218dp"
+                android:maxLines="2"
+                android:minWidth="40dp"
+                tools:text="File_name_1z53cg54f4d26g9k1c.doc" />
+
+            <TextView
+                android:id="@+id/tv_doc_size"
+                style="@style/Caption1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_doc_name"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="4dp"
+                android:layout_toEndOf="@id/iv_doc_icon"
+                android:ellipsize="end"
+                android:lines="1"
+                android:maxWidth="218dp"
+                android:minWidth="40dp"
+                android:textColor="@color/gray"
+                tools:text="500 Kb" />
+
+
+        </RelativeLayout>
+
+        <ImageView
+            android:id="@+id/iv_attachment_photo"
+            android:layout_width="266dp"
+            android:layout_height="266dp"
+            android:layout_marginVertical="8dp"
+            android:contentDescription="@string/image"
+            tools:background="@color/gray" />
+
         <LinearLayout
             android:id="@+id/view_quoted_message"
             android:layout_width="match_parent"
