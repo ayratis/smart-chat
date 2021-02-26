@@ -596,15 +596,6 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
         }
     }
 
-    private inline fun <T> MutableList<T>.replaceOrAddToEnd(item: T, predicate: (T) -> Boolean) {
-        val position = this.indexOfLast(predicate)
-        if (position != -1) {
-            this[position] = item
-        } else {
-            this += item
-        }
-    }
-
     private inline fun <T> List<T>.replaceLastWith(item: T, predicate: (T) -> Boolean): List<T> {
         val list = this.toMutableList()
         val position = list.indexOfLast(predicate)

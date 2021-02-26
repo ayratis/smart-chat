@@ -23,6 +23,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import gb.smartchat.R
+import gb.smartchat.data.download.DownloadStatus
+import gb.smartchat.data.download.FileDownloadHelper
+import gb.smartchat.entity.Message
 import io.reactivex.disposables.Disposable
 import kotlin.math.roundToInt
 
@@ -219,4 +222,15 @@ fun Intent.toLogsString(): String {
         }
     }
     return stringBuilder.toString()
+}
+
+fun Message.composeWithDownloadStatus(downloadHelper: FileDownloadHelper) : Message {
+    file?.let { file ->
+        file.url?.let { url ->
+            val downloadStatus = downloadHelper.getDownloadStatus(url)
+            return this.copy(file = file.copy(downloadStatus = downloadStatus))
+        }
+        return this.copy(file = file.copy(downloadStatus = DownloadStatus.Empty))
+    }
+    return this
 }

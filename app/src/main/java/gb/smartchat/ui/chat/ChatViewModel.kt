@@ -21,6 +21,7 @@ import gb.smartchat.ui.chat.state_machine.SideEffect
 import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.chat.state_machine.Store
 import gb.smartchat.utils.SingleEvent
+import gb.smartchat.utils.composeWithDownloadStatus
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -178,10 +179,10 @@ class ChatViewModel(
                         store.accept(Action.InternalConnected(false))
                     }
                     is SocketEvent.MessageNew -> {
-                        store.accept(Action.ServerMessageNew(event.message))
+                        store.accept(Action.ServerMessageNew(event.message.composeWithDownloadStatus(downloadHelper)))
                     }
                     is SocketEvent.MessageChange -> {
-                        store.accept(Action.ServerMessageChange(event.message))
+                        store.accept(Action.ServerMessageChange(event.message.composeWithDownloadStatus(downloadHelper)))
                     }
                     is SocketEvent.Typing -> {
                         store.accept(Action.ServerTyping(event.senderId))
@@ -304,15 +305,8 @@ class ChatViewModel(
                 lookForward = forward
             )
             .map { response ->
-                response.result.map { msg ->
-                    if (msg.file?.url != null) {
-                        val newFile = msg.file.copy(
-                            downloadStatus = downloadHelper.getDownloadStatus(msg.file.url)
-                        )
-                        msg.copy(file = newFile)
-                    } else {
-                        msg
-                    }
+                response.result.map {
+                    it.composeWithDownloadStatus(downloadHelper)
                 }
             }
             .subscribeOn(Schedulers.io())
@@ -337,15 +331,8 @@ class ChatViewModel(
                 lookForward = false
             )
             .map { response ->
-                response.result.map { msg ->
-                    if (msg.file?.url != null) {
-                        val newFile = msg.file.copy(
-                            downloadStatus = downloadHelper.getDownloadStatus(msg.file.url)
-                        )
-                        msg.copy(file = newFile)
-                    } else {
-                        msg
-                    }
+                response.result.map {
+                    it.composeWithDownloadStatus(downloadHelper)
                 }
             }
             .subscribeOn(Schedulers.io())
@@ -366,15 +353,8 @@ class ChatViewModel(
                 lookForward = true
             )
             .map { response ->
-                response.result.map { msg ->
-                    if (msg.file?.url != null) {
-                        val newFile = msg.file.copy(
-                            downloadStatus = downloadHelper.getDownloadStatus(msg.file.url)
-                        )
-                        msg.copy(file = newFile)
-                    } else {
-                        msg
-                    }
+                response.result.map {
+                    it.composeWithDownloadStatus(downloadHelper)
                 }
             }
             .subscribeOn(Schedulers.io())
