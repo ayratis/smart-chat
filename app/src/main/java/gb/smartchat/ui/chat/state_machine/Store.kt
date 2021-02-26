@@ -231,6 +231,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             }
             is Action.ClientEditMessageRequest -> {
                 sideEffectListener(SideEffect.SetInputText(action.message.text ?: ""))
+                sideEffectListener(SideEffect.CancelUploadFile)
                 return state.copy(
                     editingMessage = action.message,
                     attachmentState = AttachmentState.Empty
@@ -298,8 +299,8 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                 return state.copy(chatItems = list)
             }
             is Action.ClientTextChanged -> {
-                val sendEnabled = action.text.isNotBlank() &&
-                        state.attachmentState !is AttachmentState.Uploading
+                val sendEnabled = state.attachmentState is AttachmentState.UploadSuccess ||
+                    action.text.isNotBlank() && state.attachmentState !is AttachmentState.Uploading
                 return state.copy(currentText = action.text, sendEnabled = sendEnabled)
             }
             is Action.ClientAttach -> {

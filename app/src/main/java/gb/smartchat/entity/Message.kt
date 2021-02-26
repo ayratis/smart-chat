@@ -30,8 +30,6 @@ data class Message(
     val file: File?,
 //    @SerializedName("mentions")
 //    val mentions: List<Any>?,
-//    @SerializedName("file_ids")
-//    val fileIds: List<String>?,
 ) {
     enum class Type {
         @SerializedName("system")

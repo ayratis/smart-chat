@@ -313,11 +313,8 @@ class ChatViewModel(
         val (name, size) = contentHelper.nameSize(contentUri) ?: return
         val mimeType = contentHelper.mimeType(contentUri) ?: "*/*"
         Log.d(TAG, "uploadFile: name: $name, size: $size, mimeType: $mimeType")
-        val filePart = MultipartBody.Part.createFormData(
-            "upload_file",
-            name,
-            contentHelper.requestBody(contentUri)
-        )
+        val filePart = MultipartBody.Part
+            .createFormData("upload_file", name, contentHelper.requestBody(contentUri))
         httpApi
             .postUploadFile(filePart)
             .map { it.result.fileId }
