@@ -3,6 +3,7 @@ package gb.smartchat.ui.chat.state_machine
 import android.util.Log
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
+import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.SingleEvent
@@ -64,11 +65,20 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     return state.copy(editingMessage = null)
                 }
                 //if sending new message
-                if (state.currentText.isBlank() ||
-                    state.attachmentState is AttachmentState.Uploading
+                if (state.attachmentState is AttachmentState.Uploading ||
+                    state.currentText.isBlank() && state.attachmentState is AttachmentState.Empty
                 ) return state
 
                 val currentTime = System.currentTimeMillis()
+                val file = (state.attachmentState as? AttachmentState.UploadSuccess)?.let {
+                    File(
+                        id = it.fileId,
+                        url = null,
+                        size = null,
+                        name = null,
+                        type = null
+                    )
+                }
                 val msg = Message(
                     id = -1,
                     chatId = 1,
@@ -78,7 +88,8 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     type = null,
                     readedIds = emptyList(),
                     quotedMessage = state.quotingMessage?.toQuotedMessage(),
-                    timeCreated = Date(currentTime)
+                    timeCreated = Date(currentTime),
+                    file = file
                 )
                 sideEffectListener.invoke(SideEffect.SendMessage(msg))
                 sideEffectListener(SideEffect.SetInputText(""))
@@ -87,14 +98,18 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     chatItems = state.chatItems + newMessageItem,
                     currentText = "",
                     quotingMessage = null,
-                    withScrollTo = SingleEvent(state.chatItems.lastIndex + 1)
+                    withScrollTo = SingleEvent(state.chatItems.lastIndex + 1),
+                    sendEnabled = false,
+                    attachmentState = AttachmentState.Empty,
                 )
                 else state.copy(
                     chatItems = listOf(newMessageItem),
                     currentText = "",
                     quotingMessage = null,
                     fullDataDown = true,
-                    pagingState = PagingState.DATA
+                    pagingState = PagingState.DATA,
+                    sendEnabled = false,
+                    attachmentState = AttachmentState.Empty
                 )
             }
             is Action.ServerMessageSendSuccess -> {

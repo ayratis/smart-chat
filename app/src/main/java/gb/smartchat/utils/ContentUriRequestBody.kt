@@ -1,44 +1,48 @@
-package gb.smartchat.data.content
+package gb.smartchat.utils
 
 import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
-import android.provider.OpenableColumns
 import androidx.annotation.RequiresApi
-import gb.smartchat.utils.ContentUriRequestBody
+import okhttp3.MediaType
 import okhttp3.RequestBody
+import okio.BufferedSink
+import okio.Okio
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 
-class ContentHelperImpl(private val context: Context) : ContentHelper {
+class ContentUriRequestBody(
+    private val context: Context,
+    private val uri: Uri
+) : RequestBody() {
 
     private val contentResolver = context.contentResolver
 
-    override fun nameSize(contentUri: Uri): Pair<String, Long>? {
-        contentResolver
-            .query(contentUri, null, null, null, null)
-            ?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val displayName =
-                        cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
-                    val size = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE))
-                    return displayName to size
-                }
-            }
+    override fun contentType(): MediaType? {
+        contentResolver.getType(uri)?.let { type ->
+            return MediaType.parse(type)
+        }
         return null
     }
 
-    override fun mimeType(contentUri: Uri): String? {
-        return contentResolver.getType(contentUri)
+    @Throws(IOException::class)
+    override fun contentLength(): Long {
+        return -1
     }
 
-    override fun requestBody(contentUri: Uri): RequestBody {
-        return ContentUriRequestBody(context, contentUri)
+    @Throws(IOException::class)
+    override fun writeTo(sink: BufferedSink) {
+        try {
+            val source = Okio.source(inputStream(uri)!!)
+            sink.writeAll(source)
+        } catch (e: Throwable) {
+
+        }
     }
 
-    override fun inputStream(contentUri: Uri): InputStream? {
+    private fun inputStream(contentUri: Uri): InputStream? {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isVirtualFile(contentUri)) {
                 getInputStreamForVirtualFile(contentUri)

@@ -17,7 +17,6 @@ import gb.smartchat.ui.chat.state_machine.Action
 import gb.smartchat.ui.chat.state_machine.SideEffect
 import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.chat.state_machine.Store
-import gb.smartchat.utils.InputStreamRequestBody
 import gb.smartchat.utils.SingleEvent
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -25,7 +24,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import okhttp3.MediaType
 import okhttp3.MultipartBody
 import java.util.concurrent.TimeUnit
 
@@ -312,14 +310,13 @@ class ChatViewModel(
 
     private fun uploadFile(contentUri: Uri) {
         uploadDisposable?.dispose()
-        val inputStream = contentHelper.inputStream(contentUri) ?: return
         val (name, size) = contentHelper.nameSize(contentUri) ?: return
         val mimeType = contentHelper.mimeType(contentUri) ?: "*/*"
         Log.d(TAG, "uploadFile: name: $name, size: $size, mimeType: $mimeType")
         val filePart = MultipartBody.Part.createFormData(
             "upload_file",
             name,
-            InputStreamRequestBody(MediaType.parse(mimeType), inputStream)
+            contentHelper.requestBody(contentUri)
         )
         httpApi
             .postUploadFile(filePart)

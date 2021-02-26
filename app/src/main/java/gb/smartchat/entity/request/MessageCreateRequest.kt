@@ -15,6 +15,6 @@ data class MessageCreateRequest(
     val quotedMessageId: Long?,
 //    @SerializedName("mentions")
 //    val mentions: List<Mention> = emptyList(),
-    @SerializedName("file_ids")
-    val fileIds: List<String> = emptyList()
+    @SerializedName("file_id")
+    val fileId: Long?
 )

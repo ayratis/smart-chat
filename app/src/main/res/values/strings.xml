@@ -12,4 +12,5 @@
     <string name="outgoing_status">Статус отправки</string>
     <string name="connection_error">Ошибка соединения</string>
     <string name="retry">Повторить</string>
+    <string name="image">Изображение</string>
 </resources>
