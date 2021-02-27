@@ -2,6 +2,7 @@ package gb.smartchat.ui.chat
 
 import android.Manifest
 import android.app.Activity.RESULT_OK
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -76,7 +77,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             chat = argChat,
             socketApi = component.socketApi,
             httpApi = component.httpApi,
-            contentHelper = contentHelper
+            contentHelper = contentHelper,
+            downloadHelper = component.fileDownloadHelper
         )
     }
     private val compositeDisposable = CompositeDisposable()
@@ -103,6 +105,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             },
             onQuotedMsgClickListener = { chatItem ->
                 viewModel.onQuotedMessageClick(chatItem)
+            },
+            onFileClickListener = { chatItem ->
+                viewModel.onFileClick(chatItem)
             }
         )
     }
@@ -362,6 +367,25 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                         binding.etInput.setSelection(it.length)
                     }
                 },
+            viewModel.openFile
+                .subscribe { singleEvent ->
+                    singleEvent.getContentIfNotHandled()?.let { uri ->
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = uri
+                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        }
+                        try {
+                            startActivity(intent)
+                        } catch (e: ActivityNotFoundException) {
+                            e.printStackTrace()
+                            Toast.makeText(
+                                requireContext(),
+                                getString(R.string.file_open_error),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
         )
     }
 

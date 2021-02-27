@@ -9,6 +9,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
+import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatMsgOutgoingBinding
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.dp
@@ -22,7 +23,8 @@ class OutgoingViewHolder private constructor(
     private val onDeleteListener: (ChatItem) -> Unit,
     private val onEditListener: (ChatItem) -> Unit,
     private val onQuoteListener: (ChatItem) -> Unit,
-    private val onQuotedMsgClickListener: (ChatItem) -> Unit
+    private val onQuotedMsgClickListener: (ChatItem) -> Unit,
+    private val onFileClickListener: (ChatItem) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -33,14 +35,16 @@ class OutgoingViewHolder private constructor(
             onDeleteListener: (ChatItem) -> Unit,
             onEditListener: (ChatItem) -> Unit,
             onQuoteListener: (ChatItem) -> Unit,
-            onQuotedMsgClickListener: (ChatItem) -> Unit
+            onQuotedMsgClickListener: (ChatItem) -> Unit,
+            onFileClickListener: (ChatItem) -> Unit
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
                 onDeleteListener,
                 onEditListener,
                 onQuoteListener,
-                onQuotedMsgClickListener
+                onQuotedMsgClickListener,
+                onFileClickListener
             )
     }
 
@@ -52,6 +56,9 @@ class OutgoingViewHolder private constructor(
         binding.root.setOnCreateContextMenuListener(this)
         binding.viewQuotedMessage.setOnClickListener {
             onQuotedMsgClickListener.invoke(chatItem)
+        }
+        binding.viewDocAttachment.setOnClickListener {
+            onFileClickListener.invoke(chatItem)
         }
     }
 
@@ -90,6 +97,20 @@ class OutgoingViewHolder private constructor(
                 binding.viewDocAttachment.visible(true)
                 binding.tvDocName.text = chatItem.message.file.name
                 binding.tvDocSize.text = chatItem.message.file.size?.let { "${it / 1000} KB" }
+                when(chatItem.message.file.downloadStatus) {
+                    is DownloadStatus.Empty -> {
+                        binding.progressBarFile.visible(false)
+                        binding.ivDocIcon.setImageResource(R.drawable.ic_download_40)
+                    }
+                    is DownloadStatus.Downloading -> {
+                        binding.progressBarFile.visible(true)
+                        binding.ivDocIcon.setImageResource(R.drawable.ic_doc_40)
+                    }
+                    is DownloadStatus.Success -> {
+                        binding.progressBarFile.visible(false)
+                        binding.ivDocIcon.setImageResource(R.drawable.ic_doc_40)
+                    }
+                }
             }
         } else {
             binding.viewDocAttachment.visible(false)

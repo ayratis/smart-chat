@@ -2,11 +2,14 @@ package gb.smartchat.ui.chat
 
 import android.net.Uri
 import android.util.Log
+import android.util.LongSparseArray
+import androidx.core.util.forEach
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.data.content.ContentHelper
+import gb.smartchat.data.download.FileDownloadHelper
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
@@ -19,6 +22,7 @@ import gb.smartchat.ui.chat.state_machine.SideEffect
 import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.chat.state_machine.Store
 import gb.smartchat.utils.SingleEvent
+import gb.smartchat.utils.composeWithDownloadStatus
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -35,7 +39,8 @@ class ChatViewModel(
     private val chat: Chat,
     private val socketApi: SocketApi,
     private val httpApi: HttpApi,
-    private val contentHelper: ContentHelper
+    private val contentHelper: ContentHelper,
+    private val downloadHelper: FileDownloadHelper,
 ) : ViewModel() {
 
     class Factory(
@@ -43,14 +48,23 @@ class ChatViewModel(
         private val chat: Chat,
         private val socketApi: SocketApi,
         private val httpApi: HttpApi,
-        private val contentHelper: ContentHelper
+        private val contentHelper: ContentHelper,
+        private val downloadHelper: FileDownloadHelper
     ) : ViewModelProvider.Factory {
 
         private val store = Store(userId)
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return ChatViewModel(store, userId, chat, socketApi, httpApi, contentHelper) as T
+            return ChatViewModel(
+                store,
+                userId,
+                chat,
+                socketApi,
+                httpApi,
+                contentHelper,
+                downloadHelper
+            ) as T
         }
     }
 
@@ -60,11 +74,13 @@ class ChatViewModel(
 
     private val compositeDisposable = CompositeDisposable()
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
+    private val downloadStatusDisposableMap = LongSparseArray<Disposable>()
     private var uploadDisposable: Disposable? = null
     val viewState: Observable<State> =
         Observable.wrap(store).observeOn(AndroidSchedulers.mainThread())
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
     val instaScrollTo = PublishRelay.create<Int>()
+    val openFile = BehaviorRelay.create<SingleEvent<Uri>>()
 
     init {
         setupStateMachine()
@@ -82,6 +98,11 @@ class ChatViewModel(
     override fun onCleared() {
         compositeDisposable.dispose()
         typingTimersDisposableMap.values.forEach { d ->
+            if (!d.isDisposed) {
+                d.dispose()
+            }
+        }
+        downloadStatusDisposableMap.forEach { _, d ->
             if (!d.isDisposed) {
                 d.dispose()
             }
@@ -109,6 +130,9 @@ class ChatViewModel(
                     uploadDisposable = null
                 }
                 is SideEffect.UploadFile -> uploadFile(sideEffect.contentUri)
+                is SideEffect.DownloadFile -> downloadMessageFile(sideEffect.message)
+                is SideEffect.CancelDownloadFile -> cancelDownloadMessageFile(sideEffect.message)
+                is SideEffect.OpenFile -> openFile.accept(SingleEvent(sideEffect.contentUri))
             }
         }
     }
@@ -125,10 +149,10 @@ class ChatViewModel(
                         store.accept(Action.InternalConnected(false))
                     }
                     is SocketEvent.MessageNew -> {
-                        store.accept(Action.ServerMessageNew(event.message))
+                        store.accept(Action.ServerMessageNew(event.message.composeWithDownloadStatus(downloadHelper)))
                     }
                     is SocketEvent.MessageChange -> {
-                        store.accept(Action.ServerMessageChange(event.message))
+                        store.accept(Action.ServerMessageChange(event.message.composeWithDownloadStatus(downloadHelper)))
                     }
                     is SocketEvent.Typing -> {
                         store.accept(Action.ServerTyping(event.senderId))
@@ -250,7 +274,11 @@ class ChatViewModel(
                 messageId = messageId,
                 lookForward = forward
             )
-            .map { it.result }
+            .map { response ->
+                response.result.map {
+                    it.composeWithDownloadStatus(downloadHelper)
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -272,7 +300,11 @@ class ChatViewModel(
                 messageId = fromMessageId + (State.DEFAULT_PAGE_SIZE / 2),
                 lookForward = false
             )
-            .map { it.result }
+            .map { response ->
+                response.result.map {
+                    it.composeWithDownloadStatus(downloadHelper)
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -290,7 +322,11 @@ class ChatViewModel(
                 messageId = fromMessageId,
                 lookForward = true
             )
-            .map { it.result }
+            .map { response ->
+                response.result.map {
+                    it.composeWithDownloadStatus(downloadHelper)
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -319,6 +355,27 @@ class ChatViewModel(
                 uploadDisposable = it
                 compositeDisposable.add(it)
             }
+    }
+
+    private fun downloadMessageFile(message: Message) {
+        val d = downloadStatusDisposableMap[message.id]
+        if (d?.isDisposed == false) {
+            d.dispose()
+        }
+        message.file?.url?.let { url ->
+            downloadHelper.download(url)
+                .subscribe { downloadStatus ->
+                    val newMessage =
+                        message.copy(file = message.file.copy(downloadStatus = downloadStatus))
+                    store.accept(Action.ServerMessageChange(newMessage))
+                }.also {
+                    downloadStatusDisposableMap.put(message.id, it)
+                }
+        }
+    }
+
+    private fun cancelDownloadMessageFile(message: Message) {
+        message.file?.url?.let { downloadHelper.cancelDownload(it) }
     }
 
     fun onStart() {
@@ -394,5 +451,9 @@ class ChatViewModel(
 
     fun emptyRetry() {
         store.accept(Action.ClientEmptyRetry)
+    }
+
+    fun onFileClick(chatItem: ChatItem) {
+        store.accept(Action.ClientFileClick(chatItem.message))
     }
 }
