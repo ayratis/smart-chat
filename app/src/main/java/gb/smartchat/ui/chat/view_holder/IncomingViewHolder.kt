@@ -63,6 +63,12 @@ class IncomingViewHolder private constructor(
         this.chatItem = chatItem
         //        binding.tvContent.text = chatItem.message.id.toString() //debug
         //        return
+        Glide.with(binding.ivAvatar)
+            .load(chatItem.message.user?.avatar)
+            .placeholder(R.drawable.profile_avatar_placeholder)
+            .circleCrop()
+            .into(binding.ivAvatar)
+        binding.tvSenderName.text = chatItem.message.user?.name
         if (chatItem.message.file != null) {
             val mimeType = chatItem.message.file.url?.let {
                 val extension = MimeTypeMap.getFileExtensionFromUrl(it)
