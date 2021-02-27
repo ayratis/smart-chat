@@ -16,9 +16,7 @@ import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.TypingRequest
-import gb.smartchat.utils.SingleEvent
-import gb.smartchat.utils.composeWithDownloadStatus
-import gb.smartchat.utils.composeWithUser
+import gb.smartchat.utils.*
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -51,7 +49,7 @@ class ChatViewModel(
     val viewState: Observable<ChatUDF.State> =
         Observable.wrap(store).observeOn(AndroidSchedulers.mainThread())
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
-    val instaScrollTo = PublishRelay.create<Int>()
+    val instantScrollTo = PublishRelay.create<Int>()
     val openFile = BehaviorRelay.create<SingleEvent<Uri>>()
 
     init {
@@ -104,13 +102,13 @@ class ChatViewModel(
                     fetchPage(sideEffect.fromMessageId, sideEffect.forward)
                 }
                 is ChatUDF.SideEffect.PageErrorEvent -> {
-                    Log.e(TAG, "PageErrorEvent", sideEffect.throwable)
+                    Log.d(TAG, "PageErrorEvent", sideEffect.throwable)
                 }
                 is ChatUDF.SideEffect.LoadSpecificPart -> {
                     loadSpecificPart(sideEffect.fromMessageId)
                 }
-                is ChatUDF.SideEffect.InstaScrollTo -> {
-                    instaScrollTo.accept(sideEffect.position)
+                is ChatUDF.SideEffect.InstantScrollTo -> {
+                    instantScrollTo.accept(sideEffect.position)
                 }
                 is ChatUDF.SideEffect.LoadNewMessages -> {
                     loadNewMessages(sideEffect.fromMessageId)
@@ -136,9 +134,10 @@ class ChatViewModel(
     }
 
     private fun observeSocketEvents() {
-        val d = socketApi.observeEvents()
+        socketApi.observeEvents(chat.id)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { event ->
+                Log.d(TAG, "observeSocketEvents: $event")
                 when (event) {
                     is SocketEvent.Connected -> {
                         store.accept(ChatUDF.Action.InternalConnected(true))
@@ -159,14 +158,14 @@ class ChatViewModel(
                         store.accept(ChatUDF.Action.ServerMessageChange(msg))
                     }
                     is SocketEvent.Typing -> {
-                        store.accept(ChatUDF.Action.ServerTyping(event.senderId))
+                        store.accept(ChatUDF.Action.ServerTyping(event.typing.senderId))
                     }
                     is SocketEvent.MessageRead -> {
                         store.accept(ChatUDF.Action.ServerMessageRead(event.messageIds))
                     }
                 }
             }
-        compositeDisposable.add(d)
+            .also { compositeDisposable.add(it) }
     }
 
     private fun sendMessage(message: Message) {
@@ -182,7 +181,7 @@ class ChatViewModel(
                     }
                 },
                 { e ->
-                    Log.e(TAG, "sendMessage: error", e)
+                    Log.d(TAG, "sendMessage: error", e)
                     store.accept(ChatUDF.Action.ServerMessageSendError(message))
                 }
             )
@@ -220,7 +219,7 @@ class ChatViewModel(
                     }
                 },
                 { e ->
-                    Log.e(TAG, "deleteMessage: error", e)
+                    Log.d(TAG, "deleteMessage: error", e)
                     store.accept(ChatUDF.Action.ServerMessageDeleteError(message))
                 }
             )
@@ -247,7 +246,7 @@ class ChatViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { /*do nothing*/ },
-                { Log.e(TAG, "sendTyping: error", it) }
+                { Log.d(TAG, "sendTyping: error", it) }
             )
         compositeDisposable.addAll(d)
     }
@@ -260,12 +259,8 @@ class ChatViewModel(
         )
         val d = socketApi.readMessage(requestBody)
             .subscribe(
-                { /*do nothing*/
-                    Log.d(TAG, "onChatItemBind: success")
-                },
-                { e ->
-                    Log.e(TAG, "messageRead", e)
-                }
+                { Log.d(TAG, "onChatItemBind: success") },
+                { Log.d(TAG, "messageRead", it) }
             )
         compositeDisposable.add(d)
     }
@@ -274,12 +269,8 @@ class ChatViewModel(
         val messageId = if (fromMessageId == -1L) null else fromMessageId
         fetchMessages(messageId, forward)
             .subscribe(
-                { data ->
-                    store.accept(ChatUDF.Action.ServerMessageNewPage(data, messageId))
-                },
-                { e ->
-                    store.accept(ChatUDF.Action.ServerMessagePageError(e, messageId))
-                }
+                { store.accept(ChatUDF.Action.ServerMessageNewPage(it, messageId)) },
+                { store.accept(ChatUDF.Action.ServerMessagePageError(it, messageId)) }
             )
             .also { compositeDisposable.add(it) }
     }
@@ -328,7 +319,7 @@ class ChatViewModel(
             .createFormData("upload_file", name, contentHelper.requestBody(contentUri))
         httpApi
             .postUploadFile(filePart)
-            .map { it.result.file }
+            .map { it.result }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -359,10 +350,6 @@ class ChatViewModel(
 
     private fun cancelDownloadMessageFile(message: Message) {
         message.file?.url?.let { downloadHelper.cancelDownload(it) }
-    }
-
-    fun onStart() {
-        socketApi.connect()
     }
 
     fun onTextChanged(text: String) {

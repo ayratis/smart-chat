@@ -201,11 +201,6 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        viewModel.onStart()
-    }
-
     private var scrollToPosition: SingleEvent<Int>? = null
     private val defaultOffset: Int by lazy {
         resources.displayMetrics.heightPixels / 3
@@ -372,7 +367,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                 },
 
 
-            viewModel.instaScrollTo
+            viewModel.instantScrollTo
                 .subscribe {
                     (binding.rvChat.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
                         it,

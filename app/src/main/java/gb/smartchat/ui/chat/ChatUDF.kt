@@ -8,6 +8,7 @@ import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
 import gb.smartchat.utils.SingleEvent
+import gb.smartchat.utils.toQuotedMessage
 import io.reactivex.ObservableSource
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -76,7 +77,7 @@ object ChatUDF {
         data class LoadPage(val fromMessageId: Long?, val forward: Boolean) : SideEffect()
         data class PageErrorEvent(val throwable: Throwable) : SideEffect()
         data class LoadSpecificPart(val fromMessageId: Long) : SideEffect()
-        data class InstaScrollTo(val position: Int) : SideEffect()
+        data class InstantScrollTo(val position: Int) : SideEffect()
         data class LoadNewMessages(val fromMessageId: Long) : SideEffect()
         data class UploadFile(val contentUri: Uri) : SideEffect()
         object CancelUploadFile : SideEffect()
@@ -137,16 +138,16 @@ object ChatUDF {
             .hide()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { action ->
-                if (action !is Action.ServerMessageRead) { //paging debug
-                    Log.d(TAG, "action: $action")
-                }
-//            Log.d(TAG, "action: $action")
+//                if (action !is Action.ServerMessageRead) { //paging debug
+//                    Log.d(TAG, "action: $action")
+//                }
+                Log.d(TAG, "action: $action")
                 val newState = reduce(viewState.value!!, action)
-                Log.d(
-                    TAG,
-                    "pagingState: ${newState.pagingState}, fullDataUp: ${newState.fullDataUp}, fullDataDown: ${newState.fullDataDown}"
-                ) //paging debug
-//            Log.d(TAG, "state: $newState")
+//                Log.d(
+//                    TAG,
+//                    "pagingState: ${newState.pagingState}, fullDataUp: ${newState.fullDataUp}, fullDataDown: ${newState.fullDataDown}"
+//                ) //paging debug
+                Log.d(TAG, "state: $newState")
                 viewState.accept(newState)
             }
 
@@ -605,7 +606,7 @@ object ChatUDF {
                 is Action.ClientScrollToMessage -> {
                     val position = state.chatItems.indexOfLast { it.message.id == action.messageId }
                     return if (position != -1) {
-                        sideEffectListener(SideEffect.InstaScrollTo(position))
+                        sideEffectListener(SideEffect.InstantScrollTo(position))
                         state
                     } else {
                         sideEffectListener(SideEffect.LoadSpecificPart(action.messageId))
@@ -665,7 +666,7 @@ object ChatUDF {
                 }
                 is Action.ClientScrollToBottom -> {
                     return if (state.fullDataDown) {
-                        sideEffectListener(SideEffect.InstaScrollTo(state.chatItems.lastIndex))
+                        sideEffectListener(SideEffect.InstantScrollTo(state.chatItems.lastIndex))
                         state.copy(unreadMessageCount = 0)
                     } else {
                         sideEffectListener(SideEffect.LoadPage(null, false))

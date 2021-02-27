@@ -26,7 +26,11 @@ import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.data.download.FileDownloadHelper
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.QuotedMessage
 import gb.smartchat.entity.User
+import gb.smartchat.entity.request.MessageCreateRequest
+import gb.smartchat.entity.request.MessageDeleteRequest
+import gb.smartchat.entity.request.MessageEditRequest
 import io.reactivex.disposables.Disposable
 import kotlin.math.roundToInt
 
@@ -240,3 +244,47 @@ fun Message.composeWithUser(users: List<User>) : Message {
     val user = users.find { it.id == this.senderId }
     return this.copy(user = user)
 }
+
+fun Message.toMessageCreateRequestBody(): MessageCreateRequest? {
+    return if (text != null && senderId != null && chatId != null && clientId != null) {
+        MessageCreateRequest(
+            text = text,
+            senderId = senderId,
+            chatId = chatId,
+            clientId = clientId,
+            quotedMessageId = quotedMessage?.messageId,
+            fileId = file?.id
+        )
+    } else null
+}
+
+fun Message.toMessageEditRequestBody(): MessageEditRequest? {
+    return if (text != null && chatId != null && senderId != null) {
+        MessageEditRequest(
+            text = text,
+            messageId = id,
+            chatId = chatId,
+            senderId = senderId
+        )
+    } else null
+}
+
+fun Message.toMessageDeleteRequestBody(): MessageDeleteRequest? {
+    return if (text != null && chatId != null && senderId != null) {
+        MessageDeleteRequest(
+//                messageIds = listOf(id),
+            messageIds = listOf(id),
+            chatId = chatId,
+            senderId = senderId,
+        )
+    } else null
+}
+
+fun Message.toQuotedMessage(): QuotedMessage {
+    return QuotedMessage(
+        messageId = id,
+        text = text,
+        senderId = senderId,
+    )
+}
+

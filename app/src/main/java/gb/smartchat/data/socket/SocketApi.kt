@@ -8,7 +8,7 @@ interface SocketApi {
     fun isConnected(): Boolean
     fun connect()
     fun disconnect()
-    fun observeEvents(): Observable<SocketEvent>
+    fun observeEvents(chatId: Long? = null): Observable<SocketEvent>
 
     fun sendMessage(messageCreateRequest: MessageCreateRequest): Single<Boolean>
     fun editMessage(messageEditRequest: MessageEditRequest): Single<Boolean>
