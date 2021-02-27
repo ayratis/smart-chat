@@ -15,11 +15,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts.*
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -29,9 +32,6 @@ import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.entity.Chat
 import gb.smartchat.ui.SmartChatActivity
-import gb.smartchat.ui.chat.state_machine.AttachmentState
-import gb.smartchat.ui.chat.state_machine.PagingState
-import gb.smartchat.ui.chat.state_machine.State
 import gb.smartchat.ui.custom.ProgressDialog
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
@@ -46,13 +46,6 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         private const val PROGRESS_TAG = "progress_tag"
         private const val ARG_CHAT = "arg_chat"
 
-        private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUEST_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-        private const val REQUEST_CODE_PHOTO = 1
-        private const val REQUEST_CODE_GALLERY = 2
-        private const val REQUEST_CODE_FILE = 3
-
-
         fun create(chat: Chat) = ChatFragment().apply {
             arguments = Bundle().apply {
                 putSerializable(ARG_CHAT, chat)
@@ -65,6 +58,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
     private val argChat: Chat by lazy {
         requireArguments().getSerializable(ARG_CHAT) as Chat
     }
+    private val compositeDisposable = CompositeDisposable()
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
@@ -72,17 +66,21 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         component.contentHelper
     }
     private val viewModel by viewModels<ChatViewModel> {
-        ChatViewModel.Factory(
-            userId = component.userId,
-            chat = argChat,
-            socketApi = component.socketApi,
-            httpApi = component.httpApi,
-            contentHelper = contentHelper,
-            downloadHelper = component.fileDownloadHelper
-        )
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return ChatViewModel(
+                    store = ChatUDF.Store(component.userId),
+                    userId = component.userId,
+                    chat = argChat,
+                    socketApi = component.socketApi,
+                    httpApi = component.httpApi,
+                    contentHelper = contentHelper,
+                    downloadHelper = component.fileDownloadHelper
+                ) as T
+            }
+        }
     }
-    private val compositeDisposable = CompositeDisposable()
-    private var takePhotoUri: Uri? = null
     private val chatAdapter by lazy {
         ChatAdapter(
             onItemBindListener = { chatItem ->
@@ -110,6 +108,28 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                 viewModel.onFileClick(chatItem)
             }
         )
+    }
+    private val requestCameraPermission =
+        registerForActivityResult(RequestPermission()) { isGranted ->
+            if (isGranted) {
+                takePhoto()
+            } else {
+                Toast.makeText(requireContext(), "require permission", Toast.LENGTH_SHORT).show()
+            }
+        }
+    private var cameraPictureUri: Uri? = null
+    private val getCameraImage = registerForActivityResult(TakePicture()) { isOK ->
+        if (isOK) {
+            cameraPictureUri?.let { viewModel.attach(it) }
+        }
+    }
+    private val getPicFromGallery = registerForActivityResult(StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.data?.let { viewModel.attach(it) }
+        }
+    }
+    private val getContent = registerForActivityResult(GetContent()) { uri: Uri? ->
+        uri?.let { viewModel.attach(it) }
     }
 
     override fun onCreateView(
@@ -272,14 +292,14 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                         }
                     }
                     when (attachmentState) {
-                        is AttachmentState.Empty -> {
+                        is ChatUDF.AttachmentState.Empty -> {
                             binding.viewAttachment.visible(false)
                         }
-                        is AttachmentState.Uploading -> {
+                        is ChatUDF.AttachmentState.Uploading -> {
                             binding.viewAttachment.visible(true)
                             showContent(attachmentState.uri, true)
                         }
-                        is AttachmentState.UploadSuccess -> {
+                        is ChatUDF.AttachmentState.UploadSuccess -> {
                             binding.viewAttachment.visible(true)
                             showContent(attachmentState.uri, false)
                         }
@@ -298,11 +318,11 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                 .distinctUntilChanged()
                 .subscribe { pagingState ->
                     when (pagingState) {
-                        PagingState.EMPTY_ERROR -> {
+                        ChatUDF.PagingState.EMPTY_ERROR -> {
                             binding.viewEmptyError.visible(true)
                             showProgressDialog(false)
                         }
-                        PagingState.EMPTY_PROGRESS -> {
+                        ChatUDF.PagingState.EMPTY_PROGRESS -> {
                             binding.viewEmptyError.visible(false)
                             showProgressDialog(true)
                         }
@@ -336,8 +356,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                 .distinctUntilChanged()
                 .subscribe { unreadMessageCount ->
                     val text =
-                        if (unreadMessageCount == State.UNREAD_OVER_MAX_COUNT) {
-                            "${State.DEFAULT_PAGE_SIZE}+"
+                        if (unreadMessageCount == ChatUDF.UNREAD_OVER_MAX_COUNT) {
+                            "${ChatUDF.DEFAULT_PAGE_SIZE}+"
                         } else {
                             unreadMessageCount.toString()
                         }
@@ -394,50 +414,19 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         super.onPause()
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) {
-                takePhoto()
-            } else {
-                Toast.makeText(requireContext(), "require permission", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    override fun onTakePhoto() {
-        if (allPermissionsGranted()) takePhoto()
-        else requestPermissions(REQUEST_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
-    }
-
     override fun onSelectFromGallery() {
-        val pickPhoto = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        startActivityForResult(pickPhoto, REQUEST_CODE_GALLERY)
+        getPicFromGallery.launch(
+            Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        )
     }
 
     override fun onAttachFile() {
-        takeFile()
+        getContent.launch("*/*")
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == RESULT_OK) {
-            when (requestCode) {
-                REQUEST_CODE_PHOTO -> {
-                    takePhotoUri?.let { viewModel.attach(it) }
-                }
-                REQUEST_CODE_GALLERY -> {
-                    data?.data?.let { viewModel.attach(it) }
-                }
-                REQUEST_CODE_FILE -> {
-                    data?.data?.let { viewModel.attach(it) }
-                }
-            }
-        }
+    override fun onTakePhoto() {
+        if (isCameraPermissionGranted()) takePhoto()
+        else requestCameraPermission.launch(Manifest.permission.CAMERA)
     }
 
     private fun takePhoto() {
@@ -447,40 +436,20 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             ".jpg",
             storageDir
         )
-        context?.run {
-            Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePicIntent ->
-                takePicIntent.resolveActivity(packageManager)?.also {
-
-                    val photoURI: Uri = FileProvider.getUriForFile(
-                        this,
-                        "$packageName.fileprovider",
-                        file
-                    )
-                    takePhotoUri = photoURI
-                    takePicIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-                    startActivityForResult(takePicIntent, REQUEST_CODE_PHOTO)
-                }
-            }
-        }
+        val cameraPictureUri: Uri = FileProvider.getUriForFile(
+            requireContext(),
+            "${requireContext().packageName}.fileprovider",
+            file
+        )
+        this.cameraPictureUri = cameraPictureUri
+        getCameraImage.launch(cameraPictureUri)
     }
 
-    private fun takeFile() {
-        var chooseFile = Intent(Intent.ACTION_GET_CONTENT)
-        chooseFile.type = "*/*"
-        chooseFile = Intent.createChooser(chooseFile, "Choose a file")
-        startActivityForResult(chooseFile, REQUEST_CODE_FILE)
-    }
-
-    private fun allPermissionsGranted(): Boolean {
-        context?.run {
-            for (permission in REQUEST_PERMISSIONS) {
-                if (ContextCompat.checkSelfPermission(this, permission) !=
-                    PackageManager.PERMISSION_GRANTED
-                ) return false
-            }
-            return true
-        }
-        return false
+    private fun isCameraPermissionGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun showProgressDialog(progress: Boolean) {

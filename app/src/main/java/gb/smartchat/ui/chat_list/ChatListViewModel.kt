@@ -10,7 +10,7 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 
 class ChatListViewModel(
-    private val store: ChatListStateMachine.Store,
+    private val store: ChatListUDF.Store,
     private val httpApi: HttpApi,
     private val socketApi: SocketApi
 ) : ViewModel() {
@@ -21,7 +21,7 @@ class ChatListViewModel(
 
     private val compositeDisposable = CompositeDisposable()
 
-    val viewState: Observable<ChatListStateMachine.State> = Observable.wrap(store)
+    val viewState: Observable<ChatListUDF.State> = Observable.wrap(store)
 
     override fun onCleared() {
         compositeDisposable.dispose()
@@ -29,15 +29,15 @@ class ChatListViewModel(
 
     init {
         setupStateMachine()
-        store.accept(ChatListStateMachine.Action.Refresh)
+        store.accept(ChatListUDF.Action.Refresh)
     }
 
     private fun setupStateMachine() {
         store.sideEffectListener = { sideEffect ->
             when (sideEffect) {
-                is ChatListStateMachine.SideEffect.ErrorEvent ->
+                is ChatListUDF.SideEffect.ErrorEvent ->
                     Log.d(TAG, "errorEvent", sideEffect.error)
-                is ChatListStateMachine.SideEffect.LoadPage -> fetchPage(sideEffect.pageCount)
+                is ChatListUDF.SideEffect.LoadPage -> fetchPage(sideEffect.pageCount)
             }
         }
     }
@@ -46,15 +46,15 @@ class ChatListViewModel(
         httpApi
             .getChatList(
                 pageCount = pageCount,
-                pageSize = ChatListStateMachine.DEFAULT_PAGE_SIZE,
+                pageSize = ChatListUDF.DEFAULT_PAGE_SIZE,
                 fromArchive = null
             )
             .map { it.result }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
-                { store.accept(ChatListStateMachine.Action.NewPage(pageCount, it)) },
-                { store.accept(ChatListStateMachine.Action.PageError(it)) }
+                { store.accept(ChatListUDF.Action.NewPage(pageCount, it)) },
+                { store.accept(ChatListUDF.Action.PageError(it)) }
             )
             .also { compositeDisposable.add(it) }
     }

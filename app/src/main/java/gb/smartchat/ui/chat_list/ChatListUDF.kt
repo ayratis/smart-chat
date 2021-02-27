@@ -10,7 +10,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Consumer
 
-object ChatListStateMachine {
+object ChatListUDF {
 
     const val DEFAULT_PAGE_SIZE = 20
     private const val TAG = "ChatListStateMachine"
