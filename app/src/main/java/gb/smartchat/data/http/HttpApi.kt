@@ -1,5 +1,6 @@
 package gb.smartchat.data.http
 
+import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.Recipient
 import gb.smartchat.entity.response.BaseResponse
@@ -22,6 +23,13 @@ interface HttpApi {
     fun getRecipients(
         @Query("chat_id") chatId: Long
     ): Single<BaseResponse<List<Recipient>>>
+
+    @GET("chat/management/list")
+    fun getChatList(
+        @Query("page_count") pageCount: Int,
+        @Query("page_size") pageSize: Int,
+        @Query("from_archive") fromArchive: Boolean?
+    ): Single<BaseResponse<List<Chat>>>
 
     @Multipart
     @POST("chat/file/upload")

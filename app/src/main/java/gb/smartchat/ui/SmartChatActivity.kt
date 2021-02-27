@@ -5,7 +5,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import gb.smartchat.R
 import gb.smartchat.di.Component
-import gb.smartchat.ui.chat.ChatFragment
+import gb.smartchat.ui.chat_list.ChatListFragment
 import gb.smartchat.utils.configureSystemBars
 
 class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
@@ -28,10 +28,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         if (savedInstanceState == null) {
             supportFragmentManager
                 .beginTransaction()
-                .replace(
-                    R.id.fragment_container,
-                    ChatFragment.create(chatId = 1,)
-                )
+                .replace(R.id.fragment_container, ChatListFragment())
                 .commitNow()
         }
     }
