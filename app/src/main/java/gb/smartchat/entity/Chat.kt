@@ -25,6 +25,6 @@ data class Chat(
     val isFavorites: Boolean?,
     @SerializedName("is_pinned")
     val isPinned: Boolean?,
-    @SerializedName("users")
-    val users: List<User>?
+    @SerializedName("recipients")
+    val users: List<User>
 ) : Serializable

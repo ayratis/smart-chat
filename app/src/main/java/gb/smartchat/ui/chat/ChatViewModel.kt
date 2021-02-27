@@ -18,8 +18,10 @@ import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.TypingRequest
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.composeWithDownloadStatus
+import gb.smartchat.utils.composeWithUser
 import io.reactivex.Completable
 import io.reactivex.Observable
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
@@ -145,11 +147,15 @@ class ChatViewModel(
                         store.accept(ChatUDF.Action.InternalConnected(false))
                     }
                     is SocketEvent.MessageNew -> {
-                        val msg = event.message.composeWithDownloadStatus(downloadHelper)
+                        val msg = event.message
+                            .composeWithDownloadStatus(downloadHelper)
+                            .composeWithUser(chat.users)
                         store.accept(ChatUDF.Action.ServerMessageNew(msg))
                     }
                     is SocketEvent.MessageChange -> {
-                        val msg = event.message.composeWithDownloadStatus(downloadHelper)
+                        val msg = event.message
+                            .composeWithDownloadStatus(downloadHelper)
+                            .composeWithUser(chat.users)
                         store.accept(ChatUDF.Action.ServerMessageChange(msg))
                     }
                     is SocketEvent.Typing -> {
@@ -266,20 +272,7 @@ class ChatViewModel(
 
     private fun fetchPage(fromMessageId: Long?, forward: Boolean) {
         val messageId = if (fromMessageId == -1L) null else fromMessageId
-        val d = httpApi
-            .getChatMessageHistory(
-                chatId = chat.id,
-                pageSize = ChatUDF.DEFAULT_PAGE_SIZE,
-                messageId = messageId,
-                lookForward = forward
-            )
-            .map { response ->
-                response.result.map {
-                    it.composeWithDownloadStatus(downloadHelper)
-                }
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
+        fetchMessages(messageId, forward)
             .subscribe(
                 { data ->
                     store.accept(ChatUDF.Action.ServerMessageNewPage(data, messageId))
@@ -288,51 +281,42 @@ class ChatViewModel(
                     store.accept(ChatUDF.Action.ServerMessagePageError(e, messageId))
                 }
             )
-        compositeDisposable.add(d)
+            .also { compositeDisposable.add(it) }
     }
 
     private fun loadSpecificPart(fromMessageId: Long) {
-        val d = httpApi
-            .getChatMessageHistory(
-                chatId = chat.id,
-                pageSize = ChatUDF.DEFAULT_PAGE_SIZE,
-                messageId = fromMessageId + (ChatUDF.DEFAULT_PAGE_SIZE / 2),
-                lookForward = false
-            )
-            .map { response ->
-                response.result.map {
-                    it.composeWithDownloadStatus(downloadHelper)
-                }
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
+        fetchMessages(fromMessageId + (ChatUDF.DEFAULT_PAGE_SIZE / 2), false)
             .subscribe(
                 { store.accept(ChatUDF.Action.ServerSpecificPartSuccess(it, fromMessageId)) },
                 { store.accept(ChatUDF.Action.ServerSpecificPartError(it)) }
             )
-        compositeDisposable.add(d)
+            .also { compositeDisposable.add(it) }
     }
 
     private fun loadNewMessages(fromMessageId: Long) {
-        val d = httpApi
-            .getChatMessageHistory(
-                chatId = chat.id,
-                pageSize = ChatUDF.DEFAULT_PAGE_SIZE,
-                messageId = fromMessageId,
-                lookForward = true
-            )
-            .map { response ->
-                response.result.map {
-                    it.composeWithDownloadStatus(downloadHelper)
-                }
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
+        fetchMessages(fromMessageId, true)
             .subscribe(
                 { store.accept(ChatUDF.Action.ServerLoadNewMessagesSuccess(it)) },
                 { store.accept(ChatUDF.Action.ServerLoadNewMessagesError(it)) }
             )
-        compositeDisposable.add(d)
+            .also { compositeDisposable.add(it) }
+    }
+
+    private fun fetchMessages(fromMessageId: Long?, forward: Boolean): Single<List<Message>> {
+        return httpApi
+            .getChatMessageHistory(
+                chatId = chat.id,
+                pageSize = ChatUDF.DEFAULT_PAGE_SIZE,
+                messageId = fromMessageId,
+                lookForward = forward
+            )
+            .map { response ->
+                response.result.map {
+                    it.composeWithDownloadStatus(downloadHelper).composeWithUser(chat.users)
+                }
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
     }
 
     private fun uploadFile(contentUri: Uri) {

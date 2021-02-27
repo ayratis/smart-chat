@@ -30,6 +30,7 @@
                 android:src="@drawable/profile_avatar_placeholder" />
 
             <TextView
+                android:id="@+id/tv_sender_name"
                 style="@style/Body1"
                 android:layout_width="wrap_content"
                 android:layout_height="24dp"

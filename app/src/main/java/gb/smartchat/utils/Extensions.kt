@@ -26,6 +26,7 @@ import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.data.download.FileDownloadHelper
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.User
 import io.reactivex.disposables.Disposable
 import kotlin.math.roundToInt
 
@@ -233,4 +234,9 @@ fun Message.composeWithDownloadStatus(downloadHelper: FileDownloadHelper) : Mess
         return this.copy(file = file.copy(downloadStatus = DownloadStatus.Empty))
     }
     return this
+}
+
+fun Message.composeWithUser(users: List<User>) : Message {
+    val user = users.find { it.id == this.senderId }
+    return this.copy(user = user)
 }
