@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatListBinding
@@ -33,7 +35,17 @@ class ChatListFragment : Fragment() {
         }
     }
     private val viewModel: ChatListViewModel by viewModels {
-        ChatListViewModel.Factory((requireActivity() as SmartChatActivity).component)
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                val component = (requireActivity() as SmartChatActivity).component
+                return ChatListViewModel(
+                    ChatListStateMachine.Store(),
+                    component.httpApi,
+                    component.socketApi
+                ) as T
+            }
+        }
     }
 
     override fun onCreateView(

@@ -2,6 +2,7 @@ package gb.smartchat.entity
 
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class User(
     @SerializedName("last_read_message_id")
@@ -12,4 +13,4 @@ data class User(
     val avatar: String?,
     @SerializedName("id")
     val id: String?
-)
+): Serializable

@@ -2,10 +2,8 @@ package gb.smartchat.ui.chat_list
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
-import gb.smartchat.di.Component
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -16,18 +14,6 @@ class ChatListViewModel(
     private val httpApi: HttpApi,
     private val socketApi: SocketApi
 ) : ViewModel() {
-
-    class Factory(private val component: Component) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            val store = ChatListStateMachine.Store()
-            return ChatListViewModel(
-                store,
-                component.httpApi,
-                component.socketApi
-            ) as T
-        }
-    }
 
     companion object {
         private const val TAG = "ChatListViewModel"
