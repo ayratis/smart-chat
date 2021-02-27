@@ -1,6 +1,7 @@
 package gb.smartchat.utils
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Rect
@@ -22,6 +23,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import gb.smartchat.R
+import gb.smartchat.data.download.DownloadStatus
+import gb.smartchat.data.download.FileDownloadHelper
+import gb.smartchat.entity.Message
 import io.reactivex.disposables.Disposable
 import kotlin.math.roundToInt
 
@@ -201,4 +205,32 @@ fun Disposable.disposeOnPause(lifecycleOwner: LifecycleOwner) {
             lifecycleOwner.lifecycle.removeObserver(this)
         }
     })
+}
+
+fun Intent.toLogsString(): String {
+    val stringBuilder = StringBuilder()
+    val bundle = extras
+    if (bundle != null) {
+        var first = true
+        for (key in bundle.keySet()) {
+            if (first) {
+                first = false
+            } else {
+                stringBuilder.append("\n")
+            }
+            stringBuilder.append(key + " : " + if (bundle.get(key) != null) bundle.get(key) else "NULL")
+        }
+    }
+    return stringBuilder.toString()
+}
+
+fun Message.composeWithDownloadStatus(downloadHelper: FileDownloadHelper) : Message {
+    file?.let { file ->
+        file.url?.let { url ->
+            val downloadStatus = downloadHelper.getDownloadStatus(url)
+            return this.copy(file = file.copy(downloadStatus = downloadStatus))
+        }
+        return this.copy(file = file.copy(downloadStatus = DownloadStatus.Empty))
+    }
+    return this
 }

@@ -7,6 +7,8 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import gb.smartchat.data.content.ContentHelper
 import gb.smartchat.data.content.ContentHelperImpl
+import gb.smartchat.data.download.FileDownloadHelper
+import gb.smartchat.data.download.FileDownloadHelperImpl
 import gb.smartchat.data.gson.GsonDateAdapter
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
@@ -92,5 +94,9 @@ class Component constructor(
 
     val contentHelper: ContentHelper by lazy {
         ContentHelperImpl(application)
+    }
+
+    val fileDownloadHelper: FileDownloadHelper by lazy {
+        FileDownloadHelperImpl(application)
     }
 }

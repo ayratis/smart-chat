@@ -3,6 +3,7 @@ package gb.smartchat.ui.chat.state_machine
 import android.util.Log
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
+import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
@@ -300,7 +301,7 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
             }
             is Action.ClientTextChanged -> {
                 val sendEnabled = state.attachmentState is AttachmentState.UploadSuccess ||
-                    action.text.isNotBlank() && state.attachmentState !is AttachmentState.Uploading
+                        action.text.isNotBlank() && state.attachmentState !is AttachmentState.Uploading
                 return state.copy(currentText = action.text, sendEnabled = sendEnabled)
             }
             is Action.ClientAttach -> {
@@ -576,15 +577,22 @@ class Store(private val senderId: String) : ObservableSource<State>, Consumer<Ac
                     fullDataDown = false
                 )
             }
-        }
-    }
-
-    private inline fun <T> MutableList<T>.replaceOrAddToEnd(item: T, predicate: (T) -> Boolean) {
-        val position = this.indexOfLast(predicate)
-        if (position != -1) {
-            this[position] = item
-        } else {
-            this += item
+            is Action.ClientFileClick -> {
+                return when (val status = action.message.file!!.downloadStatus) {
+                    is DownloadStatus.Empty -> {
+                        sideEffectListener(SideEffect.DownloadFile(action.message))
+                        state
+                    }
+                    is DownloadStatus.Downloading -> {
+                        sideEffectListener(SideEffect.CancelDownloadFile(action.message))
+                        state
+                    }
+                    is DownloadStatus.Success -> {
+                        sideEffectListener(SideEffect.OpenFile(status.contentUri))
+                        state
+                    }
+                }
+            }
         }
     }
 
