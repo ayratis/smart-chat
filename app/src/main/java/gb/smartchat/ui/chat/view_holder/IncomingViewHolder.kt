@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import androidx.core.view.forEach
 import androidx.recyclerview.widget.RecyclerView
-import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -43,7 +42,7 @@ class IncomingViewHolder private constructor(
     }
 
     private val sdf = SimpleDateFormat("h:mm", Locale.getDefault())
-    private val binding by viewBinding(ItemChatMsgIncomingBinding::bind)
+    private val binding = ItemChatMsgIncomingBinding.bind(itemView)
     private lateinit var chatItem: ChatItem
 
     init {

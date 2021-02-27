@@ -131,8 +131,8 @@ fun Fragment.registerOnBackPress(
         })
 }
 
-fun FragmentTransaction.setSlideAnimation() {
-    setCustomAnimations(
+fun FragmentTransaction.setSlideAnimation(): FragmentTransaction {
+    return setCustomAnimations(
         R.anim.slide_in_right,
         R.anim.slide_out_left,
         R.anim.slide_in_left,

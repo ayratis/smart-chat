@@ -9,8 +9,11 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.widget.doAfterTextChanged
@@ -18,12 +21,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
+import gb.smartchat.entity.Chat
 import gb.smartchat.ui.SmartChatActivity
 import gb.smartchat.ui.chat.state_machine.AttachmentState
 import gb.smartchat.ui.chat.state_machine.PagingState
@@ -35,12 +38,12 @@ import java.io.File
 import kotlin.math.min
 
 
-class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOptionSelected {
+class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
 
     companion object {
         private const val TAG = "ChatFragment"
         private const val PROGRESS_TAG = "progress_tag"
-        private const val ARG_CHAT_ID = "arg_chat_id"
+        private const val ARG_CHAT = "arg_chat"
 
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUEST_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
@@ -49,15 +52,17 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
         private const val REQUEST_CODE_FILE = 3
 
 
-        fun create(chatId: Long) = ChatFragment().apply {
+        fun create(chat: Chat) = ChatFragment().apply {
             arguments = Bundle().apply {
-                putLong(ARG_CHAT_ID, chatId)
+                putSerializable(ARG_CHAT, chat)
             }
         }
     }
 
-    private val argChatId: Long by lazy {
-        requireArguments().getLong(ARG_CHAT_ID)
+    private var _binding: FragmentChatBinding? = null
+    private val binding: FragmentChatBinding get() = _binding!!
+    private val argChat: Chat by lazy {
+        requireArguments().getSerializable(ARG_CHAT) as Chat
     }
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
@@ -68,16 +73,14 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
     private val viewModel by viewModels<ChatViewModel> {
         ChatViewModel.Factory(
             userId = component.userId,
-            chatId = argChatId,
+            chat = argChat,
             socketApi = component.socketApi,
             httpApi = component.httpApi,
             contentHelper = contentHelper
         )
     }
-    private val binding by viewBinding(FragmentChatBinding::bind)
     private val compositeDisposable = CompositeDisposable()
     private var takePhotoUri: Uri? = null
-
     private val chatAdapter by lazy {
         ChatAdapter(
             onItemBindListener = { chatItem ->
@@ -104,10 +107,30 @@ class ChatFragment : Fragment(R.layout.fragment_chat), AttachDialogFragment.OnOp
         )
     }
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentChatBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        requireActivity().onBackPressedDispatcher.addCallback {
+            parentFragmentManager.popBackStack()
+        }
         binding.appBarLayout.addSystemTopPadding()
         binding.spacerBottom.addSystemBottomPadding()
+        binding.toolbar.setNavigationOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
         binding.rvChat.apply {
             layoutManager = LinearLayoutManager(context).apply {
                 stackFromEnd = true

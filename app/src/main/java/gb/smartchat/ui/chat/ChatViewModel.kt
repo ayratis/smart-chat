@@ -10,6 +10,7 @@ import gb.smartchat.data.content.ContentHelper
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
+import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.TypingRequest
@@ -31,7 +32,7 @@ import java.util.concurrent.TimeUnit
 class ChatViewModel(
     private val store: Store,
     private val userId: String,
-    private val chatId: Long,
+    private val chat: Chat,
     private val socketApi: SocketApi,
     private val httpApi: HttpApi,
     private val contentHelper: ContentHelper
@@ -39,7 +40,7 @@ class ChatViewModel(
 
     class Factory(
         private val userId: String,
-        private val chatId: Long,
+        private val chat: Chat,
         private val socketApi: SocketApi,
         private val httpApi: HttpApi,
         private val contentHelper: ContentHelper
@@ -49,7 +50,7 @@ class ChatViewModel(
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return ChatViewModel(store, userId, chatId, socketApi, httpApi, contentHelper) as T
+            return ChatViewModel(store, userId, chat, socketApi, httpApi, contentHelper) as T
         }
     }
 
@@ -60,12 +61,21 @@ class ChatViewModel(
     private val compositeDisposable = CompositeDisposable()
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
     private var uploadDisposable: Disposable? = null
-    val viewState = BehaviorRelay.create<State>()
+    val viewState: Observable<State> =
+        Observable.wrap(store).observeOn(AndroidSchedulers.mainThread())
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
     val instaScrollTo = PublishRelay.create<Int>()
 
     init {
         setupStateMachine()
+        viewState
+            .map { it.currentText }
+            .distinctUntilChanged()
+            .filter { it.isNotEmpty() }
+            .throttleLatest(1500, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { sendTyping(it) }
+            .also { compositeDisposable.add(it) }
         observeSocketEvents()
     }
 
@@ -101,24 +111,6 @@ class ChatViewModel(
                 is SideEffect.UploadFile -> uploadFile(sideEffect.contentUri)
             }
         }
-        compositeDisposable.add(
-            Observable.wrap(store)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { state ->
-                    viewState.accept(state)
-                }
-        )
-        compositeDisposable.add(
-            Observable.wrap(store)
-                .map { it.currentText }
-                .distinctUntilChanged()
-                .filter { it.isNotEmpty() }
-                .throttleLatest(1500, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { text ->
-                    sendTyping(text)
-                }
-        )
     }
 
     private fun observeSocketEvents() {
@@ -218,7 +210,7 @@ class ChatViewModel(
 
     private fun sendTyping(text: String) {
         val requestBody = TypingRequest(
-            chatId = chatId,
+            chatId = chat.id,
             senderId = userId,
             text = text
         )
@@ -234,7 +226,7 @@ class ChatViewModel(
     private fun readMessage(message: Message) {
         val requestBody = MessageReadRequest(
             messageIds = listOf(message.id),
-            chatId = chatId,
+            chatId = chat.id,
             senderId = userId,
         )
         val d = socketApi.readMessage(requestBody)
@@ -253,7 +245,7 @@ class ChatViewModel(
         val messageId = if (fromMessageId == -1L) null else fromMessageId
         val d = httpApi
             .getChatMessageHistory(
-                chatId = chatId,
+                chatId = chat.id,
                 pageSize = State.DEFAULT_PAGE_SIZE,
                 messageId = messageId,
                 lookForward = forward
@@ -275,7 +267,7 @@ class ChatViewModel(
     private fun loadSpecificPart(fromMessageId: Long) {
         val d = httpApi
             .getChatMessageHistory(
-                chatId = chatId,
+                chatId = chat.id,
                 pageSize = State.DEFAULT_PAGE_SIZE,
                 messageId = fromMessageId + (State.DEFAULT_PAGE_SIZE / 2),
                 lookForward = false
@@ -293,7 +285,7 @@ class ChatViewModel(
     private fun loadNewMessages(fromMessageId: Long) {
         val d = httpApi
             .getChatMessageHistory(
-                chatId = chatId,
+                chatId = chat.id,
                 pageSize = State.DEFAULT_PAGE_SIZE,
                 messageId = fromMessageId,
                 lookForward = true
