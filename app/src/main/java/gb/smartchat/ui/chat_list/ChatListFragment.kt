@@ -40,7 +40,7 @@ class ChatListFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 val component = (requireActivity() as SmartChatActivity).component
                 return ChatListViewModel(
-                    ChatListStateMachine.Store(),
+                    ChatListUDF.Store(),
                     component.httpApi,
                     component.socketApi
                 ) as T
