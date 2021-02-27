@@ -9,12 +9,13 @@ import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.toQuotedMessage
-import io.reactivex.ObservableSource
-import io.reactivex.Observer
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Consumer
+import io.reactivex.schedulers.Schedulers
 import java.util.*
+import java.util.concurrent.Executors
 
 object ChatUDF {
 
@@ -121,37 +122,45 @@ object ChatUDF {
         NEW_PAGE_UP_DOWN_PROGRESS,
     }
 
-    class Store(private val senderId: String) :
-        ObservableSource<State>,
-        Consumer<Action>,
-        Disposable {
+    class Store(private val senderId: String): Consumer<Action> {
 
         companion object {
             private const val TAG = "store"
         }
 
         private val actions = PublishRelay.create<Action>()
-        private val viewState = BehaviorRelay.createDefault(State())
-        var sideEffectListener: (SideEffect) -> Unit = {}
+        private val viewStateSubject = BehaviorRelay.createDefault(State())
+        private val sideEffectsSubject = PublishRelay.create<SideEffect>()
+
+        val viewState: Observable<State> = viewStateSubject.hide()
+            .observeOn(AndroidSchedulers.mainThread())
+        val sideEffects: Observable<SideEffect> = sideEffectsSubject.hide()
+            .observeOn(AndroidSchedulers.mainThread())
 
         private var disposable: Disposable = actions
             .hide()
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(Schedulers.from(Executors.newSingleThreadExecutor()))
             .subscribe { action ->
+                val newState = reduce(viewStateSubject.value!!, action) {
+                    sideEffectsSubject.accept(it)
+                }
+                viewStateSubject.accept(newState)
 //                if (action !is Action.ServerMessageRead) { //paging debug
 //                    Log.d(TAG, "action: $action")
 //                }
                 Log.d(TAG, "action: $action")
-                val newState = reduce(viewState.value!!, action)
 //                Log.d(
 //                    TAG,
 //                    "pagingState: ${newState.pagingState}, fullDataUp: ${newState.fullDataUp}, fullDataDown: ${newState.fullDataDown}"
 //                ) //paging debug
                 Log.d(TAG, "state: $newState")
-                viewState.accept(newState)
             }
 
-        private fun reduce(state: State, action: Action): State {
+        private fun reduce(
+            state: State,
+            action: Action,
+            sideEffectListener: (SideEffect) -> Unit
+        ): State {
             when (action) {
                 is Action.ClientActionWithMessage -> {
                     //if editing existing message
@@ -738,18 +747,6 @@ object ChatUDF {
 
         override fun accept(t: Action) {
             actions.accept(t)
-        }
-
-        override fun subscribe(observer: Observer<in State>) {
-            viewState.hide().subscribe(observer)
-        }
-
-        override fun dispose() {
-            disposable.dispose()
-        }
-
-        override fun isDisposed(): Boolean {
-            return disposable.isDisposed
         }
     }
 }
