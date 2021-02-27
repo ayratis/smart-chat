@@ -57,7 +57,7 @@ object ChatUDF {
         data class ServerSpecificPartError(val throwable: Throwable) : Action()
         data class ServerLoadNewMessagesSuccess(val items: List<Message>) : Action()
         data class ServerLoadNewMessagesError(val throwable: Throwable) : Action()
-        data class ServerUploadFileSuccess(val fileId: Long) : Action()
+        data class ServerUploadFileSuccess(val file: File) : Action()
         data class ServerUploadFileError(val throwable: Throwable) : Action()
 
         object InternalLoadMoreUpMessages : Action()
@@ -107,7 +107,7 @@ object ChatUDF {
     sealed class AttachmentState {
         object Empty : AttachmentState()
         data class Uploading(val uri: Uri) : AttachmentState()
-        data class UploadSuccess(val uri: Uri, val fileId: Long) : AttachmentState()
+        data class UploadSuccess(val uri: Uri, val file: File) : AttachmentState()
     }
 
     enum class PagingState {
@@ -180,15 +180,7 @@ object ChatUDF {
                     ) return state
 
                     val currentTime = System.currentTimeMillis()
-                    val file = (state.attachmentState as? AttachmentState.UploadSuccess)?.let {
-                        File(
-                            id = it.fileId,
-                            url = null,
-                            size = null,
-                            name = null,
-                            type = null
-                        )
-                    }
+                    val file = (state.attachmentState as? AttachmentState.UploadSuccess)?.file
                     val msg = Message(
                         id = -1,
                         chatId = 1,
@@ -439,7 +431,7 @@ object ChatUDF {
                         is AttachmentState.Uploading -> state.copy(
                             attachmentState = AttachmentState.UploadSuccess(
                                 state.attachmentState.uri,
-                                action.fileId
+                                action.file
                             ),
                             sendEnabled = true
                         )
@@ -759,5 +751,4 @@ object ChatUDF {
             return disposable.isDisposed
         }
     }
-
 }

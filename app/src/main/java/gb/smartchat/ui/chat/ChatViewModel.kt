@@ -344,7 +344,7 @@ class ChatViewModel(
             .createFormData("upload_file", name, contentHelper.requestBody(contentUri))
         httpApi
             .postUploadFile(filePart)
-            .map { it.result.fileId }
+            .map { it.result.file }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
