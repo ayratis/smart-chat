@@ -50,8 +50,10 @@ class ChatViewModel(
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
     val instantScrollTo = PublishRelay.create<Int>()
     val openFile = BehaviorRelay.create<SingleEvent<Uri>>()
+    val fakeScrollTo = BehaviorRelay.create<SingleEvent<Pair<Int, Boolean>>>()
 
     init {
+        compositeDisposable.add(store)
         setupStateMachine()
         viewState
             .map { it.currentText }
@@ -76,7 +78,6 @@ class ChatViewModel(
                 d.dispose()
             }
         }
-        socketApi.disconnect()
     }
 
     private fun setupStateMachine() {
@@ -128,6 +129,9 @@ class ChatViewModel(
                     }
                     is ChatUDF.SideEffect.OpenFile -> {
                         openFile.accept(SingleEvent(sideEffect.contentUri))
+                    }
+                    is ChatUDF.SideEffect.FakeScrollTo -> {
+                        fakeScrollTo.accept(SingleEvent(sideEffect.position to sideEffect.isUp))
                     }
                 }
             }

@@ -44,7 +44,6 @@
         android:id="@+id/rv_chat"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/layout_input"
         android:layout_below="@id/app_bar_layout"
         android:clipToPadding="false"
         android:overScrollMode="never"
@@ -64,6 +63,7 @@
         tools:visibility="gone" />
 
     <RelativeLayout
+        android:background="@color/white"
         android:id="@+id/layout_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
