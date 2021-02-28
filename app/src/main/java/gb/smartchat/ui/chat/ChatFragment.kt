@@ -486,14 +486,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             .map { it.unreadMessageCount }
             .distinctUntilChanged()
             .subscribe { unreadMessageCount ->
-                val text =
-                    if (unreadMessageCount == ChatUDF.UNREAD_OVER_MAX_COUNT) {
-                        "${ChatUDF.DEFAULT_PAGE_SIZE}+"
-                    } else {
-                        unreadMessageCount.toString()
-                    }
                 binding.tvUnreadMessageCount.visible(unreadMessageCount != 0)
-                binding.tvUnreadMessageCount.text = text
+                binding.tvUnreadMessageCount.text = unreadMessageCount.toString()
             }
             .also { renderDisposables.add(it) }
         viewModel.viewState

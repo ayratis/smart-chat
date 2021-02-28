@@ -15,16 +15,16 @@ import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.dp
 import gb.smartchat.utils.inflate
 import gb.smartchat.utils.visible
-import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class OutgoingViewHolder private constructor(
     itemView: View,
-    private val onDeleteListener: (ChatItem) -> Unit,
-    private val onEditListener: (ChatItem) -> Unit,
-    private val onQuoteListener: (ChatItem) -> Unit,
-    private val onQuotedMsgClickListener: (ChatItem) -> Unit,
-    private val onFileClickListener: (ChatItem) -> Unit
+    private val onDeleteListener: (ChatItem.Msg) -> Unit,
+    private val onEditListener: (ChatItem.Msg) -> Unit,
+    private val onQuoteListener: (ChatItem.Msg) -> Unit,
+    private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
+    private val onFileClickListener: (ChatItem.Msg) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -32,11 +32,11 @@ class OutgoingViewHolder private constructor(
 
         fun create(
             parent: ViewGroup,
-            onDeleteListener: (ChatItem) -> Unit,
-            onEditListener: (ChatItem) -> Unit,
-            onQuoteListener: (ChatItem) -> Unit,
-            onQuotedMsgClickListener: (ChatItem) -> Unit,
-            onFileClickListener: (ChatItem) -> Unit
+            onDeleteListener: (ChatItem.Msg) -> Unit,
+            onEditListener: (ChatItem.Msg) -> Unit,
+            onQuoteListener: (ChatItem.Msg) -> Unit,
+            onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
+            onFileClickListener: (ChatItem.Msg) -> Unit
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
@@ -49,8 +49,8 @@ class OutgoingViewHolder private constructor(
     }
 
     private val binding = ItemChatMsgOutgoingBinding.bind(itemView)
-    private lateinit var chatItem: ChatItem
-    private val sdf = SimpleDateFormat("h:mm", Locale.getDefault())
+    private lateinit var chatItem: ChatItem.Msg
+    private val sdf = DateTimeFormatter.ofPattern("H:mm")
 
     init {
         binding.root.setOnCreateContextMenuListener(this)
@@ -62,7 +62,7 @@ class OutgoingViewHolder private constructor(
         }
     }
 
-    fun bind(chatItem: ChatItem.Outgoing) {
+    fun bind(chatItem: ChatItem.Msg.Outgoing) {
         this.chatItem = chatItem
 //        binding.tvContent.text = chatItem.message.id.toString() //debug
 //        return
@@ -128,7 +128,7 @@ class OutgoingViewHolder private constructor(
 
         binding.tvContent.text = chatItem.message.text
         binding.tvContent.visible(!chatItem.message.text.isNullOrBlank())
-        binding.tvTime.text = chatItem.message.timeCreated?.let { sdf.format(it) }
+        binding.tvTime.text = sdf.format(chatItem.message.timeCreated)
     }
 
     override fun onCreateContextMenu(
