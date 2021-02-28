@@ -37,6 +37,7 @@ object ChatUDF {
         data class ServerMessageChange(val message: Message) : Action()
         data class ServerTyping(val senderId: String) : Action()
         data class ServerMessageRead(val messageIds: List<Long>) : Action()
+        data class ServerMessagesDeleted(val messages: List<Message>) : Action()
         data class ServerMessageSendSuccess(val message: Message) : Action()
         data class ServerMessageSendError(val message: Message) : Action()
         data class ServerMessageEditSuccess(val message: Message) : Action()
@@ -331,6 +332,22 @@ object ChatUDF {
                             if (messageIds.isEmpty()) {
                                 break
                             }
+                        }
+                    }
+                    return state.copy(chatItems = chatItems)
+                }
+                is Action.ServerMessagesDeleted -> {
+                    val chatItems = state.chatItems.toMutableList()
+                    val deletedMessages = action.messages.toMutableList()
+                    for (i in chatItems.lastIndex downTo 0) {
+                        if (deletedMessages.isEmpty()) {
+                            break
+                        }
+                        val chatItem = chatItems[i]
+                        val deletedMessage = deletedMessages.find { it.id == chatItem.message.id }
+                        if (deletedMessage != null) {
+                            chatItems[i] = deletedMessage.mapIntoChatItem()
+                            deletedMessages.remove(deletedMessage)
                         }
                     }
                     return state.copy(chatItems = chatItems)
@@ -714,21 +731,22 @@ object ChatUDF {
         }
 
         private fun List<Message>.mapIntoChatItems(): List<ChatItem> {
-            return map { message ->
-                when {
-                    message.senderId == senderId -> {
-                        val status =
-                            if (message.readedIds.isNullOrEmpty()) ChatItem.OutgoingStatus.SENT_2
-                            else ChatItem.OutgoingStatus.READ
-                        ChatItem.Outgoing(message, status)
-                    }
-                    (message.type == Message.Type.SYSTEM ||
-                            message.type == Message.Type.DELETED) -> {
-                        ChatItem.System(message)
-                    }
-                    else -> {
-                        ChatItem.Incoming(message)
-                    }
+            return map { it.mapIntoChatItem() }
+        }
+
+        private fun Message.mapIntoChatItem(): ChatItem {
+            return when {
+                senderId == this@Store.senderId -> {
+                    val status =
+                        if (readedIds.isNullOrEmpty()) ChatItem.OutgoingStatus.SENT_2
+                        else ChatItem.OutgoingStatus.READ
+                    ChatItem.Outgoing(this, status)
+                }
+                (type == Message.Type.SYSTEM || type == Message.Type.DELETED) -> {
+                    ChatItem.System(this)
+                }
+                else -> {
+                    ChatItem.Incoming(this)
                 }
             }
         }

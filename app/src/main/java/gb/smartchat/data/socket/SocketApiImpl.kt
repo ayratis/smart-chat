@@ -2,6 +2,7 @@ package gb.smartchat.data.socket
 
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.BuildConfig
 import gb.smartchat.entity.Message
@@ -68,7 +69,15 @@ class SocketApiImpl(
                         val messageIds = gson.fromJson(messageIdsRaw, Array<Long>::class.java)
                         SocketEvent.MessageRead(messageIds.toList())
                     }
-                    else -> null
+                    ServerEvent.MESSAGE_DELETE -> {
+                        val messageIdsRaw =
+                            response.getJSONArray("deleted_messages").toString()
+                        val typeToken = object: TypeToken<List<Message>>(){}.type
+                        val messages: List<Message> = gson.fromJson(messageIdsRaw, typeToken)
+                        SocketEvent.MessagesDeleted(messages)
+                    }
+                    ServerEvent.USERNAME_MISSING -> null
+                    ServerEvent.USER_MISSING -> null
                 }
                 socketEvent?.let { socketEventsRelay.accept(it) }
             } catch (e: Throwable) {
@@ -101,6 +110,8 @@ class SocketApiImpl(
                         is SocketEvent.MessageNew -> socketEvent.message.chatId == chatId
                         is SocketEvent.MessageRead -> true
                         is SocketEvent.Typing -> socketEvent.typing.chatId == chatId
+                        is SocketEvent.MessagesDeleted ->
+                            socketEvent.messages.firstOrNull()?.chatId == chatId
                     }
                 }
             if (isConnected()) observable.startWith(SocketEvent.Connected)

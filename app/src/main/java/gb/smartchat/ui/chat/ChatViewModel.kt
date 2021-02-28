@@ -168,6 +168,9 @@ class ChatViewModel(
                     is SocketEvent.MessageRead -> {
                         store.accept(ChatUDF.Action.ServerMessageRead(event.messageIds))
                     }
+                    is SocketEvent.MessagesDeleted -> {
+                        store.accept(ChatUDF.Action.ServerMessagesDeleted(event.messages))
+                    }
                 }
             }
             .also { compositeDisposable.add(it) }
