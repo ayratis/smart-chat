@@ -33,6 +33,7 @@ import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.entity.Chat
 import gb.smartchat.ui.SmartChatActivity
 import gb.smartchat.ui.custom.CenterSmoothScroller
+import gb.smartchat.ui.custom.HeaderItemDecoration
 import gb.smartchat.ui.custom.ProgressDialog
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
@@ -186,13 +187,13 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         binding.toolbar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
         }
-
         binding.rvChat.apply {
             layoutManager = linearLayoutManager
             setHasFixedSize(true)
             itemAnimator = null
             isNestedScrollingEnabled = false
             adapter = chatAdapter
+            addItemDecoration(HeaderItemDecoration(this, false))
         }
         binding.etInput.doAfterTextChanged {
             viewModel.onTextChanged(it?.toString() ?: "")

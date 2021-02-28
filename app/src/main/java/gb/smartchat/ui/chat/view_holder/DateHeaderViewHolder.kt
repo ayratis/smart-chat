@@ -22,6 +22,6 @@ class DateHeaderViewHolder private constructor(itemView: View) : RecyclerView.Vi
 
     fun bind(chatItem: ChatItem.DateHeader) {
         this.chatItem = chatItem
-        binding.root.text = sdf.format(chatItem.localDate)
+        binding.tvDate.text = sdf.format(chatItem.localDate)
     }
 }

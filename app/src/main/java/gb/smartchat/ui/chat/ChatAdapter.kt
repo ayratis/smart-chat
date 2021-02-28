@@ -8,6 +8,7 @@ import gb.smartchat.ui.chat.view_holder.DateHeaderViewHolder
 import gb.smartchat.ui.chat.view_holder.IncomingViewHolder
 import gb.smartchat.ui.chat.view_holder.OutgoingViewHolder
 import gb.smartchat.ui.chat.view_holder.SystemViewHolder
+import gb.smartchat.ui.custom.StickyHeaderHelper
 
 class ChatAdapter(
     private val onItemBindListener: (ChatItem) -> Unit,
@@ -18,7 +19,8 @@ class ChatAdapter(
     private val nextPageDownCallback: () -> Unit,
     private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
     private val onFileClickListener: (ChatItem.Msg) -> Unit
-) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()) {
+) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()),
+    StickyHeaderHelper {
 
     var fullDataUp = false
     var fullDataDown = false
@@ -66,5 +68,10 @@ class ChatAdapter(
         onItemBindListener.invoke(item)
         if (!fullDataUp && position < 10) nextPageUpCallback.invoke()
         if (!fullDataDown && position >= itemCount - 10) nextPageDownCallback.invoke()
+    }
+
+    override fun isHeaderItem(position: Int): Boolean {
+        if (position >= itemCount) return false
+        return getItem(position) is ChatItem.DateHeader
     }
 }

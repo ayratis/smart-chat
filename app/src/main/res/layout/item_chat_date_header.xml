@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/Body2"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_horizontal"
-    android:lines="1"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="20dp"
-    android:textColor="@color/gray_suit"
-    tools:text="8 января 2021" />
+    android:paddingVertical="12dp">
+
+    <TextView
+        android:id="@+id/tv_date"
+        style="@style/Body2"
+        android:paddingVertical="4dp"
+        android:paddingHorizontal="8dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_date_header"
+        android:layout_gravity="center_horizontal"
+        android:lines="1"
+        android:textColor="@color/gray_suit"
+        tools:text="8 января 2021" />
+
+</FrameLayout>

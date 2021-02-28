@@ -47,7 +47,6 @@
         android:layout_below="@id/app_bar_layout"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        android:paddingVertical="8dp"
         tools:listitem="@layout/item_chat_msg_outgoing" />
 
     <TextView
