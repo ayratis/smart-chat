@@ -14,7 +14,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         Component.Factory(
             application = application,
             userId = "77f21ecc-0d4a-4f85-9173-55acf327f007",
-            //userId ="46343a36-9ad0-4002-822d-61d81da5c831",
+//            userId ="46343a36-9ad0-4002-822d-61d81da5c831",
             baseUrl = "http://91.201.41.157:8000/"
         )
     }
@@ -31,5 +31,10 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
                 .replace(R.id.fragment_container, ChatListFragment())
                 .commitNow()
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        component.socket.connect()
     }
 }

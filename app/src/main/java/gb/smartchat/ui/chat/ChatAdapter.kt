@@ -1,6 +1,5 @@
 package gb.smartchat.ui.chat
 
-import android.util.Log
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -62,7 +61,6 @@ class ChatAdapter(
             is ChatItem.System -> (holder as SystemViewHolder).bind(item)
         }
         onItemBindListener.invoke(item)
-        Log.d("ChatFragment", "onBindViewHolder: $position")
         if (!fullDataUp && position < 10) nextPageUpCallback.invoke()
         if (!fullDataDown && position >= itemCount - 10) nextPageDownCallback.invoke()
     }

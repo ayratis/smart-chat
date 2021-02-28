@@ -2,9 +2,11 @@ package gb.smartchat.data.socket
 
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.BuildConfig
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.Typing
 import gb.smartchat.entity.request.*
 import gb.smartchat.utils.emitSingle
 import io.reactivex.Observable
@@ -59,15 +61,23 @@ class SocketApiImpl(
                         SocketEvent.MessageChange(message)
                     }
                     ServerEvent.TYPING -> {
-                        val senderId = response.getString("sender_id")
-                        SocketEvent.Typing(senderId)
+                        val typing = gson.fromJson(response.toString(), Typing::class.java)
+                        SocketEvent.Typing(typing)
                     }
                     ServerEvent.READ -> {
                         val messageIdsRaw = response.getJSONArray("message_ids").toString()
                         val messageIds = gson.fromJson(messageIdsRaw, Array<Long>::class.java)
                         SocketEvent.MessageRead(messageIds.toList())
                     }
-                    else -> null
+                    ServerEvent.MESSAGE_DELETE -> {
+                        val messageIdsRaw =
+                            response.getJSONArray("deleted_messages").toString()
+                        val typeToken = object: TypeToken<List<Message>>(){}.type
+                        val messages: List<Message> = gson.fromJson(messageIdsRaw, typeToken)
+                        SocketEvent.MessagesDeleted(messages)
+                    }
+                    ServerEvent.USERNAME_MISSING -> null
+                    ServerEvent.USER_MISSING -> null
                 }
                 socketEvent?.let { socketEventsRelay.accept(it) }
             } catch (e: Throwable) {
@@ -88,8 +98,26 @@ class SocketApiImpl(
         socket.disconnect()
     }
 
-    override fun observeEvents(): Observable<SocketEvent> {
-        return socketEventsRelay.hide()
+    override fun observeEvents(chatId: Long?): Observable<SocketEvent> {
+        return if (chatId == null) return socketEventsRelay.hide()
+        else {
+            val observable = socketEventsRelay.hide()
+                .filter { socketEvent ->
+                    when (socketEvent) {
+                        is SocketEvent.Connected -> true
+                        is SocketEvent.Disconnected -> true
+                        is SocketEvent.MessageChange -> socketEvent.message.chatId == chatId
+                        is SocketEvent.MessageNew -> socketEvent.message.chatId == chatId
+                        is SocketEvent.MessageRead -> true
+                        is SocketEvent.Typing -> socketEvent.typing.chatId == chatId
+                        is SocketEvent.MessagesDeleted ->
+                            socketEvent.messages.firstOrNull()?.chatId == chatId
+                    }
+                }
+            if (isConnected()) observable.startWith(SocketEvent.Connected)
+            else observable
+        }
+
     }
 
     override fun sendMessage(messageCreateRequest: MessageCreateRequest): Single<Boolean> {

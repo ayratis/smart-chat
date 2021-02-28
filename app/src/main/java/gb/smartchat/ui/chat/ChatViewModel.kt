@@ -16,9 +16,7 @@ import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.TypingRequest
-import gb.smartchat.utils.SingleEvent
-import gb.smartchat.utils.composeWithDownloadStatus
-import gb.smartchat.utils.composeWithUser
+import gb.smartchat.utils.*
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -48,13 +46,14 @@ class ChatViewModel(
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
     private val downloadStatusDisposableMap = LongSparseArray<Disposable>()
     private var uploadDisposable: Disposable? = null
-    val viewState: Observable<ChatUDF.State> =
-        Observable.wrap(store).observeOn(AndroidSchedulers.mainThread())
+    val viewState: Observable<ChatUDF.State> = store.viewState
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
-    val instaScrollTo = PublishRelay.create<Int>()
+    val instantScrollTo = PublishRelay.create<Int>()
     val openFile = BehaviorRelay.create<SingleEvent<Uri>>()
+    val fakeScrollTo = BehaviorRelay.create<SingleEvent<Pair<Int, Boolean>>>()
 
     init {
+        compositeDisposable.add(store)
         setupStateMachine()
         viewState
             .map { it.currentText }
@@ -79,66 +78,71 @@ class ChatViewModel(
                 d.dispose()
             }
         }
-        socketApi.disconnect()
     }
 
     private fun setupStateMachine() {
-        store.sideEffectListener = { sideEffect ->
-            when (sideEffect) {
-                is ChatUDF.SideEffect.SendMessage -> {
-                    sendMessage(sideEffect.message)
-                }
-                is ChatUDF.SideEffect.TypingTimer -> {
-                    startTypingTimer(sideEffect.senderId)
-                }
-                is ChatUDF.SideEffect.EditMessage -> {
-                    editMessage(sideEffect.message, sideEffect.newText)
-                }
-                is ChatUDF.SideEffect.DeleteMessage -> {
-                    deleteMessage(sideEffect.message)
-                }
-                is ChatUDF.SideEffect.SetInputText -> {
-                    setInputText.accept(SingleEvent(sideEffect.text))
-                }
-                is ChatUDF.SideEffect.LoadPage -> {
-                    fetchPage(sideEffect.fromMessageId, sideEffect.forward)
-                }
-                is ChatUDF.SideEffect.PageErrorEvent -> {
-                    Log.e(TAG, "PageErrorEvent", sideEffect.throwable)
-                }
-                is ChatUDF.SideEffect.LoadSpecificPart -> {
-                    loadSpecificPart(sideEffect.fromMessageId)
-                }
-                is ChatUDF.SideEffect.InstaScrollTo -> {
-                    instaScrollTo.accept(sideEffect.position)
-                }
-                is ChatUDF.SideEffect.LoadNewMessages -> {
-                    loadNewMessages(sideEffect.fromMessageId)
-                }
-                is ChatUDF.SideEffect.CancelUploadFile -> {
-                    uploadDisposable?.dispose()
-                    uploadDisposable = null
-                }
-                is ChatUDF.SideEffect.UploadFile -> {
-                    uploadFile(sideEffect.contentUri)
-                }
-                is ChatUDF.SideEffect.DownloadFile -> {
-                    downloadMessageFile(sideEffect.message)
-                }
-                is ChatUDF.SideEffect.CancelDownloadFile -> {
-                    cancelDownloadMessageFile(sideEffect.message)
-                }
-                is ChatUDF.SideEffect.OpenFile -> {
-                    openFile.accept(SingleEvent(sideEffect.contentUri))
+        store.sideEffects
+            .subscribe { sideEffect ->
+                when (sideEffect) {
+                    is ChatUDF.SideEffect.SendMessage -> {
+                        sendMessage(sideEffect.message)
+                    }
+                    is ChatUDF.SideEffect.TypingTimer -> {
+                        startTypingTimer(sideEffect.senderId)
+                    }
+                    is ChatUDF.SideEffect.EditMessage -> {
+                        editMessage(sideEffect.message, sideEffect.newText)
+                    }
+                    is ChatUDF.SideEffect.DeleteMessage -> {
+                        deleteMessage(sideEffect.message)
+                    }
+                    is ChatUDF.SideEffect.SetInputText -> {
+                        setInputText.accept(SingleEvent(sideEffect.text))
+                    }
+                    is ChatUDF.SideEffect.LoadPage -> {
+                        fetchPage(sideEffect.fromMessageId, sideEffect.forward)
+                    }
+                    is ChatUDF.SideEffect.PageErrorEvent -> {
+                        Log.d(TAG, "PageErrorEvent", sideEffect.throwable)
+                    }
+                    is ChatUDF.SideEffect.LoadSpecificPart -> {
+                        loadSpecificPart(sideEffect.fromMessageId)
+                    }
+                    is ChatUDF.SideEffect.InstantScrollTo -> {
+                        instantScrollTo.accept(sideEffect.position)
+                    }
+                    is ChatUDF.SideEffect.LoadNewMessages -> {
+                        loadNewMessages(sideEffect.fromMessageId)
+                    }
+                    is ChatUDF.SideEffect.CancelUploadFile -> {
+                        uploadDisposable?.dispose()
+                        uploadDisposable = null
+                    }
+                    is ChatUDF.SideEffect.UploadFile -> {
+                        uploadFile(sideEffect.contentUri)
+                    }
+                    is ChatUDF.SideEffect.DownloadFile -> {
+                        downloadMessageFile(sideEffect.message)
+                    }
+                    is ChatUDF.SideEffect.CancelDownloadFile -> {
+                        cancelDownloadMessageFile(sideEffect.message)
+                    }
+                    is ChatUDF.SideEffect.OpenFile -> {
+                        openFile.accept(SingleEvent(sideEffect.contentUri))
+                    }
+                    is ChatUDF.SideEffect.FakeScrollTo -> {
+                        fakeScrollTo.accept(SingleEvent(sideEffect.position to sideEffect.isUp))
+                    }
                 }
             }
-        }
+            .also { compositeDisposable.add(it) }
     }
 
     private fun observeSocketEvents() {
-        val d = socketApi.observeEvents()
+        socketApi.observeEvents(chat.id)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { event ->
+                Log.d(TAG, "observeSocketEvents: $event")
                 when (event) {
                     is SocketEvent.Connected -> {
                         store.accept(ChatUDF.Action.InternalConnected(true))
@@ -159,14 +163,17 @@ class ChatViewModel(
                         store.accept(ChatUDF.Action.ServerMessageChange(msg))
                     }
                     is SocketEvent.Typing -> {
-                        store.accept(ChatUDF.Action.ServerTyping(event.senderId))
+                        store.accept(ChatUDF.Action.ServerTyping(event.typing.senderId))
                     }
                     is SocketEvent.MessageRead -> {
                         store.accept(ChatUDF.Action.ServerMessageRead(event.messageIds))
                     }
+                    is SocketEvent.MessagesDeleted -> {
+                        store.accept(ChatUDF.Action.ServerMessagesDeleted(event.messages))
+                    }
                 }
             }
-        compositeDisposable.add(d)
+            .also { compositeDisposable.add(it) }
     }
 
     private fun sendMessage(message: Message) {
@@ -182,7 +189,7 @@ class ChatViewModel(
                     }
                 },
                 { e ->
-                    Log.e(TAG, "sendMessage: error", e)
+                    Log.d(TAG, "sendMessage: error", e)
                     store.accept(ChatUDF.Action.ServerMessageSendError(message))
                 }
             )
@@ -220,7 +227,7 @@ class ChatViewModel(
                     }
                 },
                 { e ->
-                    Log.e(TAG, "deleteMessage: error", e)
+                    Log.d(TAG, "deleteMessage: error", e)
                     store.accept(ChatUDF.Action.ServerMessageDeleteError(message))
                 }
             )
@@ -247,7 +254,7 @@ class ChatViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { /*do nothing*/ },
-                { Log.e(TAG, "sendTyping: error", it) }
+                { Log.d(TAG, "sendTyping: error", it) }
             )
         compositeDisposable.addAll(d)
     }
@@ -260,12 +267,8 @@ class ChatViewModel(
         )
         val d = socketApi.readMessage(requestBody)
             .subscribe(
-                { /*do nothing*/
-                    Log.d(TAG, "onChatItemBind: success")
-                },
-                { e ->
-                    Log.e(TAG, "messageRead", e)
-                }
+                { Log.d(TAG, "onChatItemBind: success") },
+                { Log.d(TAG, "messageRead", it) }
             )
         compositeDisposable.add(d)
     }
@@ -274,12 +277,8 @@ class ChatViewModel(
         val messageId = if (fromMessageId == -1L) null else fromMessageId
         fetchMessages(messageId, forward)
             .subscribe(
-                { data ->
-                    store.accept(ChatUDF.Action.ServerMessageNewPage(data, messageId))
-                },
-                { e ->
-                    store.accept(ChatUDF.Action.ServerMessagePageError(e, messageId))
-                }
+                { store.accept(ChatUDF.Action.ServerMessageNewPage(it, messageId)) },
+                { store.accept(ChatUDF.Action.ServerMessagePageError(it, messageId)) }
             )
             .also { compositeDisposable.add(it) }
     }
@@ -328,7 +327,7 @@ class ChatViewModel(
             .createFormData("upload_file", name, contentHelper.requestBody(contentUri))
         httpApi
             .postUploadFile(filePart)
-            .map { it.result.file }
+            .map { it.result }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -359,10 +358,6 @@ class ChatViewModel(
 
     private fun cancelDownloadMessageFile(message: Message) {
         message.file?.url?.let { downloadHelper.cancelDownload(it) }
-    }
-
-    fun onStart() {
-        socketApi.connect()
     }
 
     fun onTextChanged(text: String) {

@@ -2,9 +2,6 @@ package gb.smartchat.entity
 
 
 import com.google.gson.annotations.SerializedName
-import gb.smartchat.entity.request.MessageCreateRequest
-import gb.smartchat.entity.request.MessageDeleteRequest
-import gb.smartchat.entity.request.MessageEditRequest
 import java.util.*
 
 data class Message(
@@ -40,48 +37,5 @@ data class Message(
 
         @SerializedName("DELETED")
         DELETED
-    }
-
-    fun toMessageCreateRequestBody(): MessageCreateRequest? {
-        return if (text != null && senderId != null && chatId != null && clientId != null) {
-            MessageCreateRequest(
-                text = text,
-                senderId = senderId,
-                chatId = chatId,
-                clientId = clientId,
-                quotedMessageId = quotedMessage?.messageId,
-                fileId = file?.id
-            )
-        } else null
-    }
-
-    fun toMessageEditRequestBody(): MessageEditRequest? {
-        return if (text != null && chatId != null && senderId != null) {
-            MessageEditRequest(
-                text = text,
-                messageId = id,
-                chatId = chatId,
-                senderId = senderId
-            )
-        } else null
-    }
-
-    fun toMessageDeleteRequestBody(): MessageDeleteRequest? {
-        return if (text != null && chatId != null && senderId != null) {
-            MessageDeleteRequest(
-//                messageIds = listOf(id),
-                messageId = id,
-                chatId = chatId,
-                senderId = senderId,
-            )
-        } else null
-    }
-
-    fun toQuotedMessage(): QuotedMessage {
-        return QuotedMessage(
-            messageId = id,
-            text = text,
-            senderId = senderId,
-        )
     }
 }

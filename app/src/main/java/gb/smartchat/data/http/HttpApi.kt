@@ -1,10 +1,10 @@
 package gb.smartchat.data.http
 
 import gb.smartchat.entity.Chat
+import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.Recipient
 import gb.smartchat.entity.response.BaseResponse
-import gb.smartchat.entity.response.FileUploadResponse
 import io.reactivex.Single
 import okhttp3.MultipartBody
 import retrofit2.http.*
@@ -35,5 +35,5 @@ interface HttpApi {
     @POST("chat/file/upload")
     fun postUploadFile(
         @Part file: MultipartBody.Part
-    ): Single<BaseResponse<FileUploadResponse>>
+    ): Single<BaseResponse<File>>
 }
