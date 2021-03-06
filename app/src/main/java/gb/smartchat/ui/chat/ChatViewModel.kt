@@ -169,7 +169,10 @@ class ChatViewModel(
                         store.accept(ChatUDF.Action.ServerMessageRead(event.messageIds))
                     }
                     is SocketEvent.MessagesDeleted -> {
-                        store.accept(ChatUDF.Action.ServerMessagesDeleted(event.messages))
+                        val messages = event.messages.map {
+                            it.composeWithDownloadStatus(downloadHelper).composeWithUser(chat.users)
+                        }
+                        store.accept(ChatUDF.Action.ServerMessagesDeleted(messages))
                     }
                 }
             }
@@ -206,7 +209,7 @@ class ChatViewModel(
                         val msg = message.copy(text = newText)
                         store.accept(ChatUDF.Action.ServerMessageEditSuccess(msg))
                     } else {
-                        store.accept(ChatUDF.Action.ServerMessageEditSuccess(message))
+                        store.accept(ChatUDF.Action.ServerMessageEditError(message))
                     }
                 },
                 { store.accept(ChatUDF.Action.ServerMessageEditError(message)) }
@@ -399,7 +402,8 @@ class ChatViewModel(
 
     fun onChatItemBind(chatItem: ChatItem) {
         Log.d(TAG, "onChatItemBind: $chatItem")
-        if (chatItem !is ChatItem.Outgoing &&
+        if (chatItem is ChatItem.Msg &&
+            chatItem !is ChatItem.Msg.Outgoing &&
             chatItem.message.readedIds?.contains(userId) != true
         ) {
             readMessage(chatItem.message)
@@ -413,7 +417,7 @@ class ChatViewModel(
         )
     }
 
-    fun onQuotedMessageClick(chatItem: ChatItem) {
+    fun onQuotedMessageClick(chatItem: ChatItem.Msg) {
         chatItem.message.quotedMessage?.messageId?.let {
             store.accept(ChatUDF.Action.ClientScrollToMessage(it))
         }
@@ -431,7 +435,7 @@ class ChatViewModel(
         store.accept(ChatUDF.Action.ClientEmptyRetry)
     }
 
-    fun onFileClick(chatItem: ChatItem) {
+    fun onFileClick(chatItem: ChatItem.Msg) {
         store.accept(ChatUDF.Action.ClientFileClick(chatItem.message))
     }
 }

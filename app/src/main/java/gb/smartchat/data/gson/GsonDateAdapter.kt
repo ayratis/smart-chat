@@ -2,23 +2,25 @@ package gb.smartchat.data.gson
 
 import com.google.gson.*
 import java.lang.reflect.Type
-import java.util.*
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
-class GsonDateAdapter : JsonSerializer<Date>, JsonDeserializer<Date> {
+class GsonDateAdapter : JsonSerializer<ZonedDateTime>, JsonDeserializer<ZonedDateTime> {
 
     override fun serialize(
-        src: Date,
+        src: ZonedDateTime,
         typeOfSrc: Type?,
         context: JsonSerializationContext?
     ): JsonElement {
-        return JsonPrimitive(src.time)
+        return JsonPrimitive(src.toInstant().epochSecond)
     }
 
     override fun deserialize(
         json: JsonElement,
         typeOfT: Type?,
         context: JsonDeserializationContext?
-    ): Date {
-        return Date(json.asLong * 1000)
+    ): ZonedDateTime {
+        return ZonedDateTime.ofInstant(Instant.ofEpochSecond(json.asLong), ZoneId.systemDefault())
     }
 }

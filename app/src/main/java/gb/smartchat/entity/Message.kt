@@ -2,7 +2,7 @@ package gb.smartchat.entity
 
 
 import com.google.gson.annotations.SerializedName
-import java.util.*
+import java.time.ZonedDateTime
 
 data class Message(
     @SerializedName("id")
@@ -22,7 +22,7 @@ data class Message(
     @SerializedName("quoted_message")
     val quotedMessage: QuotedMessage?,
     @SerializedName("time_created")
-    val timeCreated: Date?,
+    val timeCreated: ZonedDateTime,
     @SerializedName("file")
     val file: File?,
 //    @SerializedName("mentions")

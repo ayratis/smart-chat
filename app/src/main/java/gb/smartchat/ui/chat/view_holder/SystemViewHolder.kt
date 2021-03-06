@@ -21,7 +21,7 @@ class SystemViewHolder private constructor(
     }
 
     private val binding = ItemChatMsgSystemBinding.bind(itemView)
-    private lateinit var chatItem: ChatItem
+    private lateinit var chatItem: ChatItem.Msg
 
     init {
 //        binding.tvContent.setOnClickListener {
@@ -29,7 +29,7 @@ class SystemViewHolder private constructor(
 //        }
     }
 
-    fun bind(chatItem: ChatItem.System) {
+    fun bind(chatItem: ChatItem.Msg.System) {
         this.chatItem = chatItem
         binding.tvContent.text = chatItem.message.text
     }

@@ -22,7 +22,7 @@ import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URI
-import java.util.*
+import java.time.ZonedDateTime
 
 //uses as di component (singletone for library created by activity)
 class Component constructor(
@@ -44,7 +44,7 @@ class Component constructor(
 
     val gson: Gson by lazy {
         GsonBuilder()
-            .registerTypeAdapter(Date::class.java, GsonDateAdapter())
+            .registerTypeAdapter(ZonedDateTime::class.java, GsonDateAdapter())
             .create()
     }
 
