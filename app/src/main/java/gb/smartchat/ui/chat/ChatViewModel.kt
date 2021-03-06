@@ -15,6 +15,7 @@ import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.request.MessageReadRequest
+import gb.smartchat.entity.request.ReadInfoRequest
 import gb.smartchat.entity.request.TypingRequest
 import gb.smartchat.utils.*
 import io.reactivex.Completable
@@ -111,8 +112,8 @@ class ChatViewModel(
                     is ChatUDF.SideEffect.InstantScrollTo -> {
                         instantScrollTo.accept(sideEffect.position)
                     }
-                    is ChatUDF.SideEffect.LoadNewMessages -> {
-                        loadNewMessages(sideEffect.fromMessageId)
+                    is ChatUDF.SideEffect.LoadReadInfo -> {
+                        loadReadInfo()
                     }
                     is ChatUDF.SideEffect.CancelUploadFile -> {
                         uploadDisposable?.dispose()
@@ -132,6 +133,9 @@ class ChatViewModel(
                     }
                     is ChatUDF.SideEffect.FakeScrollTo -> {
                         fakeScrollTo.accept(SingleEvent(sideEffect.position to sideEffect.isUp))
+                    }
+                    is ChatUDF.SideEffect.ReadMessage -> {
+                        readMessage(sideEffect.messageId)
                     }
                 }
             }
@@ -262,9 +266,9 @@ class ChatViewModel(
         compositeDisposable.addAll(d)
     }
 
-    private fun readMessage(message: Message) {
+    private fun readMessage(messageId: Long) {
         val requestBody = MessageReadRequest(
-            messageIds = listOf(message.id),
+            messageIds = listOf(messageId),
             chatId = chat.id,
             senderId = userId,
         )
@@ -295,11 +299,11 @@ class ChatViewModel(
             .also { compositeDisposable.add(it) }
     }
 
-    private fun loadNewMessages(fromMessageId: Long) {
-        fetchMessages(fromMessageId, true)
+    private fun loadReadInfo() {
+        socketApi.getReadInfo(ReadInfoRequest(userId, chat.id))
             .subscribe(
-                { store.accept(ChatUDF.Action.ServerLoadNewMessagesSuccess(it)) },
-                { store.accept(ChatUDF.Action.ServerLoadNewMessagesError(it)) }
+                { store.accept(ChatUDF.Action.ServerLoadReadInfoSuccess(it)) },
+                { store.accept(ChatUDF.Action.ServerLoadReadInfoError(it)) }
             )
             .also { compositeDisposable.add(it) }
     }
@@ -401,13 +405,7 @@ class ChatViewModel(
     }
 
     fun onChatItemBind(chatItem: ChatItem) {
-        Log.d(TAG, "onChatItemBind: $chatItem")
-        if (chatItem is ChatItem.Msg &&
-            chatItem !is ChatItem.Msg.Outgoing &&
-            chatItem.message.readedIds?.contains(userId) != true
-        ) {
-            readMessage(chatItem.message)
-        }
+        store.accept(ChatUDF.Action.InternalItemBind(chatItem))
     }
 
     fun loadNextPage(forward: Boolean) {

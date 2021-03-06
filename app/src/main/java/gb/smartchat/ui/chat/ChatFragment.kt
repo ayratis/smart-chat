@@ -484,7 +484,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             }
             .also { renderDisposables.add(it) }
         viewModel.viewState
-            .map { it.unreadMessageCount }
+            .map { it.readInfo.unreadCount }
             .distinctUntilChanged()
             .subscribe { unreadMessageCount ->
                 binding.tvUnreadMessageCount.visible(unreadMessageCount != 0)

@@ -7,6 +7,7 @@ import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.ReadInfo
 import gb.smartchat.utils.toQuotedMessage
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
@@ -54,8 +55,8 @@ object ChatUDF {
             Action()
 
         data class ServerSpecificPartError(val throwable: Throwable) : Action()
-        data class ServerLoadNewMessagesSuccess(val items: List<Message>) : Action()
-        data class ServerLoadNewMessagesError(val throwable: Throwable) : Action()
+        data class ServerLoadReadInfoSuccess(val readInfo: ReadInfo) : Action()
+        data class ServerLoadReadInfoError(val throwable: Throwable) : Action()
         data class ServerUploadFileSuccess(val file: File) : Action()
         data class ServerUploadFileError(val throwable: Throwable) : Action()
 
@@ -64,6 +65,7 @@ object ChatUDF {
         data class InternalTypingTimeIsUp(val senderId: String) : Action()
         data class InternalConnected(val isOnline: Boolean) : Action()
         data class InternalAtBottom(val atBottom: Boolean) : Action()
+        data class InternalItemBind(val chatItem: ChatItem) : Action()
     }
 
     sealed class SideEffect {
@@ -77,12 +79,13 @@ object ChatUDF {
         data class LoadSpecificPart(val fromMessageId: Long) : SideEffect()
         data class InstantScrollTo(val position: Int) : SideEffect()
         data class FakeScrollTo(val position: Int, val isUp: Boolean) : SideEffect()
-        data class LoadNewMessages(val fromMessageId: Long) : SideEffect()
+        object LoadReadInfo : SideEffect()
         data class UploadFile(val contentUri: Uri) : SideEffect()
         object CancelUploadFile : SideEffect()
         data class DownloadFile(val message: Message) : SideEffect()
         data class CancelDownloadFile(val message: Message) : SideEffect()
         data class OpenFile(val contentUri: Uri) : SideEffect()
+        data class ReadMessage(val messageId: Long) : SideEffect()
     }
 
     data class State(
@@ -97,7 +100,7 @@ object ChatUDF {
         val chatEnabled: Boolean = true,
         val fullDataUp: Boolean = false,
         val fullDataDown: Boolean = false,
-        val unreadMessageCount: Int = 0,
+        val readInfo: ReadInfo = ReadInfo(-1, -1, 0),
         val atBottom: Boolean = true,
         val sendEnabled: Boolean = false
     )
@@ -137,13 +140,6 @@ object ChatUDF {
                     sideEffectsSubject.accept(it)
                 }
                 viewStateSubject.accept(newState)
-//                if (action !is Action.ServerMessageRead) { //paging debug
-//                    Log.d(TAG, "action: $action")
-//                }
-//                Log.d(
-//                    TAG,
-//                    "pagingState: ${newState.pagingState}, fullDataUp: ${newState.fullDataUp}, fullDataDown: ${newState.fullDataDown}, atBottom: ${newState.atBottom}"
-//                ) //paging debug
                 Log.d(TAG, "action: $action")
                 Log.d(TAG, "state: $newState")
             }
@@ -163,8 +159,7 @@ object ChatUDF {
                             SideEffect.EditMessage(state.editingMessage, state.currentText)
                         )
                         val newMessage = state.editingMessage.copy(text = state.currentText)
-                        val newItem =
-                            ChatItem.Msg.Outgoing(newMessage, ChatItem.OutgoingStatus.EDITING)
+                        val newItem = newMessage.mapIntoChatItem(state.readInfo)
                         return state.copy(
                             chatItems = state.chatItems.replaceLastMsgWith(newItem),
                             editingMessage = null
@@ -184,7 +179,6 @@ object ChatUDF {
                         clientId = instant.toEpochMilli().toString(),
                         text = state.currentText,
                         type = null,
-                        readedIds = emptyList(),
                         quotedMessage = state.quotingMessage?.toQuotedMessage(),
                         timeCreated = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()),
                         file = file
@@ -212,30 +206,51 @@ object ChatUDF {
                 }
                 is Action.ServerMessageNew -> {
                     if (state.fullDataDown) {
-                        val newItem = action.message.mapIntoChatItem()
+                        val newItem = action.message.mapIntoChatItem(state.readInfo)
                         val list = if (newItem is ChatItem.Msg.Outgoing) {
                             state.chatItems.replaceLastMsgWith(newItem)
                         } else {
                             state.chatItems.plusMsg(newItem)
                         }
-                        return if (state.atBottom) {
-                            sideEffectListener(SideEffect.InstantScrollTo(state.chatItems.lastIndex))
-                            state.copy(
-                                chatItems = list,
-                                unreadMessageCount = 0
-                            )
+
+                        if (newItem is ChatItem.Msg.Outgoing) {
+                            return if (state.atBottom) {
+                                sideEffectListener(SideEffect.InstantScrollTo(state.chatItems.lastIndex))
+                                state.copy(chatItems = list)
+                            } else {
+                                //todo fake scroll down
+                                state.copy(chatItems = list)
+                            }
                         } else {
-                            state.copy(
-                                chatItems = list,
-                                unreadMessageCount = state.unreadMessageCount + 1
-                            )
+                            return if (state.atBottom) {
+                                sideEffectListener(SideEffect.InstantScrollTo(state.chatItems.lastIndex))
+                                val readInfo = state.readInfo.copy(
+                                    readIn = newItem.message.id,
+                                    unreadCount = 0
+                                )
+                                state.copy(
+                                    chatItems = list,
+                                    readInfo = readInfo
+                                )
+                            } else {
+                                val readInfo = state.readInfo.copy(
+                                    unreadCount = state.readInfo.unreadCount + 1
+                                )
+                                state.copy(
+                                    chatItems = list,
+                                    readInfo = readInfo
+                                )
+                            }
                         }
                     } else {
-                        return state.copy(unreadMessageCount = state.unreadMessageCount + 1)
+                        val readInfo = state.readInfo.copy(
+                            unreadCount = state.readInfo.unreadCount + 1
+                        )
+                        return state.copy(readInfo = readInfo)
                     }
                 }
                 is Action.ServerMessageNewPage -> {
-                    val newItems = action.items.mapIntoChatItems()
+                    val newItems = action.items.mapIntoChatItems(state.readInfo)
                     when (state.pagingState) {
                         PagingState.EMPTY_PROGRESS -> {
                             return if (newItems.isEmpty()) {
@@ -304,7 +319,7 @@ object ChatUDF {
                     }
                 }
                 is Action.ServerSpecificPartSuccess -> {
-                    val newItems = action.items.mapIntoChatItems()
+                    val newItems = action.items.mapIntoChatItems(state.readInfo)
                     val targetPosition = newItems.indexOfFirst {
                         it is ChatItem.Msg && it.message.id == action.targetMessageId
                     }
@@ -318,30 +333,32 @@ object ChatUDF {
                         fullDataDown = false,
                     )
                 }
-                is Action.ServerLoadNewMessagesSuccess -> {
-                    if (action.items.size < DEFAULT_PAGE_SIZE) {
-                        return if (state.fullDataDown) {
-                            val list = state.chatItems.plusList(action.items.mapIntoChatItems())
-                            if (state.atBottom) {
-                                state.copy(chatItems = list)
-                            } else {
-                                state.copy(chatItems = list)
-                            }
-                        } else {
-                            state.copy(unreadMessageCount = action.items.size)
-                        }
-                    } else {
-                        return if (state.fullDataDown) {
-                            val list = state.chatItems.plusList(action.items.mapIntoChatItems())
-                            state.copy(
-                                chatItems = list,
-                                fullDataDown = false,
-//                                unreadMessageCount = UNREAD_OVER_MAX_COUNT
-                            )
-                        } else {
-                            state/*.copy(unreadMessageCount = UNREAD_OVER_MAX_COUNT)*/
-                        }
-                    }
+                is Action.ServerLoadReadInfoSuccess -> {
+                    return state
+                    //todo
+//                    if (action.items.size < DEFAULT_PAGE_SIZE) {
+//                        return if (state.fullDataDown) {
+//                            val list = state.chatItems.plusList(action.items.mapIntoChatItems())
+//                            if (state.atBottom) {
+//                                state.copy(chatItems = list)
+//                            } else {
+//                                state.copy(chatItems = list)
+//                            }
+//                        } else {
+//                            state.copy(unreadMessageCount = action.items.size)
+//                        }
+//                    } else {
+//                        return if (state.fullDataDown) {
+//                            val list = state.chatItems.plusList(action.items.mapIntoChatItems())
+//                            state.copy(
+//                                chatItems = list,
+//                                fullDataDown = false,
+////                                unreadMessageCount = UNREAD_OVER_MAX_COUNT
+//                            )
+//                        } else {
+//                            state/*.copy(unreadMessageCount = UNREAD_OVER_MAX_COUNT)*/
+//                        }
+//                    }
                 }
 
                 //paging and scrolling actions, but no actions with list
@@ -352,15 +369,12 @@ object ChatUDF {
                                 sideEffectListener(SideEffect.LoadPage(null, false))
                                 state.copy(
                                     isOnline = true,
-                                    pagingState = PagingState.EMPTY_PROGRESS,
-                                    fullDataDown = false
+                                    pagingState = PagingState.EMPTY_PROGRESS
                                 )
                             }
                             else -> {
-                                state.copy(
-                                    isOnline = true,
-                                    fullDataDown = false
-                                )
+                                sideEffectListener(SideEffect.LoadReadInfo)
+                                state.copy(isOnline = true)
                             }
                         }
                     }
@@ -411,14 +425,19 @@ object ChatUDF {
                 is Action.ClientScrollToBottom -> {
                     return if (state.fullDataDown) {
                         sideEffectListener(SideEffect.InstantScrollTo(state.chatItems.lastIndex))
-                        state.copy(unreadMessageCount = 0)
+                        val readInfo = state.readInfo.copy(
+                            readIn = state.chatItems.lastMsg().message.id,
+                            unreadCount = 0
+                        )
+                        state.copy(readInfo = readInfo)
                     } else {
+                        //todo fake scroll down
                         sideEffectListener(SideEffect.LoadPage(null, false))
                         state.copy(
                             chatItems = emptyList(),
                             pagingState = PagingState.EMPTY_PROGRESS,
                             fullDataDown = false,
-                            unreadMessageCount = 0
+//                            unreadMessageCount = 0
                         )
                     }
                 }
@@ -448,7 +467,7 @@ object ChatUDF {
                     sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
                     return state
                 }
-                is Action.ServerLoadNewMessagesError -> {
+                is Action.ServerLoadReadInfoError -> {
                     sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
                     return state
                 }
@@ -473,31 +492,31 @@ object ChatUDF {
                 }
                 is Action.ServerMessageChange -> {
                     Log.d(TAG, "reduce: Action.ServerMessageChange, $action")
-                    val newItem = action.message.mapIntoChatItem()
+                    val newItem = action.message.mapIntoChatItem(state.readInfo)
                     return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
                 }
                 is Action.ServerMessageRead -> {
-                    val chatItems = state.chatItems.toMutableList()
-                    val messageIds = action.messageIds.toMutableList()
-                    for (i in chatItems.lastIndex downTo 0) {
-                        val chatItem = chatItems[i]
-                        if (chatItem is ChatItem.Msg && messageIds.contains(chatItem.message.id)) {
-                            val newReadIds = (chatItem.message.readedIds ?: emptyList()) + senderId
-                            val newMessage = chatItem.message.copy(readedIds = newReadIds)
-                            val newItem = when (chatItem) {
-                                is ChatItem.Msg.Incoming -> ChatItem.Msg.Incoming(newMessage)
-                                is ChatItem.Msg.System -> ChatItem.Msg.System(newMessage)
-                                is ChatItem.Msg.Outgoing ->
-                                    ChatItem.Msg.Outgoing(newMessage, ChatItem.OutgoingStatus.READ)
+                    val newReadOut = action.messageIds.maxOf { it }
+                    val readInfo = state.readInfo.copy(readOut = newReadOut)
+                    val chatItems = state.chatItems.map { chatItem ->
+                        if (chatItem is ChatItem.Msg.Outgoing) {
+                            when (chatItem.status) {
+                                ChatItem.OutgoingStatus.SENDING,
+                                ChatItem.OutgoingStatus.FAILURE,
+                                ChatItem.OutgoingStatus.SENT,
+                                ChatItem.OutgoingStatus.READ -> {
+                                    return@map chatItem
+                                }
+                                ChatItem.OutgoingStatus.SENT_2 -> {
+                                    return@map if (chatItem.message.id > readInfo.readOut) chatItem
+                                    else chatItem.copy(status = ChatItem.OutgoingStatus.READ)
+                                }
                             }
-                            chatItems[i] = newItem
-                            messageIds.remove(chatItem.message.id)
-                            if (messageIds.isEmpty()) {
-                                break
-                            }
+                        } else {
+                            chatItem
                         }
                     }
-                    return state.copy(chatItems = chatItems)
+                    return state.copy(chatItems = chatItems, readInfo = readInfo)
                 }
                 is Action.ServerMessagesDeleted -> {
                     val chatItems = state.chatItems.toMutableList()
@@ -510,34 +529,23 @@ object ChatUDF {
                         if (chatItem !is ChatItem.Msg) continue
                         val deletedMessage = deletedMessages.find { it.id == chatItem.message.id }
                         if (deletedMessage != null) {
-                            chatItems[i] = deletedMessage.mapIntoChatItem()
+                            chatItems[i] = deletedMessage.mapIntoChatItem(state.readInfo)
                             deletedMessages.remove(deletedMessage)
                         }
                     }
                     return state.copy(chatItems = chatItems)
                 }
                 is Action.ServerMessageEditSuccess -> {
-                    val newItem = action.message.mapIntoChatItem()
+                    val newItem = action.message.mapIntoChatItem(state.readInfo)
                     return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
                 }
                 is Action.ServerMessageEditError -> {
-                    val newItem = action.message.mapIntoChatItem()
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
-                }
-                is Action.ClientDeleteMessage -> {
-                    if (action.message.senderId != senderId) return state
-                    sideEffectListener(SideEffect.DeleteMessage(action.message))
-                    val newItem =
-                        ChatItem.Msg.Outgoing(action.message, ChatItem.OutgoingStatus.DELETING)
+                    //todo показать диалог
+                    val newItem = action.message.mapIntoChatItem(state.readInfo)
                     return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
                 }
                 is Action.ServerMessageDeleteSuccess -> {
-                    val newItem =
-                        ChatItem.Msg.Outgoing(action.message, ChatItem.OutgoingStatus.DELETED)
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
-                }
-                is Action.ServerMessageDeleteError -> {
-                    val newItem = action.message.mapIntoChatItem()
+                    val newItem = action.message.mapIntoChatItem(state.readInfo)
                     return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
                 }
 
@@ -629,12 +637,39 @@ object ChatUDF {
                     val typingSenderIds = state.typingSenderIds - action.senderId
                     return state.copy(typingSenderIds = typingSenderIds)
                 }
+                is Action.ClientDeleteMessage -> {
+                    if (action.message.senderId != senderId) return state
+                    sideEffectListener(SideEffect.DeleteMessage(action.message))
+                    return state
+                }
+                is Action.ServerMessageDeleteError -> {
+                    //todo показать диалог
+                    return state
+                }
+                is Action.InternalItemBind -> {
+                    if (action.chatItem is ChatItem.Msg &&
+                        action.chatItem.message.senderId != senderId &&
+                        action.chatItem.message.id > state.readInfo.readIn
+                    ) {
+                        sideEffectListener(SideEffect.ReadMessage(action.chatItem.message.id))
+                        val readInfo = state.readInfo.copy(readIn = action.chatItem.message.id)
+                        return state.copy(readInfo = readInfo)
+                    }
+                    return state
+                }
             }
         }
 
         private fun List<ChatItem>.replaceLastMsgWith(item: ChatItem.Msg): List<ChatItem> {
             return this.replaceLastWith(item) {
-                it is ChatItem.Msg && it.message.id == item.message.id
+                if (it is ChatItem.Msg) {
+                    if (it.message.senderId == senderId) {
+                        return@replaceLastWith it.message.clientId == item.message.clientId
+                    } else {
+                        return@replaceLastWith it.message.id == item.message.id
+                    }
+                }
+                false
             }
         }
 
@@ -658,7 +693,7 @@ object ChatUDF {
             return last { it is ChatItem.Msg } as ChatItem.Msg
         }
 
-        private fun List<Message>.mapIntoChatItems(): List<ChatItem> {
+        private fun List<Message>.mapIntoChatItems(readInfo: ReadInfo): List<ChatItem> {
             if (isEmpty()) return emptyList()
             val list = mutableListOf<ChatItem>()
             var localDate: LocalDate? = null
@@ -668,16 +703,16 @@ object ChatUDF {
                     list += ChatItem.DateHeader(msgLocalDate)
                     localDate = msgLocalDate
                 }
-                list += message.mapIntoChatItem()
+                list += message.mapIntoChatItem(readInfo)
             }
             return list
         }
 
-        private fun Message.mapIntoChatItem(): ChatItem.Msg {
+        private fun Message.mapIntoChatItem(readInfo: ReadInfo): ChatItem.Msg {
             return when {
                 senderId == this@Store.senderId -> {
                     val status =
-                        if (readedIds.isNullOrEmpty()) ChatItem.OutgoingStatus.SENT_2
+                        if (id > readInfo.readOut) ChatItem.OutgoingStatus.SENT_2
                         else ChatItem.OutgoingStatus.READ
                     ChatItem.Msg.Outgoing(this, status)
                 }

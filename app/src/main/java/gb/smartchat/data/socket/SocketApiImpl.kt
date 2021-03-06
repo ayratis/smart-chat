@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.BuildConfig
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.ReadInfo
 import gb.smartchat.entity.Typing
 import gb.smartchat.entity.request.*
 import gb.smartchat.utils.emitSingle
@@ -151,6 +152,14 @@ class SocketApiImpl(
     override fun sendTyping(typingRequest: TypingRequest): Single<Any> {
         return sendEvent("usr:typing:typing", typingRequest)
             .map { Any() }
+    }
+
+    override fun getReadInfo(readInfoRequest: ReadInfoRequest): Single<ReadInfo> {
+        return sendEvent("usr:chat:read_info", readInfoRequest)
+            .map { response ->
+                val raw = response.getJSONObject("result").toString()
+                gson.fromJson(raw, ReadInfo::class.java)
+            }
     }
 
     private fun <R> sendEvent(method: String, body: R): Single<JSONObject> {

@@ -23,9 +23,6 @@ sealed class ChatItem {
         SENT_2,
         READ,
         FAILURE,
-        EDITING,
-        DELETING,
-        DELETED
     }
 
     class DiffUtilItemCallback : DiffUtil.ItemCallback<ChatItem>() {
