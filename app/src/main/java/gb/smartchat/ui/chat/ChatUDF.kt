@@ -9,11 +9,13 @@ import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.ReadInfo
 import gb.smartchat.utils.toQuotedMessage
-import io.reactivex.Observable
+import io.reactivex.ObservableSource
+import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Consumer
 import java.time.*
 import java.util.*
+import kotlin.math.max
 
 object ChatUDF {
 
@@ -59,6 +61,8 @@ object ChatUDF {
         data class ServerLoadReadInfoError(val throwable: Throwable) : Action()
         data class ServerUploadFileSuccess(val file: File) : Action()
         data class ServerUploadFileError(val throwable: Throwable) : Action()
+        data class ServerLoadBottomSuccess(val messages: List<Message>) : Action()
+        data class ServerLoadBottomError(val throwable: Throwable) : Action()
 
         object InternalLoadMoreUpMessages : Action()
         object InternalLoadMoreDownMessages : Action()
@@ -78,14 +82,16 @@ object ChatUDF {
         data class PageErrorEvent(val throwable: Throwable) : SideEffect()
         data class LoadSpecificPart(val fromMessageId: Long) : SideEffect()
         data class InstantScrollTo(val position: Int) : SideEffect()
-        data class FakeScrollTo(val position: Int, val isUp: Boolean) : SideEffect()
-        object LoadReadInfo : SideEffect()
+        data class FakeScrollToCenter(val position: Int, val isUp: Boolean) : SideEffect()
+        object FakeScrollToBottom : SideEffect()
+        data class LoadReadInfo(val fromMessageId: Long) : SideEffect()
         data class UploadFile(val contentUri: Uri) : SideEffect()
         object CancelUploadFile : SideEffect()
         data class DownloadFile(val message: Message) : SideEffect()
         data class CancelDownloadFile(val message: Message) : SideEffect()
         data class OpenFile(val contentUri: Uri) : SideEffect()
         data class ReadMessage(val messageId: Long) : SideEffect()
+        object LoadBottomMessages : SideEffect()
     }
 
     data class State(
@@ -100,9 +106,9 @@ object ChatUDF {
         val chatEnabled: Boolean = true,
         val fullDataUp: Boolean = false,
         val fullDataDown: Boolean = false,
-        val readInfo: ReadInfo = ReadInfo(-1, -1, 0),
         val atBottom: Boolean = true,
-        val sendEnabled: Boolean = false
+        val sendEnabled: Boolean = false,
+        val readInfo: ReadInfo,
     )
 
     sealed class AttachmentState {
@@ -119,27 +125,28 @@ object ChatUDF {
         NEW_PAGE_UP_PROGRESS,
         NEW_PAGE_DOWN_PROGRESS,
         NEW_PAGE_UP_DOWN_PROGRESS,
+        SPECIFIC_PART_PROGRESS,
+        BOTTOM_PROGRESS,
+        READ_INFO_PROGRESS
     }
 
-    class Store(private val senderId: String) : Consumer<Action>, Disposable {
+    class Store(private val senderId: String, readInfo: ReadInfo) : ObservableSource<State>,
+        Consumer<Action>, Disposable {
 
         companion object {
             private const val TAG = "store"
         }
 
         private val actions = PublishRelay.create<Action>()
-        private val viewStateSubject = BehaviorRelay.createDefault(State())
-        private val sideEffectsSubject = PublishRelay.create<SideEffect>()
-
-        val viewState: Observable<State> = viewStateSubject.hide()
-        val sideEffects: Observable<SideEffect> = sideEffectsSubject.hide()
+        private val state = BehaviorRelay.createDefault(State(readInfo = readInfo))
+        var sideEffectListener: (SideEffect) -> Unit = {}
 
         private val disposable: Disposable = actions.hide()
             .subscribe { action ->
-                val newState = reduce(viewStateSubject.value!!, action) {
-                    sideEffectsSubject.accept(it)
+                val newState = reduce(state.value!!, action) {
+                    sideEffectListener.invoke(it)
                 }
-                viewStateSubject.accept(newState)
+                state.accept(newState)
                 Log.d(TAG, "action: $action")
                 Log.d(TAG, "state: $newState")
             }
@@ -194,15 +201,17 @@ object ChatUDF {
                         sendEnabled = false,
                         attachmentState = AttachmentState.Empty,
                     )
-                    else state.copy(
-                        chatItems = emptyList<ChatItem>().plusMsg(newMessageItem),
-                        currentText = "",
-                        quotingMessage = null,
-                        fullDataDown = true,
-                        pagingState = PagingState.DATA,
-                        sendEnabled = false,
-                        attachmentState = AttachmentState.Empty
-                    )
+                    else {
+                        state.copy(
+                            chatItems = emptyList<ChatItem>().plusMsg(newMessageItem),
+                            currentText = "",
+                            quotingMessage = null,
+                            fullDataDown = true,
+                            pagingState = PagingState.DATA,
+                            sendEnabled = false,
+                            attachmentState = AttachmentState.Empty
+                        )
+                    }
                 }
                 is Action.ServerMessageNew -> {
                     if (state.fullDataDown) {
@@ -261,8 +270,7 @@ object ChatUDF {
                             } else {
                                 state.copy(
                                     chatItems = newItems,
-                                    pagingState = PagingState.DATA,
-                                    fullDataDown = true
+                                    pagingState = PagingState.DATA
                                 )
                             }
                         }
@@ -325,7 +333,7 @@ object ChatUDF {
                     }
                     val isUp =
                         newItems.firstMsg().message.id < state.chatItems.firstMsg().message.id
-                    sideEffectListener(SideEffect.FakeScrollTo(targetPosition, isUp))
+                    sideEffectListener(SideEffect.FakeScrollToCenter(targetPosition, isUp))
                     return state.copy(
                         chatItems = newItems,
                         pagingState = PagingState.DATA,
@@ -333,32 +341,29 @@ object ChatUDF {
                         fullDataDown = false,
                     )
                 }
-                is Action.ServerLoadReadInfoSuccess -> {
+                is Action.ServerLoadBottomSuccess -> {
+                    if (state.pagingState == PagingState.BOTTOM_PROGRESS) {
+                        val newItems = action.messages.mapIntoChatItems(state.readInfo)
+                        return if (newItems.isEmpty()) {
+                            state.copy(
+                                chatItems = emptyList(),
+                                pagingState = PagingState.EMPTY,
+                                readInfo = state.readInfo.copy(unreadCount = 0)
+                            )
+                        } else {
+                            sideEffectListener(SideEffect.FakeScrollToBottom)
+                            state.copy(
+                                chatItems = newItems,
+                                pagingState = PagingState.DATA,
+                                fullDataDown = true,
+                                readInfo = state.readInfo.copy(
+                                    readIn = newItems.lastMsg().message.id,
+                                    unreadCount = 0
+                                ),
+                            )
+                        }
+                    }
                     return state
-                    //todo
-//                    if (action.items.size < DEFAULT_PAGE_SIZE) {
-//                        return if (state.fullDataDown) {
-//                            val list = state.chatItems.plusList(action.items.mapIntoChatItems())
-//                            if (state.atBottom) {
-//                                state.copy(chatItems = list)
-//                            } else {
-//                                state.copy(chatItems = list)
-//                            }
-//                        } else {
-//                            state.copy(unreadMessageCount = action.items.size)
-//                        }
-//                    } else {
-//                        return if (state.fullDataDown) {
-//                            val list = state.chatItems.plusList(action.items.mapIntoChatItems())
-//                            state.copy(
-//                                chatItems = list,
-//                                fullDataDown = false,
-////                                unreadMessageCount = UNREAD_OVER_MAX_COUNT
-//                            )
-//                        } else {
-//                            state/*.copy(unreadMessageCount = UNREAD_OVER_MAX_COUNT)*/
-//                        }
-//                    }
                 }
 
                 //paging and scrolling actions, but no actions with list
@@ -366,19 +371,37 @@ object ChatUDF {
                     if (action.isOnline) {
                         return when (state.pagingState) {
                             PagingState.EMPTY, PagingState.EMPTY_ERROR -> {
-                                sideEffectListener(SideEffect.LoadPage(null, false))
+                                val fromMessageId =
+                                    if (state.readInfo.readIn == -1L) null
+                                    else state.readInfo.readIn + 1
+                                sideEffectListener(SideEffect.LoadPage(fromMessageId, false))
                                 state.copy(
                                     isOnline = true,
                                     pagingState = PagingState.EMPTY_PROGRESS
                                 )
                             }
                             else -> {
-                                sideEffectListener(SideEffect.LoadReadInfo)
-                                state.copy(isOnline = true)
+                                sideEffectListener(SideEffect.LoadReadInfo(state.readInfo.readIn))
+                                state.copy(
+                                    isOnline = true,
+                                    pagingState = PagingState.READ_INFO_PROGRESS
+                                )
                             }
                         }
                     }
                     return state.copy(isOnline = action.isOnline)
+                }
+                is Action.ServerLoadReadInfoSuccess -> {
+                    return if (state.readInfo.readIn == action.readInfo.readIn) {
+                        state.copy(
+                            readInfo = action.readInfo,
+                            fullDataDown = false,
+                            pagingState = PagingState.DATA
+                        )
+                    } else {
+                        sideEffectListener(SideEffect.LoadReadInfo(state.readInfo.readIn))
+                        state
+                    }
                 }
                 is Action.InternalLoadMoreUpMessages -> {
                     return when (state.pagingState) {
@@ -419,7 +442,7 @@ object ChatUDF {
                         state
                     } else {
                         sideEffectListener(SideEffect.LoadSpecificPart(action.messageId))
-                        state
+                        state.copy(pagingState = PagingState.SPECIFIC_PART_PROGRESS)
                     }
                 }
                 is Action.ClientScrollToBottom -> {
@@ -431,15 +454,20 @@ object ChatUDF {
                         )
                         state.copy(readInfo = readInfo)
                     } else {
-                        //todo fake scroll down
-                        sideEffectListener(SideEffect.LoadPage(null, false))
-                        state.copy(
-                            chatItems = emptyList(),
-                            pagingState = PagingState.EMPTY_PROGRESS,
-                            fullDataDown = false,
-//                            unreadMessageCount = 0
-                        )
+                        sideEffectListener(SideEffect.LoadBottomMessages)
+                        state.copy(pagingState = PagingState.BOTTOM_PROGRESS)
                     }
+                }
+                is Action.ClientEmptyRetry -> {
+                    sideEffectListener(SideEffect.LoadPage(null, false))
+                    return state.copy(
+                        pagingState = PagingState.EMPTY_PROGRESS,
+                        fullDataDown = false
+                    )
+                }
+                is Action.ServerLoadReadInfoError -> {
+                    sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
+                    return state.copy(pagingState = PagingState.DATA)
                 }
                 is Action.ServerMessagePageError -> {
                     return when (state.pagingState) {
@@ -464,19 +492,12 @@ object ChatUDF {
                     }
                 }
                 is Action.ServerSpecificPartError -> {
-                    sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
-                    return state
+                    //todo показать диалог
+                    return state.copy(pagingState = PagingState.DATA)
                 }
-                is Action.ServerLoadReadInfoError -> {
-                    sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
-                    return state
-                }
-                is Action.ClientEmptyRetry -> {
-                    sideEffectListener(SideEffect.LoadPage(null, false))
-                    return state.copy(
-                        pagingState = PagingState.EMPTY_PROGRESS,
-                        fullDataDown = false
-                    )
+                is Action.ServerLoadBottomError -> {
+                    //todo показать диалог
+                    return state.copy(pagingState = PagingState.DATA)
                 }
 
                 //just replacing item in list
@@ -611,7 +632,14 @@ object ChatUDF {
                     return state.copy(quotingMessage = null)
                 }
                 is Action.InternalAtBottom -> {
-                    return state.copy(atBottom = action.atBottom)
+                    return if (state.fullDataDown && action.atBottom) {
+                        state.copy(
+                            atBottom = true,
+                            readInfo = state.readInfo.copy(unreadCount = 0)
+                        )
+                    } else {
+                        state.copy(atBottom = false)
+                    }
                 }
                 is Action.ClientEditMessageRequest -> {
                     sideEffectListener(SideEffect.SetInputText(action.message.text ?: ""))
@@ -652,7 +680,10 @@ object ChatUDF {
                         action.chatItem.message.id > state.readInfo.readIn
                     ) {
                         sideEffectListener(SideEffect.ReadMessage(action.chatItem.message.id))
-                        val readInfo = state.readInfo.copy(readIn = action.chatItem.message.id)
+                        val readInfo = state.readInfo.copy(
+                            readIn = action.chatItem.message.id,
+                            unreadCount = max(state.readInfo.unreadCount - 1, 0)
+                        )
                         return state.copy(readInfo = readInfo)
                     }
                     return state
@@ -767,6 +798,10 @@ object ChatUDF {
 
         override fun isDisposed(): Boolean {
             return disposable.isDisposed
+        }
+
+        override fun subscribe(observer: Observer<in State>) {
+            state.hide().subscribe(observer)
         }
     }
 }
