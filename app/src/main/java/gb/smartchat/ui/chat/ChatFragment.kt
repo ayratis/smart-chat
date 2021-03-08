@@ -24,6 +24,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -74,7 +75,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatViewModel(
-                    store = ChatUDF.Store(component.userId),
+                    store = ChatUDF.Store(component.userId, argChat.getReadInfo()),
                     userId = component.userId,
                     chat = argChat,
                     socketApi = component.socketApi,
@@ -157,8 +158,6 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             val height = bottom - top
             binding.rvChat.updatePadding(bottom = height)
         }
-
-    private var fakeScrollTo: SingleEvent<Pair<Int, Boolean>>? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -314,62 +313,26 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         }
     }
 
-    private fun scrollToPosition(pos: Int) {
-        val firstVisiblePos = linearLayoutManager.findFirstVisibleItemPosition()
-        val lastVisiblePos = linearLayoutManager.findLastVisibleItemPosition()
-        val isLastPos = pos == chatAdapter.itemCount - 1
-        val scroller = CenterSmoothScroller(requireContext())
-        val isUpScroll = pos < firstVisiblePos
-
-        Log.d(
-            TAG, "scrollToPosition: " +
-                    "pos: $pos, " +
-                    "firstVisiblePos: $firstVisiblePos, " +
-                    "lastVisiblePos: $lastVisiblePos, " +
-                    "isLastPos: $isLastPos, " +
-                    "isUpScroll: $isUpScroll"
-        )
-        if (chatAdapter.itemCount <= ChatUDF.DEFAULT_PAGE_SIZE) {
-            scroller.targetPosition = pos
-            linearLayoutManager.startSmoothScroll(scroller)
-            return
-        }
-        if (pos in firstVisiblePos..lastVisiblePos) {
-            if (isLastPos) {
-                binding.rvChat.smoothScrollToPosition(pos)
-            } else {
-                scroller.targetPosition = pos
-                linearLayoutManager.startSmoothScroll(scroller)
-            }
-        } else {
-            val firstPos =
-                if (isUpScroll) min(pos + 15, chatAdapter.itemCount - 1)
-                else max(pos - 15, 0)
-            Log.d(TAG, "scrollToPosition: firstPos: $firstPos")
-            binding.rvChat.scrollToPosition(firstPos)
-            if (isLastPos) {
-                binding.rvChat.smoothScrollToPosition(pos)
-            } else {
-                scroller.targetPosition = pos
-                linearLayoutManager.startSmoothScroll(scroller)
-            }
-        }
-    }
-
     private fun renderViewModel() {
-        viewModel.viewState
-            .map { it.chatItems }
-            .distinctUntilChanged()
-            .subscribe { chatItems ->
-                Log.d(TAG, "submitList: start")
+        viewModel.chatItems
+            .subscribe { (chatItems, scrollOptions) ->
+                Log.d(TAG, "chatItemsSize: ${chatItems.size}, scrollOptions: $scrollOptions")
                 chatAdapter.submitList(chatItems) {
-                    Log.d(TAG, "submitList: end")
-                    fakeScrollTo?.getContentIfNotHandled()?.let { (pos, isUp) ->
-                        fakeScrollToPosition(pos, isUp)
+                    scrollOptions?.let { (position, fake, isUp) ->
+                        if (fake) {
+                            if (position == chatItems.lastIndex) {
+                                fakeScrollToBottom()
+                            } else {
+                                fakeScrollToCenterPosition(position, isUp)
+                            }
+                        } else {
+                            instantScrollToPosition(position)
+                        }
                     }
                 }
             }
             .also { renderDisposables.add(it) }
+
         viewModel.viewState
             .map { listOf(it.editingMessage) }
             .distinctUntilChanged()
@@ -484,10 +447,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             }
             .also { renderDisposables.add(it) }
         viewModel.viewState
-            .map { it.unreadMessageCount }
+            .map { it.readInfo.unreadCount }
             .distinctUntilChanged()
             .subscribe { unreadMessageCount ->
-                binding.tvUnreadMessageCount.visible(unreadMessageCount != 0)
                 binding.tvUnreadMessageCount.text = unreadMessageCount.toString()
             }
             .also { renderDisposables.add(it) }
@@ -506,19 +468,16 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                 }
             }
             .also { renderDisposables.add(it) }
-        viewModel.instantScrollTo
-            .subscribe { pos ->
-                instantScrollToPosition(pos)
-            }
-            .also { renderDisposables.add(it) }
-        viewModel.fakeScrollTo
-            .subscribe { event ->
-                fakeScrollTo = event
+        viewModel.viewState
+            .map { it.atBottom to it.fullDataDown }
+            .distinctUntilChanged()
+            .subscribe { (atBottom, fullDataDown) ->
+                binding.tvUnreadMessageCount.visible(!atBottom || !fullDataDown)
             }
             .also { renderDisposables.add(it) }
     }
 
-    private fun fakeScrollToPosition(pos: Int, isUpScroll: Boolean) {
+    private fun fakeScrollToCenterPosition(pos: Int, isUpScroll: Boolean) {
         val beforePos = if (isUpScroll) chatAdapter.itemCount - 1 else 0
         Log.d(
             TAG,
@@ -527,6 +486,15 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         linearLayoutManager.scrollToPosition(beforePos)
         val scroller = CenterSmoothScroller(requireContext()).apply {
             targetPosition = pos
+        }
+        linearLayoutManager.startSmoothScroll(scroller)
+    }
+
+    private fun fakeScrollToBottom() {
+        val beforePos = if (chatAdapter.itemCount - 10 >= 10) 10 else 0
+        linearLayoutManager.scrollToPosition(beforePos)
+        val scroller = LinearSmoothScroller(requireContext()).apply {
+            targetPosition = chatAdapter.itemCount - 1
         }
         linearLayoutManager.startSmoothScroll(scroller)
     }

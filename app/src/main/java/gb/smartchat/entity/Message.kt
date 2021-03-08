@@ -2,6 +2,7 @@ package gb.smartchat.entity
 
 
 import com.google.gson.annotations.SerializedName
+import gb.smartchat.BuildConfig
 import java.time.ZonedDateTime
 
 data class Message(
@@ -17,8 +18,6 @@ data class Message(
     val text: String?,
     @SerializedName("type")
     val type: Type?,
-    @SerializedName("readed_ids")
-    val readedIds: List<String>?,
     @SerializedName("quoted_message")
     val quotedMessage: QuotedMessage?,
     @SerializedName("time_created")
@@ -37,5 +36,16 @@ data class Message(
 
         @SerializedName("DELETED")
         DELETED
+    }
+
+    override fun toString(): String {
+        if (BuildConfig.DEBUG) {
+            return id.toString()
+        }
+        return super.toString()
+    }
+
+    fun isOutgoing(userId: String): Boolean {
+        return senderId == userId
     }
 }

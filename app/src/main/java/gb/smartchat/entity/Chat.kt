@@ -27,4 +27,8 @@ data class Chat(
     val isPinned: Boolean?,
     @SerializedName("recipients")
     val users: List<User>
-) : Serializable
+) : Serializable {
+    fun getReadInfo(): ReadInfo {
+        return ReadInfo(103, -1, 20)
+    }
+}

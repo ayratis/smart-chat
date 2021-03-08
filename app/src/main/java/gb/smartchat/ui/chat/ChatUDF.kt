@@ -7,12 +7,17 @@ import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.ReadInfo
+import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.toQuotedMessage
-import io.reactivex.Observable
+import io.reactivex.ObservableSource
+import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Consumer
-import java.time.*
-import java.util.*
+import java.lang.Integer.max
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 object ChatUDF {
 
@@ -44,26 +49,32 @@ object ChatUDF {
         data class ServerMessageEditError(val message: Message) : Action()
         data class ServerMessageDeleteSuccess(val message: Message) : Action()
         data class ServerMessageDeleteError(val message: Message) : Action()
-        data class ServerMessageNewPage(val items: List<Message>, val fromMessageId: Long?) :
+        data class ServerMessageNewPage(val messages: List<Message>, val fromMessageId: Long?) :
             Action()
 
         data class ServerMessagePageError(val throwable: Throwable, val fromMessageId: Long?) :
             Action()
 
-        data class ServerSpecificPartSuccess(val items: List<Message>, val targetMessageId: Long) :
+        data class ServerSpecificPartSuccess(
+            val messages: List<Message>,
+            val targetMessageId: Long
+        ) :
             Action()
 
         data class ServerSpecificPartError(val throwable: Throwable) : Action()
-        data class ServerLoadNewMessagesSuccess(val items: List<Message>) : Action()
-        data class ServerLoadNewMessagesError(val throwable: Throwable) : Action()
+        data class ServerLoadReadInfoSuccess(val readInfo: ReadInfo) : Action()
+        data class ServerLoadReadInfoError(val throwable: Throwable) : Action()
         data class ServerUploadFileSuccess(val file: File) : Action()
         data class ServerUploadFileError(val throwable: Throwable) : Action()
+        data class ServerLoadBottomSuccess(val messages: List<Message>) : Action()
+        data class ServerLoadBottomError(val throwable: Throwable) : Action()
 
         object InternalLoadMoreUpMessages : Action()
         object InternalLoadMoreDownMessages : Action()
         data class InternalTypingTimeIsUp(val senderId: String) : Action()
         data class InternalConnected(val isOnline: Boolean) : Action()
         data class InternalAtBottom(val atBottom: Boolean) : Action()
+        data class ReadMessage(val message: Message) : Action()
     }
 
     sealed class SideEffect {
@@ -75,18 +86,19 @@ object ChatUDF {
         data class LoadPage(val fromMessageId: Long?, val forward: Boolean) : SideEffect()
         data class PageErrorEvent(val throwable: Throwable) : SideEffect()
         data class LoadSpecificPart(val fromMessageId: Long) : SideEffect()
-        data class InstantScrollTo(val position: Int) : SideEffect()
-        data class FakeScrollTo(val position: Int, val isUp: Boolean) : SideEffect()
-        data class LoadNewMessages(val fromMessageId: Long) : SideEffect()
+        data class LoadReadInfo(val fromMessageId: Long) : SideEffect()
         data class UploadFile(val contentUri: Uri) : SideEffect()
         object CancelUploadFile : SideEffect()
         data class DownloadFile(val message: Message) : SideEffect()
         data class CancelDownloadFile(val message: Message) : SideEffect()
         data class OpenFile(val contentUri: Uri) : SideEffect()
+        data class ReadMessage(val messageId: Long) : SideEffect()
+        object LoadBottomMessages : SideEffect()
     }
 
     data class State(
-        val chatItems: List<ChatItem> = emptyList(),
+        val messages: List<Message> = emptyList(),
+        val draft: List<Message> = emptyList(),
         val typingSenderIds: List<String> = emptyList(),
         val editingMessage: Message? = null,
         val currentText: String = "",
@@ -97,9 +109,16 @@ object ChatUDF {
         val chatEnabled: Boolean = true,
         val fullDataUp: Boolean = false,
         val fullDataDown: Boolean = false,
-        val unreadMessageCount: Int = 0,
         val atBottom: Boolean = true,
-        val sendEnabled: Boolean = false
+        val sendEnabled: Boolean = false,
+        val readInfo: ReadInfo,
+        val withScrollTo: SingleEvent<WithScrollTo>? = null //target, isUp
+    )
+
+    data class WithScrollTo(
+        val message: Message,
+        val fake: Boolean = false,
+        val isUp: Boolean = false
     )
 
     sealed class AttachmentState {
@@ -116,34 +135,28 @@ object ChatUDF {
         NEW_PAGE_UP_PROGRESS,
         NEW_PAGE_DOWN_PROGRESS,
         NEW_PAGE_UP_DOWN_PROGRESS,
+        SPECIFIC_PART_PROGRESS,
+        BOTTOM_PROGRESS,
+        READ_INFO_PROGRESS
     }
 
-    class Store(private val senderId: String) : Consumer<Action>, Disposable {
+    class Store(private val userId: String, readInfo: ReadInfo) : ObservableSource<State>,
+        Consumer<Action>, Disposable {
 
         companion object {
             private const val TAG = "store"
         }
 
         private val actions = PublishRelay.create<Action>()
-        private val viewStateSubject = BehaviorRelay.createDefault(State())
-        private val sideEffectsSubject = PublishRelay.create<SideEffect>()
-
-        val viewState: Observable<State> = viewStateSubject.hide()
-        val sideEffects: Observable<SideEffect> = sideEffectsSubject.hide()
+        private val state = BehaviorRelay.createDefault(State(readInfo = readInfo))
+        var sideEffectListener: (SideEffect) -> Unit = {}
 
         private val disposable: Disposable = actions.hide()
             .subscribe { action ->
-                val newState = reduce(viewStateSubject.value!!, action) {
-                    sideEffectsSubject.accept(it)
+                val newState = reduce(state.value!!, action) {
+                    sideEffectListener.invoke(it)
                 }
-                viewStateSubject.accept(newState)
-//                if (action !is Action.ServerMessageRead) { //paging debug
-//                    Log.d(TAG, "action: $action")
-//                }
-//                Log.d(
-//                    TAG,
-//                    "pagingState: ${newState.pagingState}, fullDataUp: ${newState.fullDataUp}, fullDataDown: ${newState.fullDataDown}, atBottom: ${newState.atBottom}"
-//                ) //paging debug
+                state.accept(newState)
                 Log.d(TAG, "action: $action")
                 Log.d(TAG, "state: $newState")
             }
@@ -163,10 +176,8 @@ object ChatUDF {
                             SideEffect.EditMessage(state.editingMessage, state.currentText)
                         )
                         val newMessage = state.editingMessage.copy(text = state.currentText)
-                        val newItem =
-                            ChatItem.Msg.Outgoing(newMessage, ChatItem.OutgoingStatus.EDITING)
                         return state.copy(
-                            chatItems = state.chatItems.replaceLastMsgWith(newItem),
+                            messages = state.messages.replaceLastWith(newMessage),
                             editingMessage = null
                         )
                     }
@@ -177,124 +188,137 @@ object ChatUDF {
 
                     val instant = Instant.now()
                     val file = (state.attachmentState as? AttachmentState.UploadSuccess)?.file
-                    val msg = Message(
+                    val message = Message(
                         id = -1,
                         chatId = 1,
-                        senderId = senderId,
+                        senderId = userId,
                         clientId = instant.toEpochMilli().toString(),
                         text = state.currentText,
                         type = null,
-                        readedIds = emptyList(),
                         quotedMessage = state.quotingMessage?.toQuotedMessage(),
                         timeCreated = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()),
                         file = file
                     )
-                    sideEffectListener.invoke(SideEffect.SendMessage(msg))
+                    sideEffectListener.invoke(SideEffect.SendMessage(message))
                     sideEffectListener(SideEffect.SetInputText(""))
-                    val newMessageItem = ChatItem.Msg.Outgoing(msg, ChatItem.OutgoingStatus.SENDING)
-                    sideEffectListener(SideEffect.InstantScrollTo(state.chatItems.lastIndex))
-                    return if (state.fullDataDown) state.copy(
-                        chatItems = state.chatItems.plusMsg(newMessageItem),
+                    val withScrollTo = if (state.fullDataDown) {
+                        SingleEvent(WithScrollTo(message))
+                        // sideEffectListener(SideEffect.InstantScrollTo(state.messages.lastIndex))
+                    } else {
+                        null
+                    }
+                    return state.copy(
+                        draft = state.draft + message,
                         currentText = "",
                         quotingMessage = null,
                         sendEnabled = false,
                         attachmentState = AttachmentState.Empty,
-                    )
-                    else state.copy(
-                        chatItems = emptyList<ChatItem>().plusMsg(newMessageItem),
-                        currentText = "",
-                        quotingMessage = null,
-                        fullDataDown = true,
-                        pagingState = PagingState.DATA,
-                        sendEnabled = false,
-                        attachmentState = AttachmentState.Empty
+                        withScrollTo = withScrollTo
                     )
                 }
                 is Action.ServerMessageNew -> {
-                    if (state.fullDataDown) {
-                        val newItem = action.message.mapIntoChatItem()
-                        val list = if (newItem is ChatItem.Msg.Outgoing) {
-                            state.chatItems.replaceLastMsgWith(newItem)
-                        } else {
-                            state.chatItems.plusMsg(newItem)
-                        }
-                        return if (state.atBottom) {
-                            sideEffectListener(SideEffect.InstantScrollTo(state.chatItems.lastIndex))
-                            state.copy(
-                                chatItems = list,
-                                unreadMessageCount = 0
-                            )
-                        } else {
-                            state.copy(
-                                chatItems = list,
-                                unreadMessageCount = state.unreadMessageCount + 1
-                            )
-                        }
+                    val draft = if (action.message.isOutgoing(userId)) {
+                        state.draft.filter { it.clientId != action.message.clientId }
                     } else {
-                        return state.copy(unreadMessageCount = state.unreadMessageCount + 1)
+                        state.draft
+                    }
+                    if (state.fullDataDown && (
+                                state.pagingState == PagingState.DATA ||
+                                        state.pagingState == PagingState.NEW_PAGE_UP_PROGRESS
+                                )
+                    ) {
+                        val readInfo = if (!state.atBottom) {
+                            state.readInfo.copy(unreadCount = state.readInfo.unreadCount + 1)
+                        } else {
+                            state.readInfo
+                        }
+                        val withScrollTo =
+                            if (action.message.isOutgoing(userId) || state.atBottom) {
+                                SingleEvent(WithScrollTo(action.message))
+                            } else {
+                                null
+                            }
+                        return state.copy(
+                            messages = state.messages + action.message,
+                            draft = draft,
+                            readInfo = readInfo,
+                            withScrollTo = withScrollTo
+                        )
+                    } else {
+                        val readInfo = state.readInfo.copy(
+                            unreadCount = state.readInfo.unreadCount + 1
+                        )
+                        return state.copy(
+                            readInfo = readInfo,
+                            draft = draft
+                        )
                     }
                 }
                 is Action.ServerMessageNewPage -> {
-                    val newItems = action.items.mapIntoChatItems()
                     when (state.pagingState) {
                         PagingState.EMPTY_PROGRESS -> {
-                            return if (newItems.isEmpty()) {
+                            return if (action.messages.isEmpty()) {
                                 state.copy(
-                                    chatItems = emptyList(),
+                                    messages = emptyList(),
                                     pagingState = PagingState.EMPTY
                                 )
                             } else {
                                 state.copy(
-                                    chatItems = newItems,
-                                    pagingState = PagingState.DATA,
-                                    fullDataDown = true
+                                    messages = action.messages,
+                                    pagingState = PagingState.DATA
                                 )
                             }
                         }
                         PagingState.NEW_PAGE_UP_PROGRESS -> {
-                            return if (action.items.isEmpty()) {
-                                state.copy(pagingState = PagingState.DATA, fullDataUp = true)
+                            return if (action.messages.isEmpty()) {
+                                state.copy(
+                                    pagingState = PagingState.DATA,
+                                    fullDataUp = true
+                                )
                             } else {
                                 state.copy(
-                                    chatItems = newItems.plusList(state.chatItems),
+                                    messages = action.messages + state.messages,
                                     pagingState = PagingState.DATA
                                 )
                             }
                         }
                         PagingState.NEW_PAGE_DOWN_PROGRESS -> {
-                            return if (action.items.isEmpty()) {
-                                state.copy(pagingState = PagingState.DATA, fullDataDown = true)
+                            return if (action.messages.isEmpty()) {
+                                state.copy(
+                                    pagingState = PagingState.DATA,
+                                    fullDataDown = true
+                                )
                             } else {
                                 state.copy(
-                                    chatItems = state.chatItems.plusList(newItems),
+                                    messages = state.messages + action.messages,
                                     pagingState = PagingState.DATA
                                 )
                             }
                         }
                         PagingState.NEW_PAGE_UP_DOWN_PROGRESS -> {
-                            val currentId = state.chatItems.firstMsg().message.id
+                            val currentId = state.messages.first().id
                             val isUpProgress = currentId == action.fromMessageId
                             if (isUpProgress) {
-                                return if (action.items.isEmpty()) {
+                                return if (action.messages.isEmpty()) {
                                     state.copy(
                                         pagingState = PagingState.NEW_PAGE_DOWN_PROGRESS,
                                         fullDataUp = true
                                     )
                                 } else {
                                     state.copy(
-                                        chatItems = newItems.plusList(state.chatItems),
+                                        messages = action.messages + state.messages,
                                         pagingState = PagingState.NEW_PAGE_DOWN_PROGRESS
                                     )
                                 }
                             } else {
-                                return if (action.items.isEmpty()) {
+                                return if (action.messages.isEmpty()) {
                                     state.copy(
                                         pagingState = PagingState.NEW_PAGE_UP_PROGRESS,
                                         fullDataDown = true
                                     )
                                 } else {
                                     state.copy(
-                                        chatItems = state.chatItems.plusList(newItems),
+                                        messages = state.messages + action.messages,
                                         pagingState = PagingState.NEW_PAGE_UP_PROGRESS
                                     )
                                 }
@@ -304,44 +328,43 @@ object ChatUDF {
                     }
                 }
                 is Action.ServerSpecificPartSuccess -> {
-                    val newItems = action.items.mapIntoChatItems()
-                    val targetPosition = newItems.indexOfFirst {
-                        it is ChatItem.Msg && it.message.id == action.targetMessageId
-                    }
-                    val isUp =
-                        newItems.firstMsg().message.id < state.chatItems.firstMsg().message.id
-                    sideEffectListener(SideEffect.FakeScrollTo(targetPosition, isUp))
+                    val message = action.messages.first { it.id == action.targetMessageId }
+                    val isUp = action.messages.first().id < state.messages.first().id
+                    val withScrollTo = SingleEvent(WithScrollTo(message, fake = true, isUp))
                     return state.copy(
-                        chatItems = newItems,
+                        messages = action.messages,
                         pagingState = PagingState.DATA,
                         fullDataUp = false,
                         fullDataDown = false,
+                        withScrollTo = withScrollTo
                     )
                 }
-                is Action.ServerLoadNewMessagesSuccess -> {
-                    if (action.items.size < DEFAULT_PAGE_SIZE) {
-                        return if (state.fullDataDown) {
-                            val list = state.chatItems.plusList(action.items.mapIntoChatItems())
-                            if (state.atBottom) {
-                                state.copy(chatItems = list)
-                            } else {
-                                state.copy(chatItems = list)
-                            }
-                        } else {
-                            state.copy(unreadMessageCount = action.items.size)
-                        }
-                    } else {
-                        return if (state.fullDataDown) {
-                            val list = state.chatItems.plusList(action.items.mapIntoChatItems())
+                is Action.ServerLoadBottomSuccess -> {
+                    if (state.pagingState == PagingState.BOTTOM_PROGRESS) {
+                        return if (action.messages.isEmpty()) {
                             state.copy(
-                                chatItems = list,
-                                fullDataDown = false,
-//                                unreadMessageCount = UNREAD_OVER_MAX_COUNT
+                                messages = emptyList(),
+                                pagingState = PagingState.EMPTY,
+                                readInfo = state.readInfo.copy(unreadCount = 0)
                             )
                         } else {
-                            state/*.copy(unreadMessageCount = UNREAD_OVER_MAX_COUNT)*/
+                            val withScrollTo = SingleEvent(
+                                WithScrollTo(
+                                    action.messages.last(),
+                                    fake = true,
+                                    isUp = false
+                                )
+                            )
+                            state.copy(
+                                messages = action.messages,
+                                pagingState = PagingState.DATA,
+                                fullDataDown = true,
+                                readInfo = state.readInfo.copy(unreadCount = 0),
+                                withScrollTo = withScrollTo
+                            )
                         }
                     }
+                    return state
                 }
 
                 //paging and scrolling actions, but no actions with list
@@ -349,32 +372,52 @@ object ChatUDF {
                     if (action.isOnline) {
                         return when (state.pagingState) {
                             PagingState.EMPTY, PagingState.EMPTY_ERROR -> {
-                                sideEffectListener(SideEffect.LoadPage(null, false))
+                                val fromMessageId =
+                                    if (state.readInfo.readIn == -1L) null
+                                    else state.readInfo.readIn + 1
+                                sideEffectListener(SideEffect.LoadPage(fromMessageId, false))
                                 state.copy(
                                     isOnline = true,
-                                    pagingState = PagingState.EMPTY_PROGRESS,
-                                    fullDataDown = false
+                                    pagingState = PagingState.EMPTY_PROGRESS
                                 )
                             }
                             else -> {
+                                sideEffectListener(SideEffect.LoadReadInfo(state.readInfo.readIn))
                                 state.copy(
                                     isOnline = true,
-                                    fullDataDown = false
+                                    pagingState = PagingState.READ_INFO_PROGRESS
                                 )
                             }
                         }
                     }
                     return state.copy(isOnline = action.isOnline)
                 }
+                is Action.ServerLoadReadInfoSuccess -> {
+                    //todo возможно нужен будет цикл if (state.readInfo.readIn == action.readInfo.readIn)
+                    return if (state.fullDataDown) {
+                        sideEffectListener(SideEffect.LoadPage(state.messages.last().id, true))
+                        state.copy(
+                            readInfo = action.readInfo,
+                            fullDataDown = false,
+                            pagingState = PagingState.NEW_PAGE_DOWN_PROGRESS
+                        )
+                    } else {
+                        state.copy(
+                            readInfo = action.readInfo,
+                            fullDataDown = false,
+                            pagingState = PagingState.DATA
+                        )
+                    }
+                }
                 is Action.InternalLoadMoreUpMessages -> {
                     return when (state.pagingState) {
                         PagingState.DATA -> {
-                            val fromMessageId = state.chatItems.firstMsg().message.id
+                            val fromMessageId = state.messages.first().id
                             sideEffectListener(SideEffect.LoadPage(fromMessageId, false))
                             state.copy(pagingState = PagingState.NEW_PAGE_UP_PROGRESS)
                         }
                         PagingState.NEW_PAGE_DOWN_PROGRESS -> {
-                            val fromMessageId = state.chatItems.firstMsg().message.id
+                            val fromMessageId = state.messages.first().id
                             sideEffectListener(SideEffect.LoadPage(fromMessageId, false))
                             state.copy(pagingState = PagingState.NEW_PAGE_UP_DOWN_PROGRESS)
                         }
@@ -384,12 +427,12 @@ object ChatUDF {
                 is Action.InternalLoadMoreDownMessages -> {
                     return when (state.pagingState) {
                         PagingState.DATA -> {
-                            val fromMessageId = state.chatItems.lastMsg().message.id
+                            val fromMessageId = state.messages.last().id
                             sideEffectListener(SideEffect.LoadPage(fromMessageId, true))
                             state.copy(pagingState = PagingState.NEW_PAGE_DOWN_PROGRESS)
                         }
                         PagingState.NEW_PAGE_UP_PROGRESS -> {
-                            val fromMessageId = state.chatItems.lastMsg().message.id
+                            val fromMessageId = state.messages.last().id
                             sideEffectListener(SideEffect.LoadPage(fromMessageId, true))
                             state.copy(pagingState = PagingState.NEW_PAGE_UP_DOWN_PROGRESS)
                         }
@@ -397,30 +440,35 @@ object ChatUDF {
                     }
                 }
                 is Action.ClientScrollToMessage -> {
-                    val position = state.chatItems.indexOfLast {
-                        it is ChatItem.Msg && it.message.id == action.messageId
-                    }
+                    val position = state.messages.indexOfLast { it.id == action.messageId }
                     return if (position != -1) {
-                        sideEffectListener(SideEffect.InstantScrollTo(position))
-                        state
+                        val withScrollTo = SingleEvent(WithScrollTo(state.messages[position]))
+                        state.copy(withScrollTo = withScrollTo)
                     } else {
                         sideEffectListener(SideEffect.LoadSpecificPart(action.messageId))
-                        state
+                        state.copy(pagingState = PagingState.SPECIFIC_PART_PROGRESS)
                     }
                 }
                 is Action.ClientScrollToBottom -> {
                     return if (state.fullDataDown) {
-                        sideEffectListener(SideEffect.InstantScrollTo(state.chatItems.lastIndex))
-                        state.copy(unreadMessageCount = 0)
+                        val withScrollTo = SingleEvent(WithScrollTo(state.messages.last()))
+                        val readInfo = state.readInfo.copy(unreadCount = 0)
+                        state.copy(readInfo = readInfo, withScrollTo = withScrollTo)
                     } else {
-                        sideEffectListener(SideEffect.LoadPage(null, false))
-                        state.copy(
-                            chatItems = emptyList(),
-                            pagingState = PagingState.EMPTY_PROGRESS,
-                            fullDataDown = false,
-                            unreadMessageCount = 0
-                        )
+                        sideEffectListener(SideEffect.LoadBottomMessages)
+                        state.copy(pagingState = PagingState.BOTTOM_PROGRESS)
                     }
+                }
+                is Action.ClientEmptyRetry -> {
+                    sideEffectListener(SideEffect.LoadPage(null, false))
+                    return state.copy(
+                        pagingState = PagingState.EMPTY_PROGRESS,
+                        fullDataDown = false
+                    )
+                }
+                is Action.ServerLoadReadInfoError -> {
+                    sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
+                    return state.copy(pagingState = PagingState.DATA)
                 }
                 is Action.ServerMessagePageError -> {
                     return when (state.pagingState) {
@@ -434,7 +482,7 @@ object ChatUDF {
                         }
                         PagingState.NEW_PAGE_UP_DOWN_PROGRESS -> {
                             sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
-                            val currentId = state.chatItems.firstMsg().message.id
+                            val currentId = state.messages.first().id
                             val isUpProgress = currentId == action.fromMessageId
                             val newPagingState =
                                 if (isUpProgress) PagingState.NEW_PAGE_DOWN_PROGRESS
@@ -445,100 +493,56 @@ object ChatUDF {
                     }
                 }
                 is Action.ServerSpecificPartError -> {
-                    sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
-                    return state
+                    //todo показать диалог
+                    return state.copy(pagingState = PagingState.DATA)
                 }
-                is Action.ServerLoadNewMessagesError -> {
-                    sideEffectListener(SideEffect.PageErrorEvent(action.throwable))
-                    return state
-                }
-                is Action.ClientEmptyRetry -> {
-                    sideEffectListener(SideEffect.LoadPage(null, false))
-                    return state.copy(
-                        pagingState = PagingState.EMPTY_PROGRESS,
-                        fullDataDown = false
-                    )
+                is Action.ServerLoadBottomError -> {
+                    //todo показать диалог
+                    return state.copy(pagingState = PagingState.DATA)
                 }
 
                 //just replacing item in list
                 is Action.ServerMessageSendSuccess -> {
-                    val newItem =
-                        ChatItem.Msg.Outgoing(action.message, ChatItem.OutgoingStatus.SENT)
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
+                    val draft = state.draft.filter { it.clientId != action.message.clientId }
+                    return state.copy(draft = draft)
                 }
                 is Action.ServerMessageSendError -> {
-                    val newItem =
-                        ChatItem.Msg.Outgoing(action.message, ChatItem.OutgoingStatus.FAILURE)
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
+                    //todo состояние ошибки для черновика
+                    return state
                 }
                 is Action.ServerMessageChange -> {
-                    Log.d(TAG, "reduce: Action.ServerMessageChange, $action")
-                    val newItem = action.message.mapIntoChatItem()
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
+                    return state.copy(messages = state.messages.replaceLastWith(action.message))
                 }
                 is Action.ServerMessageRead -> {
-                    val chatItems = state.chatItems.toMutableList()
-                    val messageIds = action.messageIds.toMutableList()
-                    for (i in chatItems.lastIndex downTo 0) {
-                        val chatItem = chatItems[i]
-                        if (chatItem is ChatItem.Msg && messageIds.contains(chatItem.message.id)) {
-                            val newReadIds = (chatItem.message.readedIds ?: emptyList()) + senderId
-                            val newMessage = chatItem.message.copy(readedIds = newReadIds)
-                            val newItem = when (chatItem) {
-                                is ChatItem.Msg.Incoming -> ChatItem.Msg.Incoming(newMessage)
-                                is ChatItem.Msg.System -> ChatItem.Msg.System(newMessage)
-                                is ChatItem.Msg.Outgoing ->
-                                    ChatItem.Msg.Outgoing(newMessage, ChatItem.OutgoingStatus.READ)
-                            }
-                            chatItems[i] = newItem
-                            messageIds.remove(chatItem.message.id)
-                            if (messageIds.isEmpty()) {
-                                break
-                            }
-                        }
-                    }
-                    return state.copy(chatItems = chatItems)
+                    val newReadOut = action.messageIds.maxOf { it }
+                    val readInfo = state.readInfo.copy(readOut = newReadOut)
+                    return state.copy(readInfo = readInfo)
                 }
                 is Action.ServerMessagesDeleted -> {
-                    val chatItems = state.chatItems.toMutableList()
+                    val chatItems = state.messages.toMutableList()
                     val deletedMessages = action.messages.toMutableList()
                     for (i in chatItems.lastIndex downTo 0) {
                         if (deletedMessages.isEmpty()) {
                             break
                         }
                         val chatItem = chatItems[i]
-                        if (chatItem !is ChatItem.Msg) continue
-                        val deletedMessage = deletedMessages.find { it.id == chatItem.message.id }
+                        val deletedMessage = deletedMessages.find { it.id == chatItem.id }
                         if (deletedMessage != null) {
-                            chatItems[i] = deletedMessage.mapIntoChatItem()
+                            chatItems[i] = deletedMessage
                             deletedMessages.remove(deletedMessage)
                         }
                     }
-                    return state.copy(chatItems = chatItems)
+                    return state.copy(messages = chatItems)
                 }
                 is Action.ServerMessageEditSuccess -> {
-                    val newItem = action.message.mapIntoChatItem()
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
+                    return state.copy(messages = state.messages.replaceLastWith(action.message))
                 }
                 is Action.ServerMessageEditError -> {
-                    val newItem = action.message.mapIntoChatItem()
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
-                }
-                is Action.ClientDeleteMessage -> {
-                    if (action.message.senderId != senderId) return state
-                    sideEffectListener(SideEffect.DeleteMessage(action.message))
-                    val newItem =
-                        ChatItem.Msg.Outgoing(action.message, ChatItem.OutgoingStatus.DELETING)
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
+                    //todo показать диалог
+                    return state.copy(messages = state.messages.replaceLastWith(action.message))
                 }
                 is Action.ServerMessageDeleteSuccess -> {
-                    val newItem =
-                        ChatItem.Msg.Outgoing(action.message, ChatItem.OutgoingStatus.DELETED)
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
-                }
-                is Action.ServerMessageDeleteError -> {
-                    val newItem = action.message.mapIntoChatItem()
-                    return state.copy(chatItems = state.chatItems.replaceLastMsgWith(newItem))
+                    return state.copy(messages = state.messages.replaceLastWith(action.message))
                 }
 
                 //no actions with list
@@ -603,7 +607,14 @@ object ChatUDF {
                     return state.copy(quotingMessage = null)
                 }
                 is Action.InternalAtBottom -> {
-                    return state.copy(atBottom = action.atBottom)
+                    return if (state.fullDataDown && action.atBottom) {
+                        state.copy(
+                            atBottom = true,
+                            readInfo = state.readInfo.copy(unreadCount = 0)
+                        )
+                    } else {
+                        state.copy(atBottom = false)
+                    }
                 }
                 is Action.ClientEditMessageRequest -> {
                     sideEffectListener(SideEffect.SetInputText(action.message.text ?: ""))
@@ -629,13 +640,33 @@ object ChatUDF {
                     val typingSenderIds = state.typingSenderIds - action.senderId
                     return state.copy(typingSenderIds = typingSenderIds)
                 }
+                is Action.ClientDeleteMessage -> {
+                    if (action.message.senderId != userId) return state
+                    sideEffectListener(SideEffect.DeleteMessage(action.message))
+                    return state
+                }
+                is Action.ServerMessageDeleteError -> {
+                    //todo показать диалог
+                    return state
+                }
+                is Action.ReadMessage -> {
+                    if (action.message.senderId != userId &&
+                        action.message.id > state.readInfo.readIn
+                    ) {
+                        sideEffectListener(SideEffect.ReadMessage(action.message.id))
+                        val readInfo = state.readInfo.copy(
+                            readIn = action.message.id,
+                            unreadCount = max(state.readInfo.unreadCount - 1, 0)
+                        )
+                        return state.copy(readInfo = readInfo)
+                    }
+                    return state
+                }
             }
         }
 
-        private fun List<ChatItem>.replaceLastMsgWith(item: ChatItem.Msg): List<ChatItem> {
-            return this.replaceLastWith(item) {
-                it is ChatItem.Msg && it.message.id == item.message.id
-            }
+        private fun List<Message>.replaceLastWith(item: Message): List<Message> {
+            return this.replaceLastWith(item) { it.id == item.id }
         }
 
         private inline fun <T> List<T>.replaceLastWith(
@@ -650,77 +681,6 @@ object ChatUDF {
             return list
         }
 
-        private fun List<ChatItem>.firstMsg(): ChatItem.Msg {
-            return first { it is ChatItem.Msg } as ChatItem.Msg
-        }
-
-        private fun List<ChatItem>.lastMsg(): ChatItem.Msg {
-            return last { it is ChatItem.Msg } as ChatItem.Msg
-        }
-
-        private fun List<Message>.mapIntoChatItems(): List<ChatItem> {
-            if (isEmpty()) return emptyList()
-            val list = mutableListOf<ChatItem>()
-            var localDate: LocalDate? = null
-            this.forEach { message ->
-                val msgLocalDate = message.timeCreated.toLocalDate()
-                if (msgLocalDate != null && msgLocalDate != localDate) {
-                    list += ChatItem.DateHeader(msgLocalDate)
-                    localDate = msgLocalDate
-                }
-                list += message.mapIntoChatItem()
-            }
-            return list
-        }
-
-        private fun Message.mapIntoChatItem(): ChatItem.Msg {
-            return when {
-                senderId == this@Store.senderId -> {
-                    val status =
-                        if (readedIds.isNullOrEmpty()) ChatItem.OutgoingStatus.SENT_2
-                        else ChatItem.OutgoingStatus.READ
-                    ChatItem.Msg.Outgoing(this, status)
-                }
-                (type == Message.Type.SYSTEM || type == Message.Type.DELETED) -> {
-                    ChatItem.Msg.System(this)
-                }
-                else -> {
-                    ChatItem.Msg.Incoming(this)
-                }
-            }
-        }
-
-        private fun List<ChatItem>.plusMsg(chatItemMsg: ChatItem.Msg): List<ChatItem> {
-            val newItemDate = chatItemMsg.message.timeCreated.toLocalDate()
-            if (this.isEmpty()) {
-                return listOf(ChatItem.DateHeader(newItemDate), chatItemMsg)
-            }
-            val lastItem = this.last() as ChatItem.Msg //last message cant be dateHeader
-            val lastItemDate = lastItem.message.timeCreated.toLocalDate()
-            if (lastItemDate != newItemDate) {
-                return this + ChatItem.DateHeader(newItemDate) + chatItemMsg
-            }
-            return this + chatItemMsg
-        }
-
-        private fun List<ChatItem>.plusList(anotherList: List<ChatItem>): List<ChatItem> {
-            if (this.isEmpty()) {
-                return anotherList
-            }
-            if (anotherList.isEmpty()) {
-                return this
-            }
-            val endDate = (this.last() as ChatItem.Msg).message.timeCreated.toLocalDate()
-            val startDate = (anotherList.first() as ChatItem.DateHeader).localDate
-
-            return if (endDate == startDate) {
-                this + anotherList.toMutableList().apply {
-                    removeAt(0) //removing dateHeader
-                }
-            } else {
-                this + anotherList
-            }
-        }
 
         override fun accept(t: Action) {
             actions.accept(t)
@@ -732,6 +692,10 @@ object ChatUDF {
 
         override fun isDisposed(): Boolean {
             return disposable.isDisposed
+        }
+
+        override fun subscribe(observer: Observer<in State>) {
+            state.hide().subscribe(observer)
         }
     }
 }

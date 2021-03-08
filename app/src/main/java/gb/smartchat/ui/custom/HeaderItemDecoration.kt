@@ -4,7 +4,6 @@ import android.graphics.Canvas
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.ColorDrawable
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -61,13 +60,11 @@ class HeaderItemDecoration(
         val childInContact = getChildInContact(parent, contactPoint) ?: return
         val itemPosition = parent.getChildAdapterPosition(childInContact)
         val isHeader = isHeader(itemPosition)
-        Log.d("TAG", "onDrawOver: isHeader: $isHeader")
         if (isHeader) {
             moveHeader(c, headerView, childInContact, parent.paddingTop)
             return
         }
         val isJustAfterHeader = isHeader(itemPosition - 1)
-        Log.d("TAG", "onDrawOver: isJustAfterHeader: $isJustAfterHeader")
         if (isJustAfterHeader) {
             drawHeader(c, headerView, childInContact, parent.paddingTop)
             return
