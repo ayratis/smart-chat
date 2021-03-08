@@ -2,6 +2,7 @@ package gb.smartchat.ui.chat
 
 import androidx.recyclerview.widget.DiffUtil
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.User
 import gb.smartchat.utils.SingleEvent
 import java.time.LocalDate
 
@@ -17,6 +18,8 @@ sealed class ChatItem {
             val status: OutgoingStatus
         ) : Msg(message)
     }
+
+    data class Typing(val typingUsers: List<User>) : ChatItem()
 
     enum class OutgoingStatus {
         SENDING,
@@ -60,6 +63,7 @@ data class ChatItemsInfo(
     val draft: List<Message>,
     val readOut: Long,
     val fullDataDown: Boolean,
+    val typingSenderIds: List<String>,
     val withScrollTo: SingleEvent<ChatUDF.WithScrollTo>?
 )
 
@@ -71,11 +75,15 @@ fun ChatUDF.State.mapIntoChatItemsInfo(): ChatItemsInfo {
         draft = draft,
         readOut = readInfo.readOut,
         fullDataDown = fullDataDown,
-        withScrollTo = withScrollTo
+        withScrollTo = withScrollTo,
+        typingSenderIds = typingSenderIds
     )
 }
 
-fun ChatItemsInfo.mapIntoChatItems(userId: String): Pair<List<ChatItem>, ScrollOptions?> {
+fun ChatItemsInfo.mapIntoChatItems(
+    userId: String,
+    users: List<User>
+): Pair<List<ChatItem>, ScrollOptions?> {
     if (messages.isEmpty()) return emptyList<ChatItem>() to null
     var scrollPosition = -1
     val list = mutableListOf<ChatItem>()
@@ -104,6 +112,8 @@ fun ChatItemsInfo.mapIntoChatItems(userId: String): Pair<List<ChatItem>, ScrollO
                 scrollPosition = list.lastIndex
             }
         }
+        val typingUsers = typingSenderIds.mapNotNull { id -> users.find { it.id == id } }
+        list += ChatItem.Typing(typingUsers)
     }
     return if (scrollPosition != -1 && withScrollTo != null) {
         list to ScrollOptions(scrollPosition, withScrollTo.fake, withScrollTo.isUp)

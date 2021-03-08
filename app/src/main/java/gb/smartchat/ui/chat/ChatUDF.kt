@@ -49,17 +49,20 @@ object ChatUDF {
         data class ServerMessageEditError(val message: Message) : Action()
         data class ServerMessageDeleteSuccess(val message: Message) : Action()
         data class ServerMessageDeleteError(val message: Message) : Action()
-        data class ServerMessageNewPage(val messages: List<Message>, val fromMessageId: Long?) :
-            Action()
+        data class ServerMessageNewPage(
+            val messages: List<Message>,
+            val fromMessageId: Long?
+        ) : Action()
 
-        data class ServerMessagePageError(val throwable: Throwable, val fromMessageId: Long?) :
-            Action()
+        data class ServerMessagePageError(
+            val throwable: Throwable,
+            val fromMessageId: Long?
+        ) : Action()
 
         data class ServerSpecificPartSuccess(
             val messages: List<Message>,
             val targetMessageId: Long
-        ) :
-            Action()
+        ) : Action()
 
         data class ServerSpecificPartError(val throwable: Throwable) : Action()
         data class ServerLoadReadInfoSuccess(val readInfo: ReadInfo) : Action()
@@ -140,8 +143,10 @@ object ChatUDF {
         READ_INFO_PROGRESS
     }
 
-    class Store(private val userId: String, readInfo: ReadInfo) : ObservableSource<State>,
-        Consumer<Action>, Disposable {
+    class Store(
+        private val userId: String,
+        readInfo: ReadInfo
+    ) : ObservableSource<State>, Consumer<Action>, Disposable {
 
         companion object {
             private const val TAG = "store"
