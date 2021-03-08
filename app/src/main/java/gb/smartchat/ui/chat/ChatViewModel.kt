@@ -50,7 +50,7 @@ class ChatViewModel(
     val chatItems: Observable<Pair<List<ChatItem>, ScrollOptions?>> = viewState
         .map { it.mapIntoChatItemsInfo() }
         .distinctUntilChanged()
-        .map { it.mapIntoChatItems(userId) }
+        .map { it.mapIntoChatItems(userId, chat.users) }
         .subscribeOn(Schedulers.computation())
         .observeOn(AndroidSchedulers.mainThread())
 

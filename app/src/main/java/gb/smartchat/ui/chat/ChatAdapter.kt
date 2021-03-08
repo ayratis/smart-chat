@@ -4,10 +4,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.R
-import gb.smartchat.ui.chat.view_holder.DateHeaderViewHolder
-import gb.smartchat.ui.chat.view_holder.IncomingViewHolder
-import gb.smartchat.ui.chat.view_holder.OutgoingViewHolder
-import gb.smartchat.ui.chat.view_holder.SystemViewHolder
+import gb.smartchat.ui.chat.view_holder.*
 import gb.smartchat.ui.custom.StickyHeaderHelper
 
 class ChatAdapter(
@@ -31,6 +28,7 @@ class ChatAdapter(
             is ChatItem.Msg.Outgoing -> R.layout.item_chat_msg_outgoing
             is ChatItem.Msg.Incoming -> R.layout.item_chat_msg_incoming
             is ChatItem.Msg.System -> R.layout.item_chat_msg_system
+            is ChatItem.Typing -> R.layout.item_chat_typing
         }
     }
 
@@ -53,6 +51,7 @@ class ChatAdapter(
                 onQuotedMsgClickListener,
                 onFileClickListener
             )
+            R.layout.item_chat_typing -> TypingViewHolder.create(parent)
             else -> throw RuntimeException("unknown view type")
         }
     }
@@ -64,6 +63,7 @@ class ChatAdapter(
             is ChatItem.Msg.Outgoing -> (holder as OutgoingViewHolder).bind(item)
             is ChatItem.Msg.Incoming -> (holder as IncomingViewHolder).bind(item)
             is ChatItem.Msg.System -> (holder as SystemViewHolder).bind(item)
+            is ChatItem.Typing -> (holder as TypingViewHolder).bind(item.typingUsers)
         }
         onItemBindListener.invoke(item)
         if (!fullDataUp && position < 10) nextPageUpCallback.invoke()

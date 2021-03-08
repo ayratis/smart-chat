@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:ellipsize="end"
+    android:lines="1"
+    android:paddingStart="16dp"
+    android:paddingTop="44dp"
+    android:paddingEnd="42dp"
+    style="@style/Body2"
+    android:textColor="@color/santas_gray"
+    android:paddingBottom="8dp"
+    tools:text="Набирает сообщение: Андрей, Екатерина, Андрей, Екатерина"/>

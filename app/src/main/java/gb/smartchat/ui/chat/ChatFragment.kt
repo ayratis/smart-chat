@@ -348,15 +348,6 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             }
             .also { renderDisposables.add(it) }
         viewModel.viewState
-            .map { it.typingSenderIds }
-            .distinctUntilChanged()
-            .subscribe { typingSenderIds ->
-//                    binding.toolbar.subtitle =
-//                        if (typingSenderIds.isEmpty()) ""
-//                        else "typing: $typingSenderIds"
-            }
-            .also { renderDisposables.add(it) }
-        viewModel.viewState
             .map { it.attachmentState }
             .distinctUntilChanged()
             .subscribe { attachmentState ->

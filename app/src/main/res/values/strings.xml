@@ -14,4 +14,5 @@
     <string name="retry">Повторить</string>
     <string name="image">Изображение</string>
     <string name="file_open_error">Не удалось открыть файл</string>
+    <string name="typing_users_s">Набирает сообщение: %s</string>
 </resources>
