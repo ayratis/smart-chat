@@ -2,6 +2,7 @@ package gb.smartchat.ui.chat
 
 import androidx.recyclerview.widget.DiffUtil
 import gb.smartchat.entity.Message
+import gb.smartchat.utils.SingleEvent
 import java.time.LocalDate
 
 sealed class ChatItem {
@@ -50,6 +51,80 @@ sealed class ChatItem {
                 return oldItem == newItem
             }
             return false
+        }
+    }
+}
+
+data class ChatItemsInfo(
+    val messages: List<Message>,
+    val draft: List<Message>,
+    val readOut: Long,
+    val fullDataDown: Boolean,
+    val withScrollTo: SingleEvent<ChatUDF.WithScrollTo>?
+)
+
+data class ScrollOptions(val position: Int, val fake: Boolean, val isUp: Boolean)
+
+fun ChatUDF.State.mapIntoChatItemsInfo(): ChatItemsInfo {
+    return ChatItemsInfo(
+        messages = messages,
+        draft = draft,
+        readOut = readInfo.readOut,
+        fullDataDown = fullDataDown,
+        withScrollTo = withScrollTo
+    )
+}
+
+fun ChatItemsInfo.mapIntoChatItems(userId: String): Pair<List<ChatItem>, ScrollOptions?> {
+    if (messages.isEmpty()) return emptyList<ChatItem>() to null
+    var scrollPosition = -1
+    val list = mutableListOf<ChatItem>()
+    var localDate: LocalDate? = null
+    val withScrollTo = withScrollTo?.getContentIfNotHandled()
+    messages.forEach { message ->
+        val msgLocalDate = message.timeCreated.toLocalDate()
+        if (msgLocalDate != null && msgLocalDate != localDate) {
+            list += ChatItem.DateHeader(msgLocalDate)
+            localDate = msgLocalDate
+        }
+        list += message.mapIntoChatItem(readOut, userId)
+        if (withScrollTo != null && withScrollTo.message.id == message.id) {
+            scrollPosition = list.lastIndex
+        }
+    }
+    if (fullDataDown) {
+        draft.forEach { message ->
+            val msgLocalDate = message.timeCreated.toLocalDate()
+            if (msgLocalDate != null && msgLocalDate != localDate) {
+                list += ChatItem.DateHeader(msgLocalDate)
+                localDate = msgLocalDate
+            }
+            list += ChatItem.Msg.Outgoing(message, ChatItem.OutgoingStatus.SENDING)
+            if (withScrollTo != null && withScrollTo.message.clientId == message.clientId) {
+                scrollPosition = list.lastIndex
+            }
+        }
+    }
+    return if (scrollPosition != -1 && withScrollTo != null) {
+        list to ScrollOptions(scrollPosition, withScrollTo.fake, withScrollTo.isUp)
+    } else {
+        list to null
+    }
+}
+
+private fun Message.mapIntoChatItem(readOut: Long, userId: String): ChatItem.Msg {
+    return when {
+        senderId == userId -> {
+            val status =
+                if (id > readOut) ChatItem.OutgoingStatus.SENT_2
+                else ChatItem.OutgoingStatus.READ
+            ChatItem.Msg.Outgoing(this, status)
+        }
+        (type == Message.Type.SYSTEM || type == Message.Type.DELETED) -> {
+            ChatItem.Msg.System(this)
+        }
+        else -> {
+            ChatItem.Msg.Incoming(this)
         }
     }
 }

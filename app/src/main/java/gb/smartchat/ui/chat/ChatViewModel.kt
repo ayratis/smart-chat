@@ -6,7 +6,6 @@ import android.util.LongSparseArray
 import androidx.core.util.forEach
 import androidx.lifecycle.ViewModel
 import com.jakewharton.rxrelay2.BehaviorRelay
-import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.data.content.ContentHelper
 import gb.smartchat.data.download.FileDownloadHelper
 import gb.smartchat.data.http.HttpApi
@@ -48,11 +47,15 @@ class ChatViewModel(
     private val downloadStatusDisposableMap = LongSparseArray<Disposable>()
     private var uploadDisposable: Disposable? = null
     val viewState: Observable<ChatUDF.State> = Observable.wrap(store)
+    val chatItems: Observable<Pair<List<ChatItem>, ScrollOptions?>> = viewState
+        .map { it.mapIntoChatItemsInfo() }
+        .distinctUntilChanged()
+        .map { it.mapIntoChatItems(userId) }
+        .subscribeOn(Schedulers.computation())
+        .observeOn(AndroidSchedulers.mainThread())
+
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
-    val instantScrollTo = PublishRelay.create<Int>()
     val openFile = BehaviorRelay.create<SingleEvent<Uri>>()
-    val fakeScrollToCenter = BehaviorRelay.create<SingleEvent<Pair<Int, Boolean>>>()
-    val fakeScrollToBottom = BehaviorRelay.create<SingleEvent<Unit>>()
 
     init {
         compositeDisposable.add(store)
@@ -109,9 +112,7 @@ class ChatViewModel(
                 is ChatUDF.SideEffect.LoadSpecificPart -> {
                     loadSpecificPart(sideEffect.fromMessageId)
                 }
-                is ChatUDF.SideEffect.InstantScrollTo -> {
-                    instantScrollTo.accept(sideEffect.position)
-                }
+
                 is ChatUDF.SideEffect.LoadReadInfo -> {
                     loadReadInfo(sideEffect.fromMessageId)
                 }
@@ -131,17 +132,12 @@ class ChatViewModel(
                 is ChatUDF.SideEffect.OpenFile -> {
                     openFile.accept(SingleEvent(sideEffect.contentUri))
                 }
-                is ChatUDF.SideEffect.FakeScrollToCenter -> {
-                    fakeScrollToCenter.accept(SingleEvent(sideEffect.position to sideEffect.isUp))
-                }
+
                 is ChatUDF.SideEffect.ReadMessage -> {
                     readMessage(sideEffect.messageId)
                 }
                 ChatUDF.SideEffect.LoadBottomMessages -> {
                     loadBottomMessages()
-                }
-                ChatUDF.SideEffect.FakeScrollToBottom -> {
-                    fakeScrollToBottom.accept(SingleEvent(Unit))
                 }
             }
         }
@@ -278,6 +274,7 @@ class ChatViewModel(
             senderId = userId,
         )
         val d = socketApi.readMessage(requestBody)
+            .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { Log.d(TAG, "onChatItemBind: success") },
                 { Log.d(TAG, "messageRead", it) }
@@ -319,6 +316,7 @@ class ChatViewModel(
             .flatMap {
                 socketApi.getReadInfo(ReadInfoRequest(userId, chat.id))
             }
+            .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { store.accept(ChatUDF.Action.ServerLoadReadInfoSuccess(it)) },
                 { store.accept(ChatUDF.Action.ServerLoadReadInfoError(it)) }
@@ -423,7 +421,9 @@ class ChatViewModel(
     }
 
     fun onChatItemBind(chatItem: ChatItem) {
-        store.accept(ChatUDF.Action.InternalItemBind(chatItem))
+        if (chatItem is ChatItem.Msg.Incoming) {
+            store.accept(ChatUDF.Action.ReadMessage(chatItem.message))
+        }
     }
 
     fun loadNextPage(forward: Boolean) {

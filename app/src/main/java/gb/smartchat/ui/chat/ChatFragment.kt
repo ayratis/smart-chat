@@ -159,9 +159,6 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             binding.rvChat.updatePadding(bottom = height)
         }
 
-    private var fakeScrollToCenter: SingleEvent<Pair<Int, Boolean>>? = null
-    private var fakeScrollToBottom: SingleEvent<Unit>? = null
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -317,22 +314,25 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
     }
 
     private fun renderViewModel() {
-        viewModel.viewState
-            .map { it.chatItems }
-            .distinctUntilChanged()
-            .subscribe { chatItems ->
-                Log.d(TAG, "submitList: start")
+        viewModel.chatItems
+            .subscribe { (chatItems, scrollOptions) ->
+                Log.d(TAG, "chatItemsSize: ${chatItems.size}, scrollOptions: $scrollOptions")
                 chatAdapter.submitList(chatItems) {
-                    Log.d(TAG, "submitList: end")
-                    fakeScrollToCenter?.getContentIfNotHandled()?.let { (pos, isUp) ->
-                        fakeScrollToCenterPosition(pos, isUp)
-                    }
-                    fakeScrollToBottom?.getContentIfNotHandled()?.let {
-                        fakeScrollToBottom()
+                    scrollOptions?.let { (position, fake, isUp) ->
+                        if (fake) {
+                            if (position == chatItems.lastIndex) {
+                                fakeScrollToBottom()
+                            } else {
+                                fakeScrollToCenterPosition(position, isUp)
+                            }
+                        } else {
+                            instantScrollToPosition(position)
+                        }
                     }
                 }
             }
             .also { renderDisposables.add(it) }
+
         viewModel.viewState
             .map { listOf(it.editingMessage) }
             .distinctUntilChanged()
@@ -466,23 +466,6 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                     binding.etInput.setText(it)
                     binding.etInput.setSelection(it.length)
                 }
-            }
-            .also { renderDisposables.add(it) }
-        viewModel.instantScrollTo
-            .subscribe { pos ->
-                instantScrollToPosition(pos)
-            }
-            .also { renderDisposables.add(it) }
-        viewModel.fakeScrollToCenter
-            .subscribe { event ->
-                fakeScrollToBottom = null
-                fakeScrollToCenter = event
-            }
-            .also { renderDisposables.add(it) }
-        viewModel.fakeScrollToBottom
-            .subscribe {  event ->
-                fakeScrollToCenter = null
-                fakeScrollToBottom = event
             }
             .also { renderDisposables.add(it) }
         viewModel.viewState

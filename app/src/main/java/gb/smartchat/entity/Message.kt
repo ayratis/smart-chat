@@ -44,4 +44,8 @@ data class Message(
         }
         return super.toString()
     }
+
+    fun isOutgoing(userId: String): Boolean {
+        return senderId == userId
+    }
 }
