@@ -291,7 +291,10 @@ class ChatViewModel(
     }
 
     private fun loadSpecificPart(fromMessageId: Long) {
-        fetchMessages(fromMessageId + (ChatUDF.DEFAULT_PAGE_SIZE / 2), false)
+        fetchMessages(fromMessageId + 1, false, ChatUDF.DEFAULT_PAGE_SIZE / 2)
+            .zipWith(
+                fetchMessages(fromMessageId, true, ChatUDF.DEFAULT_PAGE_SIZE / 2),
+                { t1, t2 -> t1 + t2 })
             .subscribe(
                 { store.accept(ChatUDF.Action.ServerSpecificPartSuccess(it, fromMessageId)) },
                 { store.accept(ChatUDF.Action.ServerSpecificPartError(it)) }
@@ -322,11 +325,15 @@ class ChatViewModel(
             .also { compositeDisposable.add(it) }
     }
 
-    private fun fetchMessages(fromMessageId: Long?, forward: Boolean): Single<List<Message>> {
+    private fun fetchMessages(
+        fromMessageId: Long?,
+        forward: Boolean,
+        pageSize: Int = ChatUDF.DEFAULT_PAGE_SIZE
+    ): Single<List<Message>> {
         return httpApi
             .getChatMessageHistory(
                 chatId = chat.id,
-                pageSize = ChatUDF.DEFAULT_PAGE_SIZE,
+                pageSize = pageSize,
                 messageId = fromMessageId,
                 lookForward = forward
             )
