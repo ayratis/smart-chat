@@ -5,10 +5,12 @@ import android.util.Log
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.data.download.DownloadStatus
+import gb.smartchat.entity.ChangedMessage
 import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.ReadInfo
 import gb.smartchat.utils.SingleEvent
+import gb.smartchat.utils.composeWithMessage
 import gb.smartchat.utils.toQuotedMessage
 import io.reactivex.ObservableSource
 import io.reactivex.Observer
@@ -39,7 +41,7 @@ object ChatUDF {
         data class ClientFileClick(val message: Message) : Action()
 
         data class ServerMessageNew(val message: Message) : Action()
-        data class ServerMessageChange(val message: Message) : Action()
+        data class ServerMessageEdited(val changedMessage: ChangedMessage) : Action()
         data class ServerTyping(val senderId: String) : Action()
         data class ServerMessageRead(val messageIds: List<Long>) : Action()
         data class ServerMessagesDeleted(val messages: List<Message>) : Action()
@@ -78,6 +80,7 @@ object ChatUDF {
         data class InternalConnected(val isOnline: Boolean) : Action()
         data class InternalAtBottom(val atBottom: Boolean) : Action()
         data class ReadMessage(val message: Message) : Action()
+        data class InternalUpdateMessage(val message: Message) : Action()
     }
 
     sealed class SideEffect {
@@ -202,6 +205,7 @@ object ChatUDF {
                         type = null,
                         quotedMessage = state.quotingMessage?.toQuotedMessage(),
                         timeCreated = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()),
+                        timeUpdated = null,
                         file = file
                     )
                     sideEffectListener.invoke(SideEffect.SendMessage(message))
@@ -515,7 +519,13 @@ object ChatUDF {
                     //todo состояние ошибки для черновика
                     return state
                 }
-                is Action.ServerMessageChange -> {
+                is Action.ServerMessageEdited -> {
+                    val targetMessage = state.messages.find { it.id == action.changedMessage.id }
+                        ?: return state
+                    val editedMessage = action.changedMessage.composeWithMessage(targetMessage)
+                    return state.copy(messages = state.messages.replaceLastWith(editedMessage))
+                }
+                is Action.InternalUpdateMessage -> {
                     return state.copy(messages = state.messages.replaceLastWith(action.message))
                 }
                 is Action.ServerMessageRead -> {
