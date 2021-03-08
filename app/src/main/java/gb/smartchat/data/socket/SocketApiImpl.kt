@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.BuildConfig
+import gb.smartchat.entity.ChangedMessage
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.ReadInfo
 import gb.smartchat.entity.Typing
@@ -58,8 +59,8 @@ class SocketApiImpl(
                     }
                     ServerEvent.MESSAGE_CHANGE -> {
                         val messageRaw = response.getJSONObject("new_message").toString()
-                        val message = gson.fromJson(messageRaw, Message::class.java)
-                        SocketEvent.MessageChange(message)
+                        val changedMessage = gson.fromJson(messageRaw, ChangedMessage::class.java)
+                        SocketEvent.MessageChange(changedMessage)
                     }
                     ServerEvent.TYPING -> {
                         val typing = gson.fromJson(response.toString(), Typing::class.java)
@@ -107,7 +108,7 @@ class SocketApiImpl(
                     when (socketEvent) {
                         is SocketEvent.Connected -> true
                         is SocketEvent.Disconnected -> true
-                        is SocketEvent.MessageChange -> socketEvent.message.chatId == chatId
+                        is SocketEvent.MessageChange -> socketEvent.changedMessage.chatId == chatId
                         is SocketEvent.MessageNew -> socketEvent.message.chatId == chatId
                         is SocketEvent.MessageRead -> true
                         is SocketEvent.Typing -> socketEvent.typing.chatId == chatId

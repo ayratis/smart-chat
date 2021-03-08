@@ -22,6 +22,8 @@ data class Message(
     val quotedMessage: QuotedMessage?,
     @SerializedName("time_created")
     val timeCreated: ZonedDateTime,
+    @SerializedName("time_updated")
+    val timeUpdated: ZonedDateTime?,
     @SerializedName("file")
     val file: File?,
 //    @SerializedName("mentions")

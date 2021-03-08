@@ -25,6 +25,7 @@ import androidx.lifecycle.LifecycleOwner
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.data.download.FileDownloadHelper
+import gb.smartchat.entity.ChangedMessage
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.QuotedMessage
 import gb.smartchat.entity.User
@@ -285,6 +286,16 @@ fun Message.toQuotedMessage(): QuotedMessage {
         messageId = id,
         text = text,
         senderId = senderId,
+    )
+}
+
+fun ChangedMessage.composeWithMessage(message: Message): Message {
+    return message.copy(
+        id = id,
+        chatId = chatId,
+        timeUpdated = timeUpdated,
+        text = text,
+        senderId = senderId
     )
 }
 

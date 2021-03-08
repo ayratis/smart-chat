@@ -162,10 +162,8 @@ class ChatViewModel(
                         store.accept(ChatUDF.Action.ServerMessageNew(msg))
                     }
                     is SocketEvent.MessageChange -> {
-                        val msg = event.message
-                            .composeWithDownloadStatus(downloadHelper)
-                            .composeWithUser(chat.users)
-                        store.accept(ChatUDF.Action.ServerMessageChange(msg))
+                        val msg = event.changedMessage
+                        store.accept(ChatUDF.Action.ServerMessageEdited(msg))
                     }
                     is SocketEvent.Typing -> {
                         store.accept(ChatUDF.Action.ServerTyping(event.typing.senderId))
@@ -372,7 +370,7 @@ class ChatViewModel(
                 .subscribe { downloadStatus ->
                     val newMessage =
                         message.copy(file = message.file.copy(downloadStatus = downloadStatus))
-                    store.accept(ChatUDF.Action.ServerMessageChange(newMessage))
+                    store.accept(ChatUDF.Action.InternalUpdateMessage(newMessage))
                 }.also {
                     downloadStatusDisposableMap.put(message.id, it)
                 }
