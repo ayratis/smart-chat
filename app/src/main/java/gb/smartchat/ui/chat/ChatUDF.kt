@@ -200,7 +200,7 @@ object ChatUDF {
                         chatId = 1,
                         senderId = userId,
                         clientId = instant.toEpochMilli().toString(),
-                        text = state.currentText,
+                        text = state.currentText.trim(),
                         type = null,
                         quotedMessage = state.quotingMessage?.toQuotedMessage(),
                         timeCreated = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()),
@@ -235,10 +235,10 @@ object ChatUDF {
                                         state.pagingState == PagingState.NEW_PAGE_UP_PROGRESS
                                 )
                     ) {
-                        val readInfo = if (!state.atBottom) {
-                            state.readInfo.copy(unreadCount = state.readInfo.unreadCount + 1)
+                        val readInfo = if (action.message.isOutgoing(userId) || state.atBottom) {
+                            state.readInfo.copy(unreadCount = 0)
                         } else {
-                            state.readInfo
+                            state.readInfo.copy(unreadCount = state.readInfo.unreadCount + 1)
                         }
                         val withScrollTo =
                             if (action.message.isOutgoing(userId) || state.atBottom) {
@@ -273,7 +273,8 @@ object ChatUDF {
                             } else {
                                 state.copy(
                                     messages = action.messages,
-                                    pagingState = PagingState.DATA
+                                    pagingState = PagingState.DATA,
+                                    fullDataDown = action.fromMessageId == null
                                 )
                             }
                         }
@@ -381,7 +382,7 @@ object ChatUDF {
                         return when (state.pagingState) {
                             PagingState.EMPTY, PagingState.EMPTY_ERROR -> {
                                 val fromMessageId =
-                                    if (state.readInfo.readIn == -1L) null
+                                    if (state.readInfo.readIn == -1L || state.readInfo.unreadCount == 0) null
                                     else state.readInfo.readIn + 1
                                 sideEffectListener(SideEffect.LoadPage(fromMessageId, false))
                                 state.copy(

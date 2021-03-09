@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
+import gb.smartchat.R
 
 class AttachDialogFragment : DialogFragment() {
 
@@ -14,7 +15,13 @@ class AttachDialogFragment : DialogFragment() {
             else -> object : OnOptionSelected {}
         }
 
-    private val options = arrayOf<CharSequence>("Take Photo", "Gallery", "File")
+    private val options by lazy {
+        arrayOf<CharSequence>(
+            getString(R.string.camera),
+            getString(R.string.gallery),
+            getString(R.string.files)
+        )
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         AlertDialog.Builder(requireContext()).apply {

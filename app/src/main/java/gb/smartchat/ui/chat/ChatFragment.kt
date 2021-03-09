@@ -74,7 +74,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatViewModel(
-                    store = ChatUDF.Store(component.userId, argChat.getReadInfo()),
+                    store = ChatUDF.Store(component.userId, argChat.getReadInfo(component.userId)),
                     userId = component.userId,
                     chat = argChat,
                     socketApi = component.socketApi,
@@ -184,8 +184,12 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         binding.layoutInput.addOnLayoutChangeListener(onLayoutChangeListener)
         binding.appBarLayout.addSystemTopPadding()
         binding.layoutInput.addSystemBottomPadding()
-        binding.toolbar.setNavigationOnClickListener {
-            parentFragmentManager.popBackStack()
+        binding.toolbar.apply {
+            title = argChat.storeName
+            subtitle = argChat.agentName
+            setNavigationOnClickListener {
+                parentFragmentManager.popBackStack()
+            }
         }
         binding.rvChat.apply {
             layoutManager = linearLayoutManager
@@ -224,7 +228,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                 }
             }
         })
-        binding.tvUnreadMessageCount.setOnClickListener {
+        binding.btnScrollDown.setOnClickListener {
             viewModel.scrollToBottom()
         }
         binding.btnEmptyRetry.setOnClickListener {
@@ -434,13 +438,22 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             .map { it.isOnline }
             .distinctUntilChanged()
             .subscribe { isOnline ->
-                binding.toolbar.title = if (isOnline) "Снабжение" else "Online: $isOnline"
+                binding.toolbar.apply {
+                    if (isOnline) {
+                        setSubtitleTextColor(context.color(R.color.razzmatazz))
+                        subtitle = argChat.agentName
+                    } else {
+                        setSubtitleTextColor(context.color(R.color.santas_gray))
+                        subtitle = getString(R.string.waiting_for_network)
+                    }
+                }
             }
             .also { renderDisposables.add(it) }
         viewModel.viewState
             .map { it.readInfo.unreadCount }
             .distinctUntilChanged()
             .subscribe { unreadMessageCount ->
+                binding.tvUnreadMessageCount.visible(unreadMessageCount > 0)
                 binding.tvUnreadMessageCount.text = unreadMessageCount.toString()
             }
             .also { renderDisposables.add(it) }
@@ -463,7 +476,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             .map { it.atBottom to it.fullDataDown }
             .distinctUntilChanged()
             .subscribe { (atBottom, fullDataDown) ->
-                binding.tvUnreadMessageCount.visible(!atBottom || !fullDataDown)
+                binding.btnScrollDown.visible(!atBottom || !fullDataDown)
             }
             .also { renderDisposables.add(it) }
     }

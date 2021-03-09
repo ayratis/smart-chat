@@ -108,8 +108,8 @@ class DraftViewHolder private constructor(
         binding.tvQuotedMessage.text = chatItem.message.quotedMessage?.text
         binding.ivStatus.setImageResource(
             when (chatItem.status) {
-                ChatItem.DraftStatus.FAILURE -> R.drawable.ic_one_check_12
-                ChatItem.DraftStatus.SENDING -> R.drawable.ic_one_check_12
+                ChatItem.DraftStatus.FAILURE -> R.drawable.ic_time_12
+                ChatItem.DraftStatus.SENDING -> R.drawable.ic_time_12
                 ChatItem.DraftStatus.SENT -> R.drawable.ic_one_check_12
             }
         )

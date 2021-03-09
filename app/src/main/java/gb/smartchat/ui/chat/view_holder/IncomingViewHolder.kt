@@ -14,6 +14,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatMsgIncomingBinding
+import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.dp
 import gb.smartchat.utils.inflate
@@ -90,7 +91,7 @@ class IncomingViewHolder private constructor(
                 binding.viewDocAttachment.visible(true)
                 binding.tvDocName.text = chatItem.message.file.name
                 binding.tvDocSize.text = chatItem.message.file.size?.let { "${it / 1000} KB" }
-                when(chatItem.message.file.downloadStatus) {
+                when (chatItem.message.file.downloadStatus) {
                     is DownloadStatus.Empty -> {
                         binding.progressBarFile.visible(false)
                         binding.ivDocIcon.setImageResource(R.drawable.ic_download_40)
@@ -114,6 +115,10 @@ class IncomingViewHolder private constructor(
         binding.tvContent.text = chatItem.message.text
         binding.tvContent.visible(!chatItem.message.text.isNullOrBlank())
         binding.tvTime.text = sdf.format(chatItem.message.timeCreated)
+        binding.tvEdited.visible(
+            chatItem.message.timeUpdated != null &&
+                    chatItem.message.type != Message.Type.DELETED
+        )
     }
 
     override fun onCreateContextMenu(

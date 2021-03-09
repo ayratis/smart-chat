@@ -11,6 +11,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatMsgOutgoingBinding
+import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.dp
 import gb.smartchat.utils.inflate
@@ -66,16 +67,6 @@ class OutgoingViewHolder private constructor(
         this.chatItem = chatItem
 //        binding.tvContent.text = chatItem.message.id.toString() //debug
 //        return
-//        val statusString = when (chatItem.status) {
-//            ChatItem.OutgoingStatus.SENDING -> "`"
-//            ChatItem.OutgoingStatus.SENT -> "+"
-//            ChatItem.OutgoingStatus.SENT_2 -> "++"
-//            ChatItem.OutgoingStatus.READ -> "+++"
-//            ChatItem.OutgoingStatus.FAILURE -> "error"
-//            ChatItem.OutgoingStatus.EDITING -> "editing"
-//            ChatItem.OutgoingStatus.DELETING -> "deleting"
-//            ChatItem.OutgoingStatus.DELETED -> "deleted"
-//        }
         if (chatItem.message.file != null) {
             val mimeType = chatItem.message.file.url?.let {
                 val extension = MimeTypeMap.getFileExtensionFromUrl(it)
@@ -118,6 +109,7 @@ class OutgoingViewHolder private constructor(
         }
         binding.viewQuotedMessage.visible(chatItem.message.quotedMessage != null)
         binding.tvQuotedMessage.text = chatItem.message.quotedMessage?.text
+        binding.ivStatus.visible(chatItem.message.type != Message.Type.DELETED)
         binding.ivStatus.setImageResource(
             when (chatItem.status) {
                 ChatItem.OutgoingStatus.SENT -> R.drawable.ic_double_check_12
@@ -128,6 +120,10 @@ class OutgoingViewHolder private constructor(
         binding.tvContent.text = chatItem.message.text
         binding.tvContent.visible(!chatItem.message.text.isNullOrBlank())
         binding.tvTime.text = sdf.format(chatItem.message.timeCreated)
+        binding.tvEdited.visible(
+            chatItem.message.timeUpdated != null &&
+                    chatItem.message.type != Message.Type.DELETED
+        )
     }
 
     override fun onCreateContextMenu(

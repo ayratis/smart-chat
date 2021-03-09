@@ -16,7 +16,7 @@ data class Message(
     val clientId: String?,
     @SerializedName("text")
     val text: String?,
-    @SerializedName("type")
+    @SerializedName("type_")
     val type: Type?,
     @SerializedName("quoted_message")
     val quotedMessage: QuotedMessage?,
