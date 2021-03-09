@@ -1,6 +1,7 @@
 package gb.smartchat.entity
 
 
+import android.util.Log
 import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
@@ -28,7 +29,11 @@ data class Chat(
     @SerializedName("recipients")
     val users: List<User>
 ) : Serializable {
-    fun getReadInfo(): ReadInfo {
-        return ReadInfo(103, -1, 20)
+    fun getReadInfo(userId: String): ReadInfo {
+        val inRead = users.find { it.id == userId }?.lastReadMessageId ?: -1
+        val outRead = users.filter { it.id != userId }.maxOf { it.lastReadMessageId ?: -1 }
+        val readInfo = ReadInfo(inRead, outRead, unreadMessagesCount ?: 0)
+        Log.d("Chat", "getReadInfo: $readInfo")
+        return readInfo
     }
 }

@@ -6,7 +6,7 @@ import java.io.Serializable
 
 data class User(
     @SerializedName("last_read_message_id")
-    val lastReadMessageId: Int?,
+    val lastReadMessageId: Long?,
     @SerializedName("name")
     val name: String?,
     @SerializedName("avatar")

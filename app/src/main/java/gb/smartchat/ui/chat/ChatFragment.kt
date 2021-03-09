@@ -74,7 +74,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatViewModel(
-                    store = ChatUDF.Store(component.userId, argChat.getReadInfo()),
+                    store = ChatUDF.Store(component.userId, argChat.getReadInfo(component.userId)),
                     userId = component.userId,
                     chat = argChat,
                     socketApi = component.socketApi,
