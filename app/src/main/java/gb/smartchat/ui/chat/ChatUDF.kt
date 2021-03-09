@@ -185,7 +185,10 @@ object ChatUDF {
                         val newMessage = state.editingMessage.copy(text = state.currentText)
                         return state.copy(
                             messages = state.messages.replaceLastWith(newMessage),
-                            editingMessage = null
+                            editingMessage = null,
+                            currentText = "",
+                            sendEnabled = false,
+                            attachmentState = AttachmentState.Empty,
                         )
                     }
                     //if sending new message
