@@ -22,9 +22,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 app:navigationIcon="@drawable/ic_baseline_arrow_back_24"
-                app:subtitle="158579 ООО Мясокомбинат"
+                tools:subtitle="158579 ООО Мясокомбинат"
                 app:subtitleTextColor="@color/razzmatazz"
-                app:title="@string/app_name" />
+                tools:title="@string/app_name" />
 
             <ImageButton
                 android:layout_width="40dp"
@@ -49,24 +49,41 @@
         android:overScrollMode="never"
         tools:listitem="@layout/item_chat_msg_outgoing" />
 
-    <TextView
-        android:id="@+id/tv_unread_message_count"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+    <FrameLayout
+        android:id="@+id/btn_scroll_down"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
         android:layout_above="@id/layout_input"
-        android:layout_margin="16dp"
-        android:background="@color/purple_200"
-        android:gravity="center"
-        android:textColor="@color/white"
-        android:visibility="gone"
-        tools:visibility="gone" />
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp">
+
+        <View
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="bottom|end"
+            android:background="@drawable/ic_scroll_down_40" />
+
+        <TextView
+            android:id="@+id/tv_unread_message_count"
+            style="@style/Caption1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/bg_doc_progress"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="1dp"
+            android:textColor="@color/white"
+            tools:text="25" />
+
+    </FrameLayout>
 
     <RelativeLayout
-        android:background="@color/white"
         android:id="@+id/layout_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/spacer_bottom">
+        android:layout_alignParentBottom="true"
+        android:background="@color/white">
 
         <View
             android:id="@+id/divider"
@@ -74,51 +91,54 @@
             android:layout_height="1dp"
             android:background="@color/divider" />
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/view_quoted_message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/divider"
-            android:orientation="horizontal"
-            android:paddingHorizontal="48dp"
-            android:paddingVertical="8dp"
+            android:paddingStart="56dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="48dp"
+            android:paddingBottom="4dp"
             android:visibility="gone"
             tools:visibility="gone">
 
             <View
                 android:id="@+id/view_quot"
                 android:layout_width="2dp"
-                android:layout_height="match_parent"
-                android:layout_marginHorizontal="8dp"
+                android:layout_height="0dp"
                 android:background="@color/purple_heart"
-                android:duplicateParentState="true" />
+                android:duplicateParentState="true"
+                app:layout_constraintBottom_toBottomOf="@id/tv_quoted_message"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/tv_quoted_person" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/tv_quoted_person"
+                style="@style/Caption1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:layout_marginStart="8dp"
+                android:ellipsize="end"
+                android:lines="1"
+                android:textColor="@color/purple_heart"
+                app:layout_constraintEnd_toStartOf="@id/btn_quoted_close"
+                app:layout_constraintStart_toEndOf="@id/view_quot"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Андрей" />
 
-                <TextView
-                    android:id="@+id/tv_quoted_person"
-                    style="@style/Caption1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:lines="1"
-                    android:textColor="@color/purple_heart"
-                    tools:text="Андрей" />
-
-                <TextView
-                    android:id="@+id/tv_quoted_message"
-                    style="@style/Body2"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:lines="1"
-                    tools:text="Привет! Как дела?" />
-
-            </LinearLayout>
+            <TextView
+                android:id="@+id/tv_quoted_message"
+                style="@style/Body2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:ellipsize="end"
+                android:lines="1"
+                app:layout_constraintEnd_toStartOf="@id/btn_quoted_close"
+                app:layout_constraintStart_toEndOf="@id/view_quot"
+                app:layout_constraintTop_toBottomOf="@id/tv_quoted_person"
+                tools:text="Привет! Как дела?" />
 
             <ImageButton
                 android:id="@+id/btn_quoted_close"
@@ -126,36 +146,48 @@
                 android:layout_height="40dp"
                 android:background="?attr/actionBarItemBackground"
                 android:contentDescription="@string/cancel"
-                android:src="@drawable/ic_baseline_close_24" />
+                android:src="@drawable/ic_baseline_close_24"
+                app:layout_constraintBottom_toBottomOf="@id/tv_quoted_message"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/tv_quoted_person" />
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/view_editing_message"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_below="@id/view_quoted_message"
-            android:background="#0d000000"
-            android:orientation="horizontal"
+            android:paddingStart="56dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="48dp"
+            android:paddingBottom="4dp"
             android:visibility="gone"
-            tools:visibility="gone">
+            tools:visibility="visible">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/label_editing"
+                style="@style/Caption1"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginStart="16dp"
-                android:gravity="center_vertical"
-                android:paddingVertical="8dp"
-                tools:text="Edit: " />
+                android:lines="1"
+                android:text="@string/editing"
+                android:textColor="@color/purple_heart"
+                app:layout_constraintEnd_toStartOf="@id/btn_editing_close"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/tv_editing_message"
+                style="@style/Body2"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginHorizontal="8dp"
                 android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:paddingVertical="8dp"
+                android:ellipsize="end"
+                android:lines="1"
+                app:layout_constraintEnd_toStartOf="@id/btn_editing_close"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/label_editing"
                 tools:text="Привет! Как дела?" />
 
             <ImageButton
@@ -165,9 +197,12 @@
                 android:background="?attr/actionBarItemBackground"
                 android:contentDescription="@string/cancel"
                 android:gravity="center"
-                android:src="@drawable/ic_baseline_close_24" />
+                android:src="@drawable/ic_baseline_close_24"
+                app:layout_constraintBottom_toBottomOf="@id/tv_editing_message"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/label_editing" />
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <FrameLayout
             android:id="@+id/view_attachment"
@@ -180,7 +215,7 @@
             android:minWidth="110dp"
             android:orientation="horizontal"
             android:visibility="gone"
-            tools:visibility="visible">
+            tools:visibility="gone">
 
             <ImageView
                 android:id="@+id/iv_attachment_photo"
@@ -309,7 +344,6 @@
         android:id="@+id/view_empty_error"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/spacer_bottom"
         android:layout_below="@id/app_bar_layout"
         android:background="@color/white"
         android:clickable="true"
@@ -333,11 +367,5 @@
             android:visibility="gone" />
 
     </LinearLayout>
-
-    <FrameLayout
-        android:id="@+id/spacer_bottom"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true" />
 
 </RelativeLayout>

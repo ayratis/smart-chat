@@ -8,29 +8,20 @@ import gb.smartchat.databinding.ItemChatMsgSystemBinding
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.inflate
 
-class SystemViewHolder private constructor(
-    itemView: View,
-//    private val onMessageClickListener: (ChatItem) -> Unit
-) : RecyclerView.ViewHolder(itemView) {
+class SystemViewHolder private constructor(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
     companion object {
-        private const val TAG = "DummyViewHolder"
+        private const val TAG = "SystemViewHolder"
 
-        fun create(parent: ViewGroup, /*onMessageClickListener: (ChatItem) -> Unit*/) =
-            SystemViewHolder(parent.inflate(R.layout.item_chat_msg_system), /*onMessageClickListener*/)
+        fun create(parent: ViewGroup) =
+            SystemViewHolder(parent.inflate(R.layout.item_chat_msg_system))
     }
 
     private val binding = ItemChatMsgSystemBinding.bind(itemView)
     private lateinit var chatItem: ChatItem.Msg
 
-    init {
-//        binding.tvContent.setOnClickListener {
-//            onMessageClickListener.invoke(chatItem)
-//        }
-    }
-
     fun bind(chatItem: ChatItem.Msg.System) {
         this.chatItem = chatItem
-        binding.tvContent.text = chatItem.message.text
+        binding.root.text = chatItem.message.text
     }
 }

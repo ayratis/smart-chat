@@ -145,7 +145,7 @@ private fun Message.mapIntoChatItem(readOut: Long, userId: String): ChatItem.Msg
                 else ChatItem.OutgoingStatus.RED
             ChatItem.Msg.Outgoing(this, status)
         }
-        (type == Message.Type.SYSTEM || type == Message.Type.DELETED) -> {
+        (type == Message.Type.SYSTEM) -> {
             ChatItem.Msg.System(this)
         }
         else -> {

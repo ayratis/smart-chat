@@ -175,15 +175,33 @@
             android:textSize="16sp"
             tools:text="Идейные соображения высшего порядка, а также сложившаяся структура организации в значительной степени обуславливает создание направлений прогрессивного развития." />
 
-        <TextView
-            android:id="@+id/tv_time"
-            style="@style/Caption1"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:paddingTop="2dp"
-            android:textColor="@color/gray"
-            tools:text="9:00" />
+            android:gravity="center_vertical"
+            tools:ignore="UseCompoundDrawables">
+
+            <TextView
+                android:id="@+id/tv_time"
+                style="@style/Caption1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gray"
+                tools:text="9:00" />
+
+            <TextView
+                android:id="@+id/tv_edited"
+                style="@style/Caption1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/edited"
+                android:textColor="@color/gray"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

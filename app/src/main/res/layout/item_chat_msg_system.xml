@@ -1,21 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:tools="http://schemas.android.com/tools"
-android:layout_width="match_parent"
-android:paddingVertical="4dp"
-android:paddingHorizontal="8dp"
-android:layout_height="wrap_content">
-
-<TextView
-    android:id="@+id/tv_content"
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Body2"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="8dp"
-    android:textColor="@android:color/darker_gray"
-    android:textSize="14sp"
-    android:textStyle="bold|italic"
-    tools:text="1" />
-
-</FrameLayout>
+    android:paddingVertical="20dp"
+    android:textColor="@color/gray_suit"
+    tools:text="Пользователь Андрей добавил пользователя Ольга" />
