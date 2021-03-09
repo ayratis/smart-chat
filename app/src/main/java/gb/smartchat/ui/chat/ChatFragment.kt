@@ -24,7 +24,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -129,7 +128,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             onFileClickListener = { chatItem ->
                 viewModel.onFileClick(chatItem)
             }
-        )
+        ).apply {
+            setHasStableIds(true)
+        }
     }
     private val requestCameraPermission =
         registerForActivityResult(RequestPermission()) { isGranted ->
@@ -215,8 +216,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         binding.rvChat.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             private var atBottom: Boolean = true
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                val pos =
-                    (recyclerView.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                val pos = linearLayoutManager.findLastVisibleItemPosition()
                 val isBottom = pos == chatAdapter.itemCount - 1
                 if (atBottom != isBottom) {
                     atBottom = isBottom
@@ -482,12 +482,13 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
     }
 
     private fun fakeScrollToBottom() {
-        val beforePos = if (chatAdapter.itemCount - 10 >= 10) 10 else 0
-        linearLayoutManager.scrollToPosition(beforePos)
-        val scroller = LinearSmoothScroller(requireContext()).apply {
-            targetPosition = chatAdapter.itemCount - 1
+        if (chatAdapter.itemCount - 10 > 0) {
+            val beforePos = chatAdapter.itemCount - 10
+            Log.d(TAG, "fakeScrollToBottom: beforePos: $beforePos")
+            binding.rvChat.scrollToPosition(beforePos)
         }
-        linearLayoutManager.startSmoothScroll(scroller)
+        binding.rvChat.smoothScrollToPosition(chatAdapter.itemCount - 1)
+
     }
 
     private fun instantScrollToPosition(pos: Int) {
@@ -496,6 +497,13 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         }
         val firstVisiblePos = linearLayoutManager.findFirstVisibleItemPosition()
         val lastVisiblePos = linearLayoutManager.findLastVisibleItemPosition()
+
+        if (pos - 1 <= lastVisiblePos) {
+            //если находимся внизу
+            binding.rvChat.scrollToPosition(pos)
+            return
+        }
+
         val firstClosePos = max(firstVisiblePos - 10, 0)
         val lastClosePos = min(lastVisiblePos + 10, chatAdapter.itemCount - 1)
         Log.d(

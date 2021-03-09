@@ -17,15 +17,20 @@ sealed class ChatItem {
             override val message: Message,
             val status: OutgoingStatus
         ) : Msg(message)
+
+        data class Draft(override val message: Message, val status: DraftStatus) : Msg(message)
     }
 
     data class Typing(val typingUsers: List<User>) : ChatItem()
 
     enum class OutgoingStatus {
+        SENT,
+        RED,
+    }
+
+    enum class DraftStatus {
         SENDING,
         SENT,
-        SENT_2,
-        READ,
         FAILURE,
     }
 
@@ -38,10 +43,13 @@ sealed class ChatItem {
                 return oldItem.message.id == newItem.message.id
             }
             if (oldItem is Msg.Outgoing && newItem is Msg.Outgoing) {
-                return oldItem.message.clientId == newItem.message.clientId
+                return oldItem.message.id == newItem.message.id
             }
             if (oldItem is Msg.System && newItem is Msg.System) {
                 return oldItem.message.id == newItem.message.id
+            }
+            if (oldItem is Msg.Draft && newItem is Msg.Draft) {
+                return oldItem.message.clientId == newItem.message.clientId
             }
             return false
         }
@@ -54,6 +62,10 @@ sealed class ChatItem {
                 return oldItem == newItem
             }
             return false
+        }
+
+        override fun getChangePayload(oldItem: ChatItem, newItem: ChatItem): Any {
+            return Any()
         }
     }
 }
@@ -107,10 +119,13 @@ fun ChatItemsInfo.mapIntoChatItems(
                 list += ChatItem.DateHeader(msgLocalDate)
                 localDate = msgLocalDate
             }
-            list += ChatItem.Msg.Outgoing(message, ChatItem.OutgoingStatus.SENDING)
+            list += ChatItem.Msg.Draft(message, ChatItem.DraftStatus.SENDING)
             if (withScrollTo != null && withScrollTo.message.clientId == message.clientId) {
                 scrollPosition = list.lastIndex
             }
+        }
+        if (scrollPosition == list.lastIndex) {
+            scrollPosition++
         }
         val typingUsers = typingSenderIds.mapNotNull { id -> users.find { it.id == id } }
         list += ChatItem.Typing(typingUsers)
@@ -126,8 +141,8 @@ private fun Message.mapIntoChatItem(readOut: Long, userId: String): ChatItem.Msg
     return when {
         senderId == userId -> {
             val status =
-                if (id > readOut) ChatItem.OutgoingStatus.SENT_2
-                else ChatItem.OutgoingStatus.READ
+                if (id > readOut) ChatItem.OutgoingStatus.SENT
+                else ChatItem.OutgoingStatus.RED
             ChatItem.Msg.Outgoing(this, status)
         }
         (type == Message.Type.SYSTEM || type == Message.Type.DELETED) -> {

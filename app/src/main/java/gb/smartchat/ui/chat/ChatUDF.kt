@@ -105,18 +105,17 @@ object ChatUDF {
     data class State(
         val messages: List<Message> = emptyList(),
         val draft: List<Message> = emptyList(),
-        val typingSenderIds: List<String> = emptyList(),
-        val editingMessage: Message? = null,
-        val currentText: String = "",
-        val attachmentState: AttachmentState = AttachmentState.Empty,
-        val quotingMessage: Message? = null,
         val pagingState: PagingState = PagingState.EMPTY,
+        val currentText: String = "",
+        val editingMessage: Message? = null,
+        val quotingMessage: Message? = null,
+        val attachmentState: AttachmentState = AttachmentState.Empty,
         val isOnline: Boolean = false,
-        val chatEnabled: Boolean = true,
         val fullDataUp: Boolean = false,
         val fullDataDown: Boolean = false,
         val atBottom: Boolean = true,
         val sendEnabled: Boolean = false,
+        val typingSenderIds: List<String> = emptyList(),
         val readInfo: ReadInfo,
         val withScrollTo: SingleEvent<WithScrollTo>? = null //target, isUp
     )
@@ -152,7 +151,7 @@ object ChatUDF {
     ) : ObservableSource<State>, Consumer<Action>, Disposable {
 
         companion object {
-            private const val TAG = "store"
+            private const val TAG = "ChatUDF"
         }
 
         private val actions = PublishRelay.create<Action>()
@@ -164,9 +163,9 @@ object ChatUDF {
                 val newState = reduce(state.value!!, action) {
                     sideEffectListener.invoke(it)
                 }
-                state.accept(newState)
                 Log.d(TAG, "action: $action")
                 Log.d(TAG, "state: $newState")
+                state.accept(newState)
             }
 
         private fun reduce(
@@ -512,8 +511,10 @@ object ChatUDF {
 
                 //just replacing item in list
                 is Action.ServerMessageSendSuccess -> {
-                    val draft = state.draft.filter { it.clientId != action.message.clientId }
-                    return state.copy(draft = draft)
+                    //todo изменить состояние отправки
+//                    val draft = state.draft.filter { it.clientId != action.message.clientId }
+//                    return state.copy(draft = draft)
+                    return state
                 }
                 is Action.ServerMessageSendError -> {
                     //todo состояние ошибки для черновика

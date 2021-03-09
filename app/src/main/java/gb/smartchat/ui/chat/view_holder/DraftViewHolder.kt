@@ -18,7 +18,7 @@ import gb.smartchat.utils.visible
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-class OutgoingViewHolder private constructor(
+class DraftViewHolder private constructor(
     itemView: View,
     private val onDeleteListener: (ChatItem.Msg) -> Unit,
     private val onEditListener: (ChatItem.Msg) -> Unit,
@@ -28,7 +28,7 @@ class OutgoingViewHolder private constructor(
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
-        private const val TAG = "OutgoingViewHolder"
+        private const val TAG = "DraftViewHolder"
 
         fun create(
             parent: ViewGroup,
@@ -38,7 +38,7 @@ class OutgoingViewHolder private constructor(
             onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
             onFileClickListener: (ChatItem.Msg) -> Unit
         ) =
-            OutgoingViewHolder(
+            DraftViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
                 onDeleteListener,
                 onEditListener,
@@ -62,20 +62,8 @@ class OutgoingViewHolder private constructor(
         }
     }
 
-    fun bind(chatItem: ChatItem.Msg.Outgoing) {
+    fun bind(chatItem: ChatItem.Msg.Draft) {
         this.chatItem = chatItem
-//        binding.tvContent.text = chatItem.message.id.toString() //debug
-//        return
-//        val statusString = when (chatItem.status) {
-//            ChatItem.OutgoingStatus.SENDING -> "`"
-//            ChatItem.OutgoingStatus.SENT -> "+"
-//            ChatItem.OutgoingStatus.SENT_2 -> "++"
-//            ChatItem.OutgoingStatus.READ -> "+++"
-//            ChatItem.OutgoingStatus.FAILURE -> "error"
-//            ChatItem.OutgoingStatus.EDITING -> "editing"
-//            ChatItem.OutgoingStatus.DELETING -> "deleting"
-//            ChatItem.OutgoingStatus.DELETED -> "deleted"
-//        }
         if (chatItem.message.file != null) {
             val mimeType = chatItem.message.file.url?.let {
                 val extension = MimeTypeMap.getFileExtensionFromUrl(it)
@@ -120,8 +108,9 @@ class OutgoingViewHolder private constructor(
         binding.tvQuotedMessage.text = chatItem.message.quotedMessage?.text
         binding.ivStatus.setImageResource(
             when (chatItem.status) {
-                ChatItem.OutgoingStatus.SENT -> R.drawable.ic_double_check_12
-                ChatItem.OutgoingStatus.RED -> R.drawable.ic_double_check_colored_12
+                ChatItem.DraftStatus.FAILURE -> R.drawable.ic_one_check_12
+                ChatItem.DraftStatus.SENDING -> R.drawable.ic_one_check_12
+                ChatItem.DraftStatus.SENT -> R.drawable.ic_one_check_12
             }
         )
 
