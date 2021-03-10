@@ -594,8 +594,8 @@ object ChatUDF {
                     val position = action.text.indexOfLast { it == '@' }
                     val mentions = when {
                         action.text.isBlank() -> emptyList()
-                        action.text.startsWith(' ') -> emptyList()
                         position == action.text.lastIndex -> state.users
+                        action.text[position + 1] == ' ' -> emptyList()
                         position != -1 -> {
                             val name = action.text.substring(position + 1)
                             if (name.isBlank()) emptyList()
