@@ -14,4 +14,6 @@ data class ChangedMessage(
     val text: String?,
     @SerializedName("time_updated")
     val timeUpdated: ZonedDateTime,
+    @SerializedName("mentions")
+    val mentions: List<Mention>?,
 )

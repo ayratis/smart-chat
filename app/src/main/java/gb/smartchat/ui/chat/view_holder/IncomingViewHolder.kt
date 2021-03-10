@@ -1,5 +1,9 @@
 package gb.smartchat.ui.chat.view_holder
 
+import android.graphics.Color
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.ContextMenu
 import android.view.MenuInflater
@@ -112,7 +116,21 @@ class IncomingViewHolder private constructor(
         }
         binding.viewQuotedMessage.visible(chatItem.message.quotedMessage != null)
         binding.tvQuotedMessage.text = chatItem.message.quotedMessage?.text
-        binding.tvContent.text = chatItem.message.text
+        binding.tvContent.text =
+            if (chatItem.message.mentions.isNullOrEmpty()) {
+                chatItem.message.text
+            } else {
+                SpannableStringBuilder(chatItem.message.text).apply {
+                    chatItem.message.mentions.forEach { mention ->
+                        setSpan(
+                            ForegroundColorSpan(Color.BLUE),
+                            mention.offset,
+                            mention.offset + mention.length,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    }
+                }
+            }
         binding.tvContent.visible(!chatItem.message.text.isNullOrBlank())
         binding.tvTime.text = sdf.format(chatItem.message.timeCreated)
         binding.tvEdited.visible(

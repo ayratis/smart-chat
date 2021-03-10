@@ -254,6 +254,7 @@ fun Message.toMessageCreateRequestBody(): MessageCreateRequest? {
             chatId = chatId,
             clientId = clientId,
             quotedMessageId = quotedMessage?.messageId,
+            mentions = mentions,
             fileId = file?.id
         )
     } else null
@@ -265,7 +266,8 @@ fun Message.toMessageEditRequestBody(): MessageEditRequest? {
             text = text,
             messageId = id,
             chatId = chatId,
-            senderId = senderId
+            senderId = senderId,
+            mentions = mentions
         )
     } else null
 }
@@ -295,7 +297,8 @@ fun ChangedMessage.composeWithMessage(message: Message): Message {
         chatId = chatId,
         timeUpdated = timeUpdated,
         text = text,
-        senderId = senderId
+        senderId = senderId,
+        mentions = mentions
     )
 }
 

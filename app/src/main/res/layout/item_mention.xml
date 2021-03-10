@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:foreground="?attr/selectableItemBackground">
+
+    <View
+        android:id="@+id/divider_top"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/iv_photo"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginVertical="9dp"
+        android:layout_marginStart="16dp"
+        android:contentDescription="@null"
+        tools:background="@color/gray" />
+
+    <TextView
+        android:id="@+id/tv_name"
+        style="@style/Body3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="64dp"
+        android:layout_marginEnd="16dp"
+        android:ellipsize="end"
+        android:lines="1"
+        tools:text="Борис Петров" />
+
+    <View
+        android:id="@+id/divider_bot"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="56dp"
+        android:background="@color/divider" />
+
+</FrameLayout>

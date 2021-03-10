@@ -26,8 +26,8 @@ data class Message(
     val timeUpdated: ZonedDateTime?,
     @SerializedName("file")
     val file: File?,
-//    @SerializedName("mentions")
-//    val mentions: List<Any>?,
+    @SerializedName("mentions")
+    val mentions: List<Mention>?,
 
 //custom
     val user: User? = null

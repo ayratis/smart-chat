@@ -18,6 +18,7 @@ import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts.*
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.view.updatePadding
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -28,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.entity.Chat
@@ -74,7 +76,11 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatViewModel(
-                    store = ChatUDF.Store(component.userId, argChat.getReadInfo(component.userId)),
+                    store = ChatUDF.Store(
+                        component.userId,
+                        argChat.getReadInfo(component.userId),
+                        argChat.users
+                    ),
                     userId = component.userId,
                     chat = argChat,
                     socketApi = component.socketApi,
@@ -132,6 +138,14 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             setHasStableIds(true)
         }
     }
+    private val mentionAdapter by lazy {
+        MentionAdapter { user ->
+            viewModel.onMentionClick(user)
+        }
+    }
+    private val mentionSheetBehavior: BottomSheetBehavior<RecyclerView> by lazy {
+        BottomSheetBehavior.from(binding.rvMentions)
+    }
     private val requestCameraPermission =
         registerForActivityResult(RequestPermission()) { isGranted ->
             if (isGranted) {
@@ -158,6 +172,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         View.OnLayoutChangeListener { _, _, top, _, bottom, _, _, _, _ ->
             val height = bottom - top
             binding.rvChat.updatePadding(bottom = height)
+            binding.rvMentions.updatePadding(bottom = height)
+            mentionSheetBehavior.peekHeight = height + 126.dp(binding.root)
         }
 
     override fun onCreateView(
@@ -198,6 +214,11 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             isNestedScrollingEnabled = false
             adapter = chatAdapter
             addItemDecoration(HeaderItemDecoration(this, false))
+        }
+        binding.rvMentions.apply {
+            layoutManager = LinearLayoutManager(context)
+            itemAnimator = null
+            adapter = mentionAdapter
         }
         binding.etInput.doAfterTextChanged {
             viewModel.onTextChanged(it?.toString() ?: "")
@@ -350,6 +371,10 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                     else R.drawable.btn_send
                 )
             }
+            .also { renderDisposables.add(it) }
+        viewModel.viewState
+            .map { it.mentions }
+            .subscribe { mentionAdapter.setData(it) }
             .also { renderDisposables.add(it) }
         viewModel.viewState
             .map { it.attachmentState }
