@@ -1,5 +1,9 @@
 package gb.smartchat.ui.chat.view_holder
 
+import android.graphics.Color
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.*
 import android.webkit.MimeTypeMap
@@ -88,7 +92,7 @@ class OutgoingViewHolder private constructor(
                 binding.viewDocAttachment.visible(true)
                 binding.tvDocName.text = chatItem.message.file.name
                 binding.tvDocSize.text = chatItem.message.file.size?.let { "${it / 1000} KB" }
-                when(chatItem.message.file.downloadStatus) {
+                when (chatItem.message.file.downloadStatus) {
                     is DownloadStatus.Empty -> {
                         binding.progressBarFile.visible(false)
                         binding.ivDocIcon.setImageResource(R.drawable.ic_download_40)
@@ -117,7 +121,21 @@ class OutgoingViewHolder private constructor(
             }
         )
 
-        binding.tvContent.text = chatItem.message.text
+        binding.tvContent.text =
+            if (chatItem.message.mentions.isNullOrEmpty()) {
+                chatItem.message.text
+            } else {
+                SpannableStringBuilder(chatItem.message.text).apply {
+                    chatItem.message.mentions.forEach { mention ->
+                        setSpan(
+                            ForegroundColorSpan(Color.BLUE),
+                            mention.offset,
+                            mention.offset + mention.length,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    }
+                }
+            }
         binding.tvContent.visible(!chatItem.message.text.isNullOrBlank())
         binding.tvTime.text = sdf.format(chatItem.message.timeCreated)
         binding.tvEdited.visible(

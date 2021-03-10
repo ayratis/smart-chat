@@ -13,6 +13,7 @@ import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.User
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.ReadInfoRequest
 import gb.smartchat.entity.request.TypingRequest
@@ -98,7 +99,7 @@ class ChatViewModel(
                     startTypingTimer(sideEffect.senderId)
                 }
                 is ChatUDF.SideEffect.EditMessage -> {
-                    editMessage(sideEffect.message, sideEffect.newText)
+                    editMessage(sideEffect.oldMessage, sideEffect.newMessage)
                 }
                 is ChatUDF.SideEffect.DeleteMessage -> {
                     deleteMessage(sideEffect.message)
@@ -205,20 +206,19 @@ class ChatViewModel(
         compositeDisposable.add(d)
     }
 
-    private fun editMessage(message: Message, newText: String) {
-        val messageEditRequest = message.copy(text = newText).toMessageEditRequestBody() ?: return
+    private fun editMessage(oldMessage: Message, newMessage: Message) {
+        val messageEditRequest = newMessage.toMessageEditRequestBody() ?: return
         val d = socketApi.editMessage(messageEditRequest)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { result ->
                     if (result) {
-                        val msg = message.copy(text = newText)
-                        store.accept(ChatUDF.Action.ServerMessageEditSuccess(msg))
+                        store.accept(ChatUDF.Action.ServerMessageEditSuccess(newMessage))
                     } else {
-                        store.accept(ChatUDF.Action.ServerMessageEditError(message))
+                        store.accept(ChatUDF.Action.ServerMessageEditError(oldMessage))
                     }
                 },
-                { store.accept(ChatUDF.Action.ServerMessageEditError(message)) }
+                { store.accept(ChatUDF.Action.ServerMessageEditError(oldMessage)) }
             )
         compositeDisposable.add(d)
     }
@@ -461,5 +461,9 @@ class ChatViewModel(
 
     fun onFileClick(chatItem: ChatItem.Msg) {
         store.accept(ChatUDF.Action.ClientFileClick(chatItem.message))
+    }
+
+    fun onMentionClick(user: User) {
+        store.accept(ChatUDF.Action.ClientMentionClick(user))
     }
 }

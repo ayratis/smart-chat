@@ -33,7 +33,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.entity.Chat
-import gb.smartchat.entity.User
 import gb.smartchat.ui.SmartChatActivity
 import gb.smartchat.ui.custom.CenterSmoothScroller
 import gb.smartchat.ui.custom.HeaderItemDecoration
@@ -77,7 +76,11 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatViewModel(
-                    store = ChatUDF.Store(component.userId, argChat.getReadInfo(component.userId)),
+                    store = ChatUDF.Store(
+                        component.userId,
+                        argChat.getReadInfo(component.userId),
+                        argChat.users
+                    ),
                     userId = component.userId,
                     chat = argChat,
                     socketApi = component.socketApi,
@@ -136,7 +139,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         }
     }
     private val mentionAdapter by lazy {
-        MentionAdapter()
+        MentionAdapter { user ->
+            viewModel.onMentionClick(user)
+        }
     }
     private val mentionSheetBehavior: BottomSheetBehavior<RecyclerView> by lazy {
         BottomSheetBehavior.from(binding.rvMentions)
@@ -215,9 +220,6 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             itemAnimator = null
             adapter = mentionAdapter
         }
-        val fakeItems = listOf<Int>().map { User(it.toLong(), it.toString(), it.toString(), it.toString()) }
-        mentionAdapter.setData(fakeItems)
-        mentionSheetBehavior.expandedOffset
         binding.etInput.doAfterTextChanged {
             viewModel.onTextChanged(it?.toString() ?: "")
         }
@@ -369,6 +371,10 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
                     else R.drawable.btn_send
                 )
             }
+            .also { renderDisposables.add(it) }
+        viewModel.viewState
+            .map { it.mentions }
+            .subscribe { mentionAdapter.setData(it) }
             .also { renderDisposables.add(it) }
         viewModel.viewState
             .map { it.attachmentState }

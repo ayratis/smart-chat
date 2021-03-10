@@ -1,6 +1,7 @@
 package gb.smartchat.entity.request
 
 import com.google.gson.annotations.SerializedName
+import gb.smartchat.entity.Mention
 
 data class MessageCreateRequest(
     @SerializedName("text")
@@ -13,8 +14,8 @@ data class MessageCreateRequest(
     val clientId: String,
     @SerializedName("quoted_message_id")
     val quotedMessageId: Long?,
-//    @SerializedName("mentions")
-//    val mentions: List<Mention> = emptyList(),
+    @SerializedName("mentions")
+    val mentions: List<Mention>?,
     @SerializedName("file_id")
     val fileId: Long?
 )

@@ -5,10 +5,7 @@ import android.util.Log
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.data.download.DownloadStatus
-import gb.smartchat.entity.ChangedMessage
-import gb.smartchat.entity.File
-import gb.smartchat.entity.Message
-import gb.smartchat.entity.ReadInfo
+import gb.smartchat.entity.*
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.composeWithMessage
 import gb.smartchat.utils.toQuotedMessage
@@ -81,12 +78,13 @@ object ChatUDF {
         data class InternalAtBottom(val atBottom: Boolean) : Action()
         data class ReadMessage(val message: Message) : Action()
         data class InternalUpdateMessage(val message: Message) : Action()
+        data class ClientMentionClick(val mention: User) : Action()
     }
 
     sealed class SideEffect {
         data class SendMessage(val message: Message) : SideEffect()
         data class TypingTimer(val senderId: String) : SideEffect()
-        data class EditMessage(val message: Message, val newText: String) : SideEffect()
+        data class EditMessage(val oldMessage: Message, val newMessage: Message) : SideEffect()
         data class DeleteMessage(val message: Message) : SideEffect()
         data class SetInputText(val text: String) : SideEffect()
         data class LoadPage(val fromMessageId: Long?, val forward: Boolean) : SideEffect()
@@ -103,6 +101,8 @@ object ChatUDF {
     }
 
     data class State(
+        val users: List<User>,
+        val readInfo: ReadInfo,
         val messages: List<Message> = emptyList(),
         val draft: List<Message> = emptyList(),
         val pagingState: PagingState = PagingState.EMPTY,
@@ -116,8 +116,8 @@ object ChatUDF {
         val atBottom: Boolean = true,
         val sendEnabled: Boolean = false,
         val typingSenderIds: List<String> = emptyList(),
-        val readInfo: ReadInfo,
-        val withScrollTo: SingleEvent<WithScrollTo>? = null //target, isUp
+        val withScrollTo: SingleEvent<WithScrollTo>? = null,
+        val mentions: List<User> = emptyList()
     )
 
     data class WithScrollTo(
@@ -147,7 +147,8 @@ object ChatUDF {
 
     class Store(
         private val userId: String,
-        readInfo: ReadInfo
+        readInfo: ReadInfo,
+        users: List<User>
     ) : ObservableSource<State>, Consumer<Action>, Disposable {
 
         companion object {
@@ -155,7 +156,7 @@ object ChatUDF {
         }
 
         private val actions = PublishRelay.create<Action>()
-        private val state = BehaviorRelay.createDefault(State(readInfo = readInfo))
+        private val state = BehaviorRelay.createDefault(State(users, readInfo))
         var sideEffectListener: (SideEffect) -> Unit = {}
 
         private val disposable: Disposable = actions.hide()
@@ -179,10 +180,13 @@ object ChatUDF {
                     //if editing existing message
                     if (state.editingMessage != null) {
                         sideEffectListener(SideEffect.SetInputText(""))
-                        sideEffectListener(
-                            SideEffect.EditMessage(state.editingMessage, state.currentText)
+                        val newMessage = state.editingMessage.copy(
+                            text = state.currentText,
+                            mentions = state.currentText.getMentions(state.users)
                         )
-                        val newMessage = state.editingMessage.copy(text = state.currentText)
+                        sideEffectListener(
+                            SideEffect.EditMessage(state.editingMessage, newMessage)
+                        )
                         return state.copy(
                             messages = state.messages.replaceLastWith(newMessage),
                             editingMessage = null,
@@ -208,7 +212,8 @@ object ChatUDF {
                         quotedMessage = state.quotingMessage?.toQuotedMessage(),
                         timeCreated = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()),
                         timeUpdated = null,
-                        file = file
+                        file = file,
+                        mentions = state.currentText.getMentions(state.users)
                     )
                     sideEffectListener.invoke(SideEffect.SendMessage(message))
                     sideEffectListener(SideEffect.SetInputText(""))
@@ -224,6 +229,7 @@ object ChatUDF {
                         quotingMessage = null,
                         sendEnabled = false,
                         attachmentState = AttachmentState.Empty,
+                        mentions = emptyList(),
                         withScrollTo = withScrollTo
                     )
                 }
@@ -585,7 +591,35 @@ object ChatUDF {
                 is Action.ClientTextChanged -> {
                     val sendEnabled = state.attachmentState is AttachmentState.UploadSuccess ||
                             action.text.isNotBlank() && state.attachmentState !is AttachmentState.Uploading
-                    return state.copy(currentText = action.text, sendEnabled = sendEnabled)
+                    val position = action.text.indexOfLast { it == '@' }
+                    val mentions = when {
+                        action.text.isBlank() -> emptyList()
+                        action.text.startsWith(' ') -> emptyList()
+                        position == action.text.lastIndex -> state.users
+                        position != -1 -> {
+                            val name = action.text.substring(position + 1)
+                            if (name.isBlank()) emptyList()
+                            else state.users.filter { it.name?.contains(name, true) == true }
+                        }
+                        else -> emptyList()
+                    }
+                    return state.copy(
+                        currentText = action.text,
+                        sendEnabled = sendEnabled,
+                        mentions = mentions
+                    )
+                }
+                is Action.ClientMentionClick -> {
+                    val pos = state.currentText.indexOfLast { it == '@' }
+                    if (pos == -1 || action.mention.name == null) return state
+                    val startText = state.currentText.substring(0, pos + 1)
+                    val newText = startText + action.mention.name + ' '
+                    sideEffectListener(SideEffect.SetInputText(newText))
+                    return state.copy(
+                        currentText = newText,
+                        mentions = emptyList(),
+                        sendEnabled = true
+                    )
                 }
                 is Action.ClientAttach -> {
                     if (state.editingMessage != null) return state
@@ -701,6 +735,28 @@ object ChatUDF {
             return list
         }
 
+        private fun String.getMentions(users: List<User>): List<Mention> {
+            val mentions = mutableListOf<Mention>()
+            users.forEach { user ->
+                if (user.name != null) {
+                    val targetText = "@${user.name}"
+                    var startIndex = 0
+                    var s = this
+                    while (s.contains(targetText, true)) {
+                        val offset = this.indexOf(targetText, startIndex, true)
+                        mentions += Mention(
+                            userId = user.id,
+                            offset = offset,
+                            length = targetText.length
+                        )
+                        println("while: $mentions")
+                        startIndex = offset + targetText.length - 1
+                        s = s.substring(startIndex)
+                    }
+                }
+            }
+            return mentions
+        }
 
         override fun accept(t: Action) {
             actions.accept(t)

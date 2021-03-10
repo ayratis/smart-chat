@@ -11,19 +11,32 @@ import gb.smartchat.databinding.ItemMentionBinding
 import gb.smartchat.entity.User
 import gb.smartchat.utils.dp
 import gb.smartchat.utils.inflate
+import gb.smartchat.utils.visible
 
-class MentionViewHolder private constructor(itemView: View) : RecyclerView.ViewHolder(itemView) {
+class MentionViewHolder private constructor(
+    itemView: View,
+    clickListener: (User) -> Unit
+) : RecyclerView.ViewHolder(itemView) {
 
     companion object {
         private const val TAG = "MentionViewHolder"
 
-        fun create(parent: ViewGroup) =
-            MentionViewHolder(parent.inflate(R.layout.item_mention))
+        fun create(parent: ViewGroup, clickListener: (User) -> Unit) =
+            MentionViewHolder(parent.inflate(R.layout.item_mention), clickListener)
     }
 
     private val binding = ItemMentionBinding.bind(itemView)
+    private lateinit var user: User
 
-    fun bind(user: User) {
+    init {
+        binding.root.setOnClickListener {
+            clickListener.invoke(user)
+        }
+    }
+
+    fun bind(user: User, isFirst: Boolean, isLast: Boolean) {
+        this.user = user
+        binding.dividerTop.visible(isFirst)
         Glide.with(binding.ivPhoto)
             .load(user.avatar)
             .placeholder(R.drawable.profile_avatar_placeholder)
@@ -32,7 +45,7 @@ class MentionViewHolder private constructor(itemView: View) : RecyclerView.ViewH
                 RoundedCorners(12.dp(binding.ivPhoto))
             )
             .into(binding.ivPhoto)
-
         binding.tvName.text = user.name
+        binding.dividerBot.visible(!isLast)
     }
 }

@@ -5,6 +5,13 @@
     android:layout_height="wrap_content"
     android:background="@color/white">
 
+    <View
+        android:id="@+id/divider_top"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider"
+        android:visibility="gone" />
+
     <ImageView
         android:id="@+id/iv_photo"
         android:layout_width="32dp"
@@ -27,6 +34,7 @@
         tools:text="Борис Петров" />
 
     <View
+        android:id="@+id/divider_bot"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_gravity="bottom"

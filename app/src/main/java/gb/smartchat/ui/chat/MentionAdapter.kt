@@ -6,16 +6,18 @@ import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.entity.User
 import gb.smartchat.ui.chat.view_holder.MentionViewHolder
 
-class MentionAdapter : RecyclerView.Adapter<MentionViewHolder>() {
+class MentionAdapter(
+    private val clickListener: (User) -> Unit
+) : RecyclerView.Adapter<MentionViewHolder>() {
 
     private val items = ArrayList<User>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MentionViewHolder {
-        return MentionViewHolder.create(parent)
+        return MentionViewHolder.create(parent, clickListener)
     }
 
     override fun onBindViewHolder(holder: MentionViewHolder, position: Int) {
-        holder.bind(items[position])
+        holder.bind(items[position], isFirst = position == 0, isLast = position == itemCount - 1)
     }
 
     override fun getItemCount(): Int {
