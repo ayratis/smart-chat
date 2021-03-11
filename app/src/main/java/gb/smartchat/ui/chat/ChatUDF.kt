@@ -239,6 +239,11 @@ object ChatUDF {
                     } else {
                         state.draft
                     }
+
+                    if (state.pagingState == PagingState.READ_INFO_PROGRESS) {
+                        return state
+                    }
+
                     if (state.fullDataDown && (
                                 state.pagingState == PagingState.DATA ||
                                         state.pagingState == PagingState.NEW_PAGE_UP_PROGRESS
