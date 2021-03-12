@@ -433,6 +433,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             .subscribe {
                 val quotingMessage = it.first()
                 binding.viewQuotedMessage.visible(quotingMessage != null)
+                binding.tvQuotedPerson.text = quotingMessage?.user?.name
                 binding.tvQuotedMessage.text = quotingMessage?.text
             }
             .also { renderDisposables.add(it) }
