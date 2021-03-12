@@ -4,6 +4,7 @@ import android.util.Log
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import gb.smartchat.entity.Mention
 import gb.smartchat.ui.chat.view_holder.*
 import gb.smartchat.ui.custom.StickyHeaderHelper
 import java.time.ZoneId
@@ -16,7 +17,8 @@ class ChatAdapter(
     private val nextPageUpCallback: () -> Unit,
     private val nextPageDownCallback: () -> Unit,
     private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
-    private val onFileClickListener: (ChatItem.Msg) -> Unit
+    private val onFileClickListener: (ChatItem.Msg) -> Unit,
+    private val onMentionClickListener: (Mention) -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()),
     StickyHeaderHelper {
 
@@ -41,7 +43,8 @@ class ChatAdapter(
                 parent,
                 onQuoteListener,
                 onQuotedMsgClickListener,
-                onFileClickListener
+                onFileClickListener,
+                onMentionClickListener
             )
             3 -> SystemViewHolder.create(parent)
             4 -> OutgoingViewHolder.create(
@@ -50,7 +53,8 @@ class ChatAdapter(
                 onEditListener,
                 onQuoteListener,
                 onQuotedMsgClickListener,
-                onFileClickListener
+                onFileClickListener,
+                onMentionClickListener
             )
             5 -> DraftViewHolder.create(
                 parent,

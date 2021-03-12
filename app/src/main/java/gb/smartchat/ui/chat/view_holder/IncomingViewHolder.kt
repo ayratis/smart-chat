@@ -1,9 +1,7 @@
 package gb.smartchat.ui.chat.view_holder
 
-import android.graphics.Color
 import android.text.Spannable
 import android.text.SpannableStringBuilder
-import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.ContextMenu
 import android.view.MenuInflater
@@ -18,11 +16,10 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatMsgIncomingBinding
+import gb.smartchat.entity.Mention
 import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
-import gb.smartchat.utils.dp
-import gb.smartchat.utils.inflate
-import gb.smartchat.utils.visible
+import gb.smartchat.utils.*
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -30,7 +27,8 @@ class IncomingViewHolder private constructor(
     itemView: View,
     private val onQuoteListener: (ChatItem.Msg) -> Unit,
     private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
-    private val onFileClickListener: (ChatItem.Msg) -> Unit
+    private val onFileClickListener: (ChatItem.Msg) -> Unit,
+    private val onMentionClickListener: (Mention) -> Unit,
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -41,12 +39,14 @@ class IncomingViewHolder private constructor(
             onQuoteListener: (ChatItem.Msg) -> Unit,
             onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
             onFileClickListener: (ChatItem.Msg) -> Unit,
+            onMentionClickListener: (Mention) -> Unit,
         ) =
             IncomingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_incoming),
                 onQuoteListener,
                 onQuotedMsgClickListener,
-                onFileClickListener
+                onFileClickListener,
+                onMentionClickListener
             )
     }
 
@@ -123,7 +123,12 @@ class IncomingViewHolder private constructor(
                 SpannableStringBuilder(chatItem.message.text).apply {
                     chatItem.message.mentions.forEach { mention ->
                         setSpan(
-                            ForegroundColorSpan(Color.BLUE),
+                            AppClickableSpan(
+                                isUnderlineText = false,
+                                linkColor = itemView.context.color(R.color.purple_heart)
+                            ) {
+                                onMentionClickListener.invoke(mention)
+                            },
                             mention.offset,
                             mention.offset + mention.length,
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE

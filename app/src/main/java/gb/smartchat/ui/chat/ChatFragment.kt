@@ -133,6 +133,11 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             },
             onFileClickListener = { chatItem ->
                 viewModel.onFileClick(chatItem)
+            },
+            onMentionClickListener = { mention ->
+                Toast
+                    .makeText(requireContext(), "user_id: ${mention.userId}", Toast.LENGTH_SHORT)
+                    .show()
             }
         ).apply {
             setHasStableIds(true)

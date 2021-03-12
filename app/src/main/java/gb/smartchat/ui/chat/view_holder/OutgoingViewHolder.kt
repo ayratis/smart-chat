@@ -1,9 +1,8 @@
 package gb.smartchat.ui.chat.view_holder
 
-import android.graphics.Color
 import android.text.Spannable
 import android.text.SpannableStringBuilder
-import android.text.style.ForegroundColorSpan
+import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.*
 import android.webkit.MimeTypeMap
@@ -15,11 +14,10 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatMsgOutgoingBinding
+import gb.smartchat.entity.Mention
 import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
-import gb.smartchat.utils.dp
-import gb.smartchat.utils.inflate
-import gb.smartchat.utils.visible
+import gb.smartchat.utils.*
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -29,7 +27,8 @@ class OutgoingViewHolder private constructor(
     private val onEditListener: (ChatItem.Msg) -> Unit,
     private val onQuoteListener: (ChatItem.Msg) -> Unit,
     private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
-    private val onFileClickListener: (ChatItem.Msg) -> Unit
+    private val onFileClickListener: (ChatItem.Msg) -> Unit,
+    private val onMentionClickListener: (Mention) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -41,7 +40,8 @@ class OutgoingViewHolder private constructor(
             onEditListener: (ChatItem.Msg) -> Unit,
             onQuoteListener: (ChatItem.Msg) -> Unit,
             onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
-            onFileClickListener: (ChatItem.Msg) -> Unit
+            onFileClickListener: (ChatItem.Msg) -> Unit,
+            onMentionClickListener: (Mention) -> Unit,
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
@@ -49,7 +49,8 @@ class OutgoingViewHolder private constructor(
                 onEditListener,
                 onQuoteListener,
                 onQuotedMsgClickListener,
-                onFileClickListener
+                onFileClickListener,
+                onMentionClickListener,
             )
     }
 
@@ -121,22 +122,30 @@ class OutgoingViewHolder private constructor(
             }
         )
 
-        binding.tvContent.text =
-            if (chatItem.message.mentions.isNullOrEmpty()) {
-                chatItem.message.text
-            } else {
-                SpannableStringBuilder(chatItem.message.text).apply {
-                    chatItem.message.mentions.forEach { mention ->
-                        setSpan(
-                            ForegroundColorSpan(Color.BLUE),
-                            mention.offset,
-                            mention.offset + mention.length,
-                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                        )
+        binding.tvContent.apply {
+            text =
+                if (chatItem.message.mentions.isNullOrEmpty()) {
+                    chatItem.message.text
+                } else {
+                    SpannableStringBuilder(chatItem.message.text).apply {
+                        chatItem.message.mentions.forEach { mention ->
+                            setSpan(
+                                AppClickableSpan(
+                                    isUnderlineText = false,
+                                    linkColor = itemView.context.color(R.color.purple_heart)
+                                ) {
+                                    onMentionClickListener.invoke(mention)
+                                  },
+                                mention.offset,
+                                mention.offset + mention.length,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+                        }
                     }
                 }
-            }
-        binding.tvContent.visible(!chatItem.message.text.isNullOrBlank())
+            movementMethod = LinkMovementMethod.getInstance()
+            visible(!chatItem.message.text.isNullOrBlank())
+        }
         binding.tvTime.text = sdf.format(chatItem.message.timeCreated)
         binding.tvEdited.visible(
             chatItem.message.timeUpdated != null &&

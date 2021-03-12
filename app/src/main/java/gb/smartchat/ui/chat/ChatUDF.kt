@@ -181,8 +181,8 @@ object ChatUDF {
                     if (state.editingMessage != null) {
                         sideEffectListener(SideEffect.SetInputText(""))
                         val newMessage = state.editingMessage.copy(
-                            text = state.currentText,
-                            mentions = state.currentText.getMentions(state.users)
+                            text = state.currentText.trim(),
+                            mentions = state.currentText.trim().getMentions(state.users)
                         )
                         sideEffectListener(
                             SideEffect.EditMessage(state.editingMessage, newMessage)
@@ -192,6 +192,7 @@ object ChatUDF {
                             editingMessage = null,
                             currentText = "",
                             sendEnabled = false,
+                            mentions = emptyList(),
                             attachmentState = AttachmentState.Empty,
                         )
                     }
@@ -740,7 +741,7 @@ object ChatUDF {
             return list
         }
 
-        private fun String.getMentions(users: List<User>): List<Mention> {
+       private fun String.getMentions(users: List<User>): List<Mention> {
             val mentions = mutableListOf<Mention>()
             users.forEach { user ->
                 if (user.name != null) {
@@ -754,9 +755,8 @@ object ChatUDF {
                             offset = offset,
                             length = targetText.length
                         )
-                        println("while: $mentions")
-                        startIndex = offset + targetText.length - 1
-                        s = s.substring(startIndex)
+                        startIndex = offset + targetText.length
+                        s = this.substring(startIndex)
                     }
                 }
             }

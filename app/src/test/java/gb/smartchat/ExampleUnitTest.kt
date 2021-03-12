@@ -18,8 +18,8 @@ class ExampleUnitTest {
 
     @Test
     fun getMentions() {
-        val text = "hi @111 and @234"
-        val users = listOf("111", "234").map { User(0, it, it, it) }
+        val text = "@111 gf @222 @1@11cqawdaf@22@222 asdaf @11@1     "
+        val users = listOf("111", "222").map { User(0, it, it, it) }
         val mentions = mutableListOf<Mention>()
         users.forEach { user ->
             if (user.name != null) {
@@ -34,8 +34,9 @@ class ExampleUnitTest {
                         length = targetText.length
                     )
                     println("while: $mentions")
-                    startIndex = offset + targetText.length - 1
-                    s = s.substring(startIndex)
+                    startIndex = offset + targetText.length
+                    println("startIndex: $startIndex")
+                    s = text.substring(startIndex)
                 }
             }
         }
