@@ -125,7 +125,7 @@ class DraftViewHolder private constructor(
         menuInfo: ContextMenu.ContextMenuInfo?
     ) {
         val inflater = MenuInflater(itemView.context)
-        inflater.inflate(R.menu.outgoing_message, menu)
+        inflater.inflate(R.menu.delete, menu)
         inflater.inflate(R.menu.quote, menu)
         menu?.forEach {
             it.setOnMenuItemClickListener { menuItem ->

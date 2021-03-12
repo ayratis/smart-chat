@@ -1,12 +1,14 @@
 package gb.smartchat.ui.chat.view_holder
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context.CLIPBOARD_SERVICE
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.*
 import android.webkit.MimeTypeMap
-import androidx.core.view.forEach
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -21,6 +23,7 @@ import gb.smartchat.utils.*
 import java.time.format.DateTimeFormatter
 import java.util.*
 
+
 class OutgoingViewHolder private constructor(
     itemView: View,
     private val onDeleteListener: (ChatItem.Msg) -> Unit,
@@ -29,7 +32,7 @@ class OutgoingViewHolder private constructor(
     private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
     private val onMentionClickListener: (Mention) -> Unit
-) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
+) : RecyclerView.ViewHolder(itemView) {
 
     companion object {
         private const val TAG = "OutgoingViewHolder"
@@ -57,14 +60,67 @@ class OutgoingViewHolder private constructor(
     private val binding = ItemChatMsgOutgoingBinding.bind(itemView)
     private lateinit var chatItem: ChatItem.Msg
     private val sdf = DateTimeFormatter.ofPattern("H:mm")
+    private val clipboard by lazy {
+        itemView.context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+    }
 
     init {
-        binding.root.setOnCreateContextMenuListener(this)
         binding.viewQuotedMessage.setOnClickListener {
             onQuotedMsgClickListener.invoke(chatItem)
         }
         binding.viewDocAttachment.setOnClickListener {
             onFileClickListener.invoke(chatItem)
+        }
+        binding.content.setOnClickListener {
+            if (chatItem.message.type == Message.Type.DELETED) return@setOnClickListener
+
+            val menu = android.widget.PopupMenu(itemView.context, binding.content)
+            menu.inflate(R.menu.quote)
+            if (!chatItem.message.text.isNullOrBlank()) {
+                menu.inflate(R.menu.copy)
+            }
+            if (chatItem.message.file?.downloadStatus == DownloadStatus.Empty) {
+                menu.inflate(R.menu.download)
+            }
+            menu.inflate(R.menu.edit)
+            menu.inflate(R.menu.delete)
+            menu.setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.action_quote -> {
+                        Log.d(TAG, "onCreateContextMenu: quote")
+                        onQuoteListener.invoke(chatItem)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.action_copy -> {
+                        Log.d(TAG, "onCreateContextMenu: copy")
+                        val clip = ClipData.newPlainText(null, chatItem.message.text)
+                        clipboard.setPrimaryClip(clip)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.action_download -> {
+                        Log.d(TAG, "onCreateContextMenu: download")
+                        if (chatItem.message.file?.downloadStatus == DownloadStatus.Empty) {
+                            onFileClickListener.invoke(chatItem)
+                        }
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.action_edit -> {
+                        Log.d(TAG, "onCreateContextMenu: edit")
+                        onEditListener.invoke(chatItem)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.action_delete -> {
+                        Log.d(TAG, "onCreateContextMenu: delete")
+                        onDeleteListener.invoke(chatItem)
+                        return@setOnMenuItemClickListener true
+                    }
+                }
+                false
+            }
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                menu.setForceShowIcon(true)
+            }
+            menu.show()
         }
     }
 
@@ -135,7 +191,7 @@ class OutgoingViewHolder private constructor(
                                     linkColor = itemView.context.color(R.color.purple_heart)
                                 ) {
                                     onMentionClickListener.invoke(mention)
-                                  },
+                                },
                                 mention.offset,
                                 mention.offset + mention.length,
                                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -143,7 +199,9 @@ class OutgoingViewHolder private constructor(
                         }
                     }
                 }
-            movementMethod = LinkMovementMethod.getInstance()
+            movementMethod =
+                if (chatItem.message.mentions.isNullOrEmpty()) null
+                else LinkMovementMethod.getInstance()
             visible(!chatItem.message.text.isNullOrBlank())
         }
         binding.tvTime.text = sdf.format(chatItem.message.timeCreated)
@@ -151,37 +209,5 @@ class OutgoingViewHolder private constructor(
             chatItem.message.timeUpdated != null &&
                     chatItem.message.type != Message.Type.DELETED
         )
-    }
-
-    override fun onCreateContextMenu(
-        menu: ContextMenu?,
-        v: View?,
-        menuInfo: ContextMenu.ContextMenuInfo?
-    ) {
-        val inflater = MenuInflater(itemView.context)
-        inflater.inflate(R.menu.outgoing_message, menu)
-        inflater.inflate(R.menu.quote, menu)
-        menu?.forEach {
-            it.setOnMenuItemClickListener { menuItem ->
-                when (menuItem.itemId) {
-                    R.id.action_delete -> {
-                        Log.d(TAG, "onCreateContextMenu: delete")
-                        onDeleteListener.invoke(chatItem)
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.action_edit -> {
-                        Log.d(TAG, "onCreateContextMenu: edit")
-                        onEditListener.invoke(chatItem)
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.action_quote -> {
-                        Log.d(TAG, "onCreateContextMenu: quote")
-                        onQuoteListener.invoke(chatItem)
-                        return@setOnMenuItemClickListener true
-                    }
-                }
-                false
-            }
-        }
     }
 }

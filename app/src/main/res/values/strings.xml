@@ -1,11 +1,13 @@
 <resources>
     <string name="app_name">Smart Chat</string>
-    <string name="send">Send</string>
-    <string name="edit">Edit</string>
-    <string name="delete">Delete</string>
-    <string name="cancel">Cancel</string>
+    <string name="send">Отправить</string>
+    <string name="edit">Редактировать</string>
+    <string name="delete">Удалить</string>
+    <string name="cancel">Отмена</string>
     <string name="ok">OK</string>
-    <string name="quote">Quote</string>
+    <string name="download">Скачать</string>
+    <string name="copy">Копировать</string>
+    <string name="quote">Ответить</string>
     <string name="message">Сообщение</string>
     <string name="attach">Прикрепить</string>
     <string name="detach">Открепить</string>
