@@ -1,5 +1,7 @@
 package gb.smartchat.ui
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -10,11 +12,24 @@ import gb.smartchat.utils.configureSystemBars
 
 class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
 
+    companion object {
+        private const val ARG_USER_ID = "arg user id"
+
+        fun createLaunchIntent(context: Context, userId: String): Intent {
+            return Intent(context, SmartChatActivity::class.java).apply {
+                putExtra(ARG_USER_ID, userId)
+            }
+        }
+    }
+
+    private val userId: String by lazy {
+        intent.getStringExtra(ARG_USER_ID)!!
+    }
+
     val component: Component by viewModels {
         Component.Factory(
             application = application,
-            userId = "77f21ecc-0d4a-4f85-9173-55acf327f007",
-//            userId ="46343a36-9ad0-4002-822d-61d81da5c831",
+            userId = userId,
             baseUrl = "http://91.201.41.157:8000/"
         )
     }

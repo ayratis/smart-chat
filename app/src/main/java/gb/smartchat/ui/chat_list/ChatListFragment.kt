@@ -65,6 +65,9 @@ class ChatListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.appBarLayout.addSystemTopPadding()
+        binding.toolbar.setNavigationOnClickListener {
+            activity?.finish()
+        }
         binding.rvChatList.apply {
             addSystemBottomPadding()
             setHasFixedSize(true)
