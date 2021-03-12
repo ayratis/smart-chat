@@ -8,6 +8,7 @@ import gb.smartchat.databinding.ItemChatDateHeaderBinding
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.inflate
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 class DateHeaderViewHolder private constructor(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -18,7 +19,7 @@ class DateHeaderViewHolder private constructor(itemView: View) : RecyclerView.Vi
 
     private val binding = ItemChatDateHeaderBinding.bind(itemView)
     private lateinit var chatItem: ChatItem.DateHeader
-    private val sdf = DateTimeFormatter.ofPattern("d MMMM yyyy")
+    private val sdf = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru"))
 
     fun bind(chatItem: ChatItem.DateHeader) {
         this.chatItem = chatItem
