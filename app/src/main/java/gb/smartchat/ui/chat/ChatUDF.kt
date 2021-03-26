@@ -746,14 +746,16 @@ object ChatUDF {
             users.forEach { user ->
                 if (user.name != null) {
                     val targetText = "@${user.name}"
+                    val targetLengthUtf8 = targetText.encodeToByteArray().size
                     var startIndex = 0
                     var s = this
                     while (s.contains(targetText, true)) {
                         val offset = this.indexOf(targetText, startIndex, true)
+                        val offsetUtf8 = this.substring(0, offset).encodeToByteArray().size
                         mentions += Mention(
                             userId = user.id,
-                            offset = offset,
-                            length = targetText.length
+                            offsetUtf8 = offsetUtf8,
+                            lengthUtf8 = targetLengthUtf8
                         )
                         startIndex = offset + targetText.length
                         s = this.substring(startIndex)

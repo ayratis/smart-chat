@@ -185,6 +185,14 @@ class OutgoingViewHolder private constructor(
                 } else {
                     SpannableStringBuilder(chatItem.message.text).apply {
                         chatItem.message.mentions.forEach { mention ->
+                            val mentionUtf8 = ByteArray(mention.lengthUtf8)
+                            chatItem.message.text!!.encodeToByteArray().copyInto(
+                                destination = mentionUtf8,
+                                startIndex = mention.offsetUtf8,
+                                endIndex = mention.offsetUtf8 + mention.lengthUtf8
+                            )
+                            val mentionString = mentionUtf8.decodeToString()
+                            val offset = chatItem.message.text.indexOf(mentionString)
                             setSpan(
                                 AppClickableSpan(
                                     isUnderlineText = false,
@@ -192,8 +200,8 @@ class OutgoingViewHolder private constructor(
                                 ) {
                                     onMentionClickListener.invoke(mention)
                                 },
-                                mention.offset,
-                                mention.offset + mention.length,
+                                offset,
+                                offset + mentionString.length,
                                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                             )
                         }

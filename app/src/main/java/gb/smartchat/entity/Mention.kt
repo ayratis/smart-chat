@@ -6,7 +6,7 @@ data class Mention(
     @SerializedName("user_id")
     val userId: String?,
     @SerializedName("offset")
-    val offset: Int,
+    val offsetUtf8: Int,
     @SerializedName("length")
-    val length: Int
+    val lengthUtf8: Int
 )
