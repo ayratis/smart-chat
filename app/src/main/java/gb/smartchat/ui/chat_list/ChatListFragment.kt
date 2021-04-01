@@ -23,8 +23,11 @@ class ChatListFragment : Fragment() {
     private var _binding: FragmentChatListBinding? = null
     private val binding: FragmentChatListBinding get() = _binding!!
     private val compositeDisposable = CompositeDisposable()
+    private val component by lazy {
+        (requireActivity() as SmartChatActivity).component
+    }
     private val chatListAdapter by lazy {
-        ChatListAdapter { chat ->
+        ChatListAdapter(component.userId) { chat ->
             parentFragmentManager
                 .beginTransaction()
                 .setSlideAnimation()
@@ -38,7 +41,6 @@ class ChatListFragment : Fragment() {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                val component = (requireActivity() as SmartChatActivity).component
                 return ChatListViewModel(
                     ChatListUDF.Store(),
                     component.httpApi,
