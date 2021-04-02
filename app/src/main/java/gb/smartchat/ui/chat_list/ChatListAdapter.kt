@@ -6,11 +6,12 @@ import androidx.recyclerview.widget.ListAdapter
 import gb.smartchat.entity.Chat
 
 class ChatListAdapter(
+    private val userId: String,
     private val clickListener: (Chat) -> Unit
 ) : ListAdapter<Chat, ChatViewHolder>(DiffUtilItemCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
-        return ChatViewHolder.create(parent, clickListener)
+        return ChatViewHolder.create(parent, userId, clickListener)
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {

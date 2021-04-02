@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.DisplayMetrics
 import android.util.TypedValue
@@ -12,10 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
-import androidx.annotation.AttrRes
-import androidx.annotation.ColorInt
-import androidx.annotation.LayoutRes
-import androidx.annotation.RequiresApi
+import androidx.annotation.*
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
@@ -204,6 +202,9 @@ fun Context.colorFromAttr(@AttrRes attr: Int): Int {
 
 fun Context.color(colorRes: Int) = ContextCompat.getColor(this, colorRes)
 
+fun Context.drawable(@DrawableRes drawableRes: Int): Drawable =
+    ContextCompat.getDrawable(this, drawableRes)!!
+
 fun Disposable.disposeOnPause(lifecycleOwner: LifecycleOwner) {
     lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
         override fun onPause(owner: LifecycleOwner) {
@@ -230,7 +231,7 @@ fun Intent.toLogsString(): String {
     return stringBuilder.toString()
 }
 
-fun Message.composeWithDownloadStatus(downloadHelper: FileDownloadHelper) : Message {
+fun Message.composeWithDownloadStatus(downloadHelper: FileDownloadHelper): Message {
     file?.let { file ->
         file.url?.let { url ->
             val downloadStatus = downloadHelper.getDownloadStatus(url)
@@ -241,7 +242,7 @@ fun Message.composeWithDownloadStatus(downloadHelper: FileDownloadHelper) : Mess
     return this
 }
 
-fun Message.composeWithUser(users: List<User>) : Message {
+fun Message.composeWithUser(users: List<User>): Message {
     val user = users.find { it.id == this.senderId }
     return this.copy(user = user)
 }
@@ -301,4 +302,3 @@ fun ChangedMessage.composeWithMessage(message: Message): Message {
         mentions = mentions
     )
 }
-

@@ -1,17 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:tools="http://schemas.android.com/tools"
     android:background="?attr/selectableItemBackground"
-    android:orientation="vertical">
+    android:paddingHorizontal="16dp">
+
+    <ImageView
+        android:id="@+id/iv_avatar"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="13dp"
+        android:layout_marginBottom="8dp"
+        android:contentDescription="@null"
+        app:layout_constraintBottom_toTopOf="@id/tv_agent_name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/profile_avatar_placeholder" />
 
     <TextView
-        android:id="@+id/tv_id"
-        style="@style/Body1"
-        tools:text="1"
+        android:id="@+id/tv_chat_name"
+        style="@style/Body3"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="13dp"
+        android:layout_marginEnd="30dp"
+        android:ellipsize="end"
+        android:lines="1"
+        app:layout_constraintEnd_toStartOf="@+id/tv_last_msg_date"
+        app:layout_constraintStart_toEndOf="@id/iv_avatar"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Сервис-центр" />
+
+    <TextView
+        android:id="@+id/tv_last_msg_date"
+        style="@style/Caption1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/gray"
+        app:layout_constraintBaseline_toBaselineOf="@id/tv_chat_name"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="09:29" />
+
+    <ImageView
+        android:id="@+id/iv_send_status"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="6dp"
+        android:contentDescription="@null"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_last_msg_date"
+        app:layout_constraintEnd_toStartOf="@id/tv_last_msg_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_last_msg_date"
+        tools:src="@drawable/ic_double_check_12" />
+
+    <TextView
+        android:id="@+id/tv_last_msg_sender_name"
+        style="@style/Body2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="30dp"
+        android:ellipsize="end"
+        android:lines="1"
+        app:layout_constraintEnd_toStartOf="@+id/tv_last_msg_date"
+        app:layout_constraintStart_toEndOf="@id/iv_avatar"
+        app:layout_constraintTop_toBottomOf="@id/tv_chat_name"
+        tools:text="Антон" />
+
+    <TextView
+        android:id="@+id/tv_last_msg_text"
+        style="@style/Body2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="8dp"
+        android:drawablePadding="4dp"
+        android:ellipsize="end"
+        android:lines="1"
+        android:textColor="@color/gray"
+        app:layout_constraintBottom_toTopOf="@id/tv_agent_name"
+        app:layout_constraintEnd_toStartOf="@+id/tv_last_msg_date"
+        app:layout_constraintStart_toEndOf="@id/iv_avatar"
+        app:layout_constraintTop_toBottomOf="@id/tv_last_msg_sender_name"
+        tools:text="Спасибо за информацию!" />
+
+    <TextView
+        android:id="@+id/tv_unread_counter"
+        style="@style/Caption2"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="6.5dp"
+        android:layout_marginEnd="2dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/bg_chat_unread_counter"
+        android:gravity="center"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_last_msg_text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_last_msg_date"
+        tools:text="21" />
+
+    <TextView
+        android:id="@+id/tv_agent_name"
+        style="@style/Caption1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp" />
+        android:layout_marginBottom="8dp"
+        android:drawablePadding="4dp"
+        android:textColor="@color/razzmatazz"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:text="Тюлькин Заречка (Свит лайф)" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
