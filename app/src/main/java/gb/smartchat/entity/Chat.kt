@@ -15,7 +15,7 @@ data class Chat(
     @SerializedName("agent_name")
     val agentName: String?,
     @SerializedName("last_message")
-    val lastMessage: ChatLastMessage?,
+    val lastMessage: Message?,
     @SerializedName("unread_messages_count")
     val unreadMessagesCount: Int?,
     @SerializedName("is_favorites")

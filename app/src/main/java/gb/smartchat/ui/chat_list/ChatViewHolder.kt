@@ -1,33 +1,49 @@
 package gb.smartchat.ui.chat_list
 
-import android.view.View
+import android.graphics.drawable.Drawable
+import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.databinding.ItemChatBinding
 import gb.smartchat.entity.Chat
-import gb.smartchat.utils.inflate
+import gb.smartchat.utils.drawable
 import gb.smartchat.utils.visible
 import java.time.format.DateTimeFormatter
 
 class ChatViewHolder(
-    itemView: View,
+    private val binding: ItemChatBinding,
     private val userId: String,
     private val clickListener: (Chat) -> Unit,
-) : RecyclerView.ViewHolder(itemView) {
+) : RecyclerView.ViewHolder(binding.root) {
 
     companion object {
         fun create(
             parent: ViewGroup,
             userId: String,
             clickListener: (Chat) -> Unit
-        ) = ChatViewHolder(parent.inflate(R.layout.item_chat), userId, clickListener)
+        ) = ChatViewHolder(
+            ItemChatBinding.inflate(LayoutInflater.from(parent.context), parent, false),
+            userId,
+            clickListener
+        )
     }
 
-    private val binding: ItemChatBinding = ItemChatBinding.bind(itemView)
     private lateinit var chat: Chat
     private val sdf = DateTimeFormatter.ofPattern("H:mm")
+
+    private val imgIcon: Drawable by lazy {
+        itemView.context.drawable(R.drawable.ic_img_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
+    }
+
+    private val docIcon: Drawable by lazy {
+        itemView.context.drawable(R.drawable.ic_doc_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
+    }
 
     init {
         itemView.setOnClickListener {
@@ -47,6 +63,15 @@ class ChatViewHolder(
         } else {
             binding.ivAvatar.setImageResource(R.drawable.group_avatar_placeholder)
         }
+        val icon: Drawable? = when {
+            chat.lastMessage?.file == null -> null
+            chat.lastMessage.file.isImage() -> imgIcon
+            else -> docIcon
+        }
+        binding.tvLastMsgText.setCompoundDrawables(icon, null, null, null)
+        binding.tvLastMsgText.text =
+            if (!chat.lastMessage?.text.isNullOrBlank()) chat.lastMessage?.text
+            else chat.lastMessage?.file?.name
         binding.tvChatName.text = chat.name
         binding.tvLastMsgDate.text = chat.lastMessage?.timeCreated?.let { sdf.format(it) }
         binding.ivSendStatus.apply {
@@ -64,7 +89,6 @@ class ChatViewHolder(
         }
         binding.tvLastMsgSenderName.text =
             chat.users.find { it.id == chat.lastMessage?.senderId }?.name
-        binding.tvLastMsgText.text = chat.lastMessage?.text
         binding.tvUnreadCounter.apply {
             text = chat.unreadMessagesCount?.toString()
             visible(chat.unreadMessagesCount ?: 0 > 0)

@@ -8,7 +8,6 @@ import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.*
-import android.webkit.MimeTypeMap
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -129,12 +128,7 @@ class OutgoingViewHolder private constructor(
 //        binding.tvContent.text = chatItem.message.id.toString() //debug
 //        return
         if (chatItem.message.file != null) {
-            val mimeType = chatItem.message.file.url?.let {
-                val extension = MimeTypeMap.getFileExtensionFromUrl(it)
-                MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-            }
-            Log.d(TAG, "bind: file mimeType: $mimeType")
-            if (mimeType?.startsWith("image") == true) {
+            if (chatItem.message.file.isImage()) {
                 binding.viewDocAttachment.visible(false)
                 binding.ivAttachmentPhoto.visible(true)
                 Glide.with(binding.ivAttachmentPhoto)
