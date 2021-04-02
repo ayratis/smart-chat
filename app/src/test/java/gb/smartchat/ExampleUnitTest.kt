@@ -73,4 +73,17 @@ class ExampleUnitTest {
         println("mentionOffset: $mentionOffset, mentionLength: $mentionLength")
 
     }
+
+
+    @Test
+    fun asd() {
+        val s = "asd"
+        val n = 1
+        val result = s.removeRange(n, n+1)
+
+
+        println(result)
+        println("asd".toByteArray(Charsets.UTF_8).size)
+        println("фыв".toByteArray(Charsets.UTF_8).size)
+    }
 }

@@ -1,9 +1,12 @@
 package gb.smartchat.ui.chat_list
 
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
@@ -13,9 +16,7 @@ import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatListBinding
 import gb.smartchat.ui.SmartChatActivity
 import gb.smartchat.ui.chat.ChatFragment
-import gb.smartchat.utils.addSystemBottomPadding
-import gb.smartchat.utils.addSystemTopPadding
-import gb.smartchat.utils.setSlideAnimation
+import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
 class ChatListFragment : Fragment() {
@@ -75,6 +76,19 @@ class ChatListFragment : Fragment() {
             setHasFixedSize(true)
             layoutManager = LinearLayoutManager(context)
             adapter = chatListAdapter
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            binding.btnCreateChat.doOnApplyWindowInsets { _, insets, _ ->
+                binding.btnCreateChat.updateLayoutParams<CoordinatorLayout.LayoutParams> {
+                    bottomMargin = 16.dp(binding.btnCreateChat) + insets.systemWindowInsetBottom
+                }
+                insets
+            }
+        }
+
+        binding.btnCreateChat.setOnClickListener {
+
         }
     }
 
