@@ -1,8 +1,7 @@
 package gb.smartchat.ui.create_chat
 
-class CreateChatFragment {
-    init {
+import androidx.fragment.app.Fragment
 
+class CreateChatFragment : Fragment() {
 
-    }
 }

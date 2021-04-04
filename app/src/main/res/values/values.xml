@@ -36,4 +36,16 @@
         <item name="fontFamily">@font/gerbera_regular</item>
     </style>
 
+    <style name="Body4">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="fontFamily">@font/gerbera_regular</item>
+    </style>
+
+    <style name="H4">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="fontFamily">@font/gerbera_medium</item>
+    </style>
+
 </resources>
