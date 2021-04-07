@@ -1,7 +1,10 @@
 package gb.smartchat.ui.create_chat
 
 import androidx.lifecycle.ViewModel
+import gb.smartchat.R
 import gb.smartchat.data.http.HttpApi
+import gb.smartchat.data.resources.ResourceManager
+import gb.smartchat.utils.humanMessage
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -9,11 +12,13 @@ import io.reactivex.schedulers.Schedulers
 
 class CreateChatViewModel(
     private val httpApi: HttpApi,
-    private val store: CreateChatUDF.Store
+    private val store: CreateChatUDF.Store,
+    private val resourceManager: ResourceManager
 ) : ViewModel() {
 
     companion object {
         private const val TAG = "CreateChatViewModel"
+        private const val ERROR_RETRY_TAG = "error retry tag"
     }
 
     private val compositeDisposable = CompositeDisposable()
@@ -53,16 +58,35 @@ class CreateChatViewModel(
     }
 
     private fun CreateChatUDF.State.mapIntoContactItems(): List<ContactItem> {
-        return when (this) {
+        val list = mutableListOf<ContactItem>()
+        list += ContactItem.CreateGroupButton
+        when (this) {
             is CreateChatUDF.State.Data -> {
-                val list = mutableListOf<ContactItem>()
                 for (group in this.groups) {
                     list += ContactItem.Group(group)
                     list += group.contacts.map { ContactItem.Contact(it) }
                 }
-                list
             }
-            else -> emptyList()
+            is CreateChatUDF.State.Error -> {
+                list += ContactItem.Error(
+                    message = this.error.humanMessage(resourceManager),
+                    action = resourceManager.getString(R.string.retry),
+                    tag = ERROR_RETRY_TAG
+                )
+            }
+            is CreateChatUDF.State.Loading -> {
+                list += ContactItem.Loading
+            }
+            is CreateChatUDF.State.Empty -> {
+
+            }
+        }
+        return list
+    }
+
+    fun onErrorActionClick(tag: String) {
+        when(tag) {
+            ERROR_RETRY_TAG -> store.accept(CreateChatUDF.Action.Refresh)
         }
     }
 

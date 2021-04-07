@@ -13,6 +13,7 @@ import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentCreateChatBinding
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding
+import gb.smartchat.utils.registerOnBackPress
 import io.reactivex.disposables.CompositeDisposable
 
 class CreateChatFragment : Fragment() {
@@ -34,15 +35,18 @@ class CreateChatFragment : Fragment() {
                 return CreateChatViewModel(
                     component.httpApi,
                     CreateChatUDF.Store(),
+                    component.resourceManager
                 ) as T
             }
         }
     }
 
     private val contactsAdapter by lazy {
-        ContactsAdapter { contact ->
-
-        }
+        ContactsAdapter(
+            createGroupClickListener = {},
+            contactClickListener = {},
+            errorActionClickListener = { viewModel.onErrorActionClick(it) }
+        )
     }
 
     override fun onCreateView(
@@ -61,7 +65,15 @@ class CreateChatFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        registerOnBackPress {
+            parentFragmentManager.popBackStack()
+        }
         binding.appBarLayout.addSystemTopPadding()
+        binding.toolbar.apply {
+            setNavigationOnClickListener {
+                parentFragmentManager.popBackStack()
+            }
+        }
         binding.rvContacts.apply {
             addSystemBottomPadding()
             setHasFixedSize(true)

@@ -23,6 +23,7 @@ import androidx.lifecycle.LifecycleOwner
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.data.download.FileDownloadHelper
+import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.entity.ChangedMessage
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.QuotedMessage
@@ -31,6 +32,7 @@ import gb.smartchat.entity.request.MessageCreateRequest
 import gb.smartchat.entity.request.MessageDeleteRequest
 import gb.smartchat.entity.request.MessageEditRequest
 import io.reactivex.disposables.Disposable
+import java.io.IOException
 import kotlin.math.roundToInt
 
 
@@ -302,3 +304,11 @@ fun ChangedMessage.composeWithMessage(message: Message): Message {
         mentions = mentions
     )
 }
+
+fun Throwable.humanMessage(resourceManager: ResourceManager): String {
+    return when (this) {
+        is IOException -> resourceManager.getString(R.string.connection_error)
+        else -> resourceManager.getString(R.string.unknown_error)
+    }
+}
+

@@ -1,4 +1,4 @@
-package gb.smartchat.ui.create_chat
+package gb.smartchat.ui.create_chat.view_holder
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -9,6 +9,7 @@ import gb.smartchat.entity.Group
 class ContactGroupViewHolder private constructor(
     private val binding: ItemContactGroupBinding
 ) : RecyclerView.ViewHolder(binding.root) {
+
     companion object {
         fun create(parent: ViewGroup) =
             ContactGroupViewHolder(

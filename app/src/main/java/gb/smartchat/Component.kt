@@ -11,6 +11,8 @@ import gb.smartchat.data.download.FileDownloadHelper
 import gb.smartchat.data.download.FileDownloadHelperImpl
 import gb.smartchat.data.gson.GsonDateAdapter
 import gb.smartchat.data.http.HttpApi
+import gb.smartchat.data.resources.ResourceManager
+import gb.smartchat.data.resources.ResourceManagerImpl
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketApiImpl
 import io.socket.client.IO
@@ -40,6 +42,10 @@ class Component constructor(
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             return Component(application, baseUrl, userId) as T
         }
+    }
+
+    val resourceManager: ResourceManager by lazy {
+        ResourceManagerImpl(application.resources)
     }
 
     val gson: Gson by lazy {

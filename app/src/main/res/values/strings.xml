@@ -24,4 +24,7 @@
     <string name="files">Файлы</string>
     <string name="edited">Изменено</string>
     <string name="create_chat">Создать чат</string>
+    <string name="create_group">Создать группу</string>
+    <string name="no_connection">Нет подключения к интернету</string>
+    <string name="unknown_error">Неизвестная ошибка</string>
 </resources>
