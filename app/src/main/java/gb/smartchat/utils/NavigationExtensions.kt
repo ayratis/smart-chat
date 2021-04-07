@@ -12,7 +12,6 @@ const val defaultContainerId = R.id.fragment_container
 
 fun FragmentManager.back() {
     popBackStack()
-    executePendingTransactions()
 }
 
 fun FragmentManager.backTo(fragmentClass: KClass<out Fragment>?) {
