@@ -1,12 +1,10 @@
-package gb.smartchat.ui
+package gb.smartchat
 
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import gb.smartchat.R
-import gb.smartchat.di.Component
 import gb.smartchat.ui.chat_list.ChatListFragment
 import gb.smartchat.utils.configureSystemBars
 
@@ -30,7 +28,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         Component.Factory(
             application = application,
             userId = userId,
-            baseUrl = "http://91.201.41.157:8000/"
+            baseUrl = "http://91.201.41.157:8001/"
         )
     }
 

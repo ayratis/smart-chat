@@ -1,4 +1,4 @@
-package gb.smartchat.di
+package gb.smartchat
 
 import android.app.Application
 import androidx.lifecycle.ViewModel

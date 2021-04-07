@@ -10,8 +10,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.R
+import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListBinding
-import gb.smartchat.ui.SmartChatActivity
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.addSystemTopPadding

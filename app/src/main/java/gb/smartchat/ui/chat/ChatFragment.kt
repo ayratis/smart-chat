@@ -31,9 +31,9 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import gb.smartchat.R
+import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.entity.Chat
-import gb.smartchat.ui.SmartChatActivity
 import gb.smartchat.ui.custom.CenterSmoothScroller
 import gb.smartchat.ui.custom.HeaderItemDecoration
 import gb.smartchat.ui.custom.ProgressDialog

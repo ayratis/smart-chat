@@ -25,14 +25,14 @@
         tools:ignore="AllowBackup,UnusedAttribute">
 
         <activity
-            android:name=".ui.SmartChatActivity"
+            android:name=".SmartChatActivity"
             android:theme="@style/Theme.SmartChat"
             android:windowSoftInputMode="adjustResize">
 
         </activity>
 
         <activity
-            android:name=".ui.SelectUserActivity"
+            android:name=".SelectUserActivity"
             android:theme="@style/Theme.SmartChat"
             android:windowSoftInputMode="adjustResize">
 
