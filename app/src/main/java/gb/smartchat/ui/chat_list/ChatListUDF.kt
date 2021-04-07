@@ -49,7 +49,7 @@ object ChatListUDF {
         private val viewState = BehaviorRelay.createDefault(State())
         var sideEffectListener: (SideEffect) -> Unit = {}
 
-        private var disposable: Disposable = actions
+        private val disposable: Disposable = actions
             .hide()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { action ->

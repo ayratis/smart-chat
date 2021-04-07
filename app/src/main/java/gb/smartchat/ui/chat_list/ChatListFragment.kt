@@ -16,6 +16,7 @@ import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListBinding
 import gb.smartchat.ui.chat.ChatFragment
+import gb.smartchat.ui.create_chat.CreateChatFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -88,7 +89,10 @@ class ChatListFragment : Fragment() {
         }
 
         binding.btnCreateChat.setOnClickListener {
-
+            parentFragmentManager.navigateTo(
+                CreateChatFragment(),
+                NavAnim.SLIDE
+            )
         }
     }
 
