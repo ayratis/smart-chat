@@ -1,11 +1,11 @@
-package gb.smartchat.ui
+package gb.smartchat
 
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import gb.smartchat.R
 
 class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         findViewById<Button>(R.id.btn_user1).setOnClickListener {

@@ -10,9 +10,9 @@ import gb.smartchat.entity.Message
 import gb.smartchat.entity.ReadInfo
 import gb.smartchat.entity.Typing
 import gb.smartchat.entity.request.*
-import gb.smartchat.utils.emitSingle
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.socket.client.Ack
 import io.socket.client.Socket
 import org.json.JSONObject
 
@@ -28,11 +28,6 @@ class SocketApiImpl(
     private val socketEventsRelay = PublishRelay.create<SocketEvent>()
 
     init {
-//        if (BuildConfig.DEBUG) {
-//            socket.setSystemListeners {
-//                log(it)
-//            }
-//        }
         socket.on(Socket.EVENT_CONNECT) {
             Log.d(TAG, "connect")
             socketEventsRelay.accept(SocketEvent.Connected)
@@ -40,6 +35,12 @@ class SocketApiImpl(
         socket.on(Socket.EVENT_DISCONNECT) {
             Log.d(TAG, "disconnect")
             socketEventsRelay.accept(SocketEvent.Disconnected)
+        }
+        if (BuildConfig.DEBUG) {
+            socket.on(Socket.EVENT_CONNECT_ERROR) {
+                val msg = "connect error: ${(it[0] as? Exception)?.message}"
+                Log.d(TAG, "connect error: $msg")
+            }
         }
         ServerEvent.values().forEach {
             setServerEventListener(it)
@@ -168,6 +169,29 @@ class SocketApiImpl(
         return socket.emitSingle(method, requestBody)
             .doOnSuccess { logAck(method, requestBody, it) }
     }
+
+    private fun Socket.emitSingle(method: String, bodyJson: JSONObject): Single<JSONObject> =
+        Single.create { emitter ->
+            try {
+                val ack = Ack { args ->
+                    val response = args[0] as JSONObject
+                    if (!emitter.isDisposed) {
+                        emitter.onSuccess(response)
+                    }
+                }
+                this.emit(
+                    method,
+                    bodyJson,
+                    ack
+                )
+            } catch (e: Throwable) {
+                if (!emitter.isDisposed) {
+                    emitter.onError(e)
+                } else {
+                    return@create
+                }
+            }
+        }
 
     private fun logAck(method: String, requestBody: JSONObject, responseBody: JSONObject) {
         val msg = "Ack callback\n" +
