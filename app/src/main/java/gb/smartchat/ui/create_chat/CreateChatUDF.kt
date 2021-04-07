@@ -14,17 +14,24 @@ object CreateChatUDF {
 
     private const val TAG = "CreateChatUDF"
 
-    sealed class State {
-        object Empty : State()
-        object Loading : State()
-        data class Data(val groups: List<Group>) : State()
-        data class Error(val error: Throwable) : State()
+    data class State(
+        val contactsResponseState: ContactsResponseState = ContactsResponseState.Loading,
+        val query: String? = null,
+        val groupsToShow: List<Group> = emptyList()
+    )
+
+    sealed class ContactsResponseState {
+        object Loading : ContactsResponseState()
+        data class Data(val groups: List<Group>) : ContactsResponseState()
+        data class Error(val error: Throwable) : ContactsResponseState()
     }
 
     sealed class Action {
         object Refresh : Action()
         data class LoadContactsSuccess(val groups: List<Group>) : Action()
         data class LoadContactsError(val error: Throwable) : Action()
+        data class QueryTextChanged(val query: String?) : Action()
+        data class QueryTextSubmit(val text: String?) : Action()
     }
 
     sealed class SideEffect {
@@ -34,7 +41,7 @@ object CreateChatUDF {
     class Store : ObservableSource<State>, Consumer<Action>, Disposable {
 
         private val actions = PublishRelay.create<Action>()
-        private val viewState = BehaviorRelay.createDefault<State>(State.Empty)
+        private val viewState = BehaviorRelay.createDefault(State())
         var sideEffectListener: (SideEffect) -> Unit = {}
 
         private val disposable: Disposable = actions
@@ -55,20 +62,64 @@ object CreateChatUDF {
             when (action) {
                 is Action.Refresh -> {
                     sideEffectListener.invoke(SideEffect.LoadContacts)
-                    return State.Loading
+                    val responseState = when (state.contactsResponseState) {
+                        is ContactsResponseState.Data -> state.contactsResponseState
+                        is ContactsResponseState.Error -> ContactsResponseState.Loading
+                        is ContactsResponseState.Loading -> state.contactsResponseState
+                    }
+                    return state.copy(contactsResponseState = responseState)
                 }
                 is Action.LoadContactsSuccess -> {
-                    return State.Data(action.groups)
+                    val responseState = ContactsResponseState.Data(action.groups)
+                    val groupsToShow = filterGroups(action.groups, state.query)
+                    return state.copy(
+                        contactsResponseState = responseState,
+                        groupsToShow = groupsToShow
+                    )
                 }
                 is Action.LoadContactsError -> {
-                    return when (state) {
-                        is State.Data -> state
-                        is State.Empty,
-                        is State.Error,
-                        is State.Loading -> State.Error(action.error)
+                    val responseState = when (state.contactsResponseState) {
+                        is ContactsResponseState.Data -> state.contactsResponseState
+                        is ContactsResponseState.Error,
+                        is ContactsResponseState.Loading -> ContactsResponseState.Error(action.error)
+                    }
+                    return state.copy(contactsResponseState = responseState)
+                }
+                is Action.QueryTextChanged -> {
+                    return when (state.contactsResponseState) {
+                        is ContactsResponseState.Data -> {
+                            state.copy(
+                                query = action.query,
+                                groupsToShow = filterGroups(
+                                    state.contactsResponseState.groups,
+                                    action.query
+                                )
+                            )
+                        }
+                        is ContactsResponseState.Error,
+                        is ContactsResponseState.Loading -> {
+                            state.copy(query = action.query)
+                        }
                     }
                 }
+                is Action.QueryTextSubmit -> {
+                    return state
+                }
             }
+        }
+
+        private fun filterGroups(groups: List<Group>, query: String?): List<Group> {
+            if (query.isNullOrBlank()) return groups
+            val list = mutableListOf<Group>()
+            for (group in groups) {
+                val contacts = group.contacts.filter {
+                    it.name?.contains(query, ignoreCase = true) == true
+                }
+                if (contacts.isNotEmpty()) {
+                    list += group.copy(contacts = contacts)
+                }
+            }
+            return list
         }
 
         override fun accept(t: Action) {

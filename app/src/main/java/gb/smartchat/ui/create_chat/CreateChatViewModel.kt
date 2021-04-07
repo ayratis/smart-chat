@@ -60,25 +60,22 @@ class CreateChatViewModel(
     private fun CreateChatUDF.State.mapIntoContactItems(): List<ContactItem> {
         val list = mutableListOf<ContactItem>()
         list += ContactItem.CreateGroupButton
-        when (this) {
-            is CreateChatUDF.State.Data -> {
-                for (group in this.groups) {
+        when (this.contactsResponseState) {
+            is CreateChatUDF.ContactsResponseState.Data -> {
+                for (group in this.groupsToShow) {
                     list += ContactItem.Group(group)
                     list += group.contacts.map { ContactItem.Contact(it) }
                 }
             }
-            is CreateChatUDF.State.Error -> {
+            is CreateChatUDF.ContactsResponseState.Error -> {
                 list += ContactItem.Error(
-                    message = this.error.humanMessage(resourceManager),
+                    message = this.contactsResponseState.error.humanMessage(resourceManager),
                     action = resourceManager.getString(R.string.retry),
                     tag = ERROR_RETRY_TAG
                 )
             }
-            is CreateChatUDF.State.Loading -> {
+            is CreateChatUDF.ContactsResponseState.Loading -> {
                 list += ContactItem.Loading
-            }
-            is CreateChatUDF.State.Empty -> {
-
             }
         }
         return list
@@ -92,5 +89,13 @@ class CreateChatViewModel(
 
     override fun onCleared() {
         compositeDisposable.dispose()
+    }
+
+    fun onQueryTextSubmit(query: String?) {
+        store.accept(CreateChatUDF.Action.QueryTextSubmit(query))
+    }
+
+    fun onQueryTextChange(query: String?) {
+        store.accept(CreateChatUDF.Action.QueryTextChanged(query))
     }
 }

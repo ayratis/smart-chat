@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentCreateChatBinding
 import gb.smartchat.utils.addSystemBottomPadding
@@ -17,6 +19,10 @@ import gb.smartchat.utils.registerOnBackPress
 import io.reactivex.disposables.CompositeDisposable
 
 class CreateChatFragment : Fragment() {
+
+    companion object {
+        private const val TAG = "CreateChatFragment"
+    }
 
     private var _binding: FragmentCreateChatBinding? = null
     private val binding: FragmentCreateChatBinding
@@ -73,6 +79,20 @@ class CreateChatFragment : Fragment() {
             setNavigationOnClickListener {
                 parentFragmentManager.popBackStack()
             }
+            inflateMenu(R.menu.search)
+            (menu.findItem(R.id.search).actionView as SearchView).setOnQueryTextListener(
+                object : SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?): Boolean {
+                        viewModel.onQueryTextSubmit(query)
+                        return true
+                    }
+
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        viewModel.onQueryTextChange(newText)
+                        return true
+                    }
+                }
+            )
         }
         binding.rvContacts.apply {
             addSystemBottomPadding()
