@@ -1,9 +1,7 @@
 package gb.smartchat.data.http
 
-import gb.smartchat.entity.Chat
-import gb.smartchat.entity.File
-import gb.smartchat.entity.Message
-import gb.smartchat.entity.Recipient
+import gb.smartchat.entity.*
+import gb.smartchat.entity.request.CreateChatRequest
 import gb.smartchat.entity.response.BaseResponse
 import gb.smartchat.entity.response.ContactListResponse
 import io.reactivex.Single
@@ -47,4 +45,14 @@ interface HttpApi {
         @Query("partner_name") partnerName: String,
         @Query("agent_code") agentCode: Int
     ): Single<BaseResponse<ContactListResponse>>
+
+    @POST("chat/management/create")
+    fun postCreateChat(
+        @Body createChatRequest: CreateChatRequest
+    ): Single<BaseResponse<Chat>>
+
+    @GET("chat/contacts/profile")
+    fun getUserProfile(
+        @Query("another_user_id") anotherUserId: String? = null
+    ): Single<BaseResponse<UserProfile>>
 }

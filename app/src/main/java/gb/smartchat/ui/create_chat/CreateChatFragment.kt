@@ -6,24 +6,34 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentCreateChatBinding
-import gb.smartchat.utils.addSystemBottomPadding
-import gb.smartchat.utils.addSystemTopPadding
-import gb.smartchat.utils.registerOnBackPress
+import gb.smartchat.entity.StoreInfo
+import gb.smartchat.ui.chat.ChatFragment
+import gb.smartchat.ui.custom.MessageDialogFragment
+import gb.smartchat.ui.custom.ProgressDialog
+import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
 class CreateChatFragment : Fragment() {
 
     companion object {
         private const val TAG = "CreateChatFragment"
+        private const val PROGRESS_TAG = "progress tag"
+        private const val ARG_STORE_INFO = "arg store info"
+
+        fun create(storeInfo: StoreInfo) = CreateChatFragment().apply {
+            arguments = Bundle().apply {
+                putSerializable(ARG_STORE_INFO, storeInfo)
+            }
+        }
     }
 
+    private val storeInfo by lazy {
+        requireArguments().getSerializable(ARG_STORE_INFO) as StoreInfo
+    }
     private var _binding: FragmentCreateChatBinding? = null
     private val binding: FragmentCreateChatBinding
         get() = _binding!!
@@ -34,23 +44,19 @@ class CreateChatFragment : Fragment() {
         (requireActivity() as SmartChatActivity).component
     }
 
-    private val viewModel: CreateChatViewModel by viewModels {
-        object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                return CreateChatViewModel(
-                    component.httpApi,
-                    CreateChatUDF.Store(),
-                    component.resourceManager
-                ) as T
-            }
-        }
+    private val viewModel: CreateChatViewModel by simpleViewModels {
+        CreateChatViewModel(
+            storeInfo,
+            component.httpApi,
+            CreateChatUDF.Store(),
+            component.resourceManager
+        )
     }
 
     private val contactsAdapter by lazy {
         ContactsAdapter(
             createGroupClickListener = {},
-            contactClickListener = {},
+            contactClickListener = { viewModel.onContactClick(it) },
             errorActionClickListener = { viewModel.onErrorActionClick(it) }
         )
     }
@@ -108,5 +114,48 @@ class CreateChatFragment : Fragment() {
         viewModel.items
             .subscribe { contactsAdapter.submitList(it) }
             .also { compositeDisposable.add(it) }
+
+        viewModel.navToChat
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let {
+                    parentFragmentManager.replace(
+                        ChatFragment.create(it),
+                        NavAnim.SLIDE
+                    )
+                }
+            }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.showDialog
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let {
+                    MessageDialogFragment
+                        .create(message = it)
+                        .show(childFragmentManager, null)
+                }
+            }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.progressDialog
+            .subscribe { showProgressDialog(it) }
+            .also { compositeDisposable.add(it) }
+    }
+
+    override fun onPause() {
+        compositeDisposable.clear()
+        super.onPause()
+    }
+
+    private fun showProgressDialog(progress: Boolean) {
+        if (!isAdded) return
+
+        val fragment = childFragmentManager.findFragmentByTag(PROGRESS_TAG)
+        if (fragment != null && !progress) {
+            (fragment as ProgressDialog).dismissAllowingStateLoss()
+            childFragmentManager.executePendingTransactions()
+        } else if (fragment == null && progress) {
+            ProgressDialog().show(childFragmentManager, PROGRESS_TAG)
+            childFragmentManager.executePendingTransactions()
+        }
     }
 }

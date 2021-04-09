@@ -27,5 +27,6 @@
     <string name="create_group">Создать группу</string>
     <string name="no_connection">Нет подключения к интернету</string>
     <string name="unknown_error">Неизвестная ошибка</string>
+    <string name="profile_error">Ошибка при загрузке профиля</string>
     <string name="search">Поиск</string>
 </resources>

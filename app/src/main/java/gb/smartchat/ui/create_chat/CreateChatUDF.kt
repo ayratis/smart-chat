@@ -3,6 +3,8 @@ package gb.smartchat.ui.create_chat
 import android.util.Log
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
+import gb.smartchat.entity.Chat
+import gb.smartchat.entity.Contact
 import gb.smartchat.entity.Group
 import io.reactivex.ObservableSource
 import io.reactivex.Observer
@@ -17,7 +19,8 @@ object CreateChatUDF {
     data class State(
         val contactsResponseState: ContactsResponseState = ContactsResponseState.Loading,
         val query: String? = null,
-        val groupsToShow: List<Group> = emptyList()
+        val groupsToShow: List<Group> = emptyList(),
+        val createChatProgress: Boolean = false
     )
 
     sealed class ContactsResponseState {
@@ -32,10 +35,16 @@ object CreateChatUDF {
         data class LoadContactsError(val error: Throwable) : Action()
         data class QueryTextChanged(val query: String?) : Action()
         data class QueryTextSubmit(val text: String?) : Action()
+        data class CreateChatClick(val contact: Contact) : Action()
+        data class CreateChatSuccess(val chat: Chat) : Action()
+        data class CreateChatError(val error: Throwable) : Action()
     }
 
     sealed class SideEffect {
         object LoadContacts : SideEffect()
+        data class CreateChat(val contact: Contact) : SideEffect()
+        data class ShowErrorMessage(val error: Throwable) : SideEffect()
+        data class NavigateToChat(val chat: Chat) : SideEffect()
     }
 
     class Store : ObservableSource<State>, Consumer<Action>, Disposable {
@@ -104,6 +113,18 @@ object CreateChatUDF {
                 }
                 is Action.QueryTextSubmit -> {
                     return state
+                }
+                is Action.CreateChatClick -> {
+                    sideEffectListener.invoke(SideEffect.CreateChat(action.contact))
+                    return state.copy(createChatProgress = true)
+                }
+                is Action.CreateChatError -> {
+                    sideEffectListener.invoke(SideEffect.ShowErrorMessage(action.error))
+                    return state.copy(createChatProgress = false)
+                }
+                is Action.CreateChatSuccess -> {
+                    sideEffectListener.invoke(SideEffect.NavigateToChat(action.chat))
+                    return state.copy(createChatProgress = false)
                 }
             }
         }
