@@ -18,19 +18,20 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.*
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.data.download.FileDownloadHelper
-import gb.smartchat.entity.ChangedMessage
-import gb.smartchat.entity.Message
-import gb.smartchat.entity.QuotedMessage
-import gb.smartchat.entity.User
+import gb.smartchat.data.resources.ResourceManager
+import gb.smartchat.entity.*
+import gb.smartchat.entity.request.CreateChatRequest
 import gb.smartchat.entity.request.MessageCreateRequest
 import gb.smartchat.entity.request.MessageDeleteRequest
 import gb.smartchat.entity.request.MessageEditRequest
 import io.reactivex.disposables.Disposable
+import java.io.IOException
 import kotlin.math.roundToInt
 
 
@@ -302,3 +303,30 @@ fun ChangedMessage.composeWithMessage(message: Message): Message {
         mentions = mentions
     )
 }
+
+fun Throwable.humanMessage(resourceManager: ResourceManager): String {
+    return when (this) {
+        is IOException -> resourceManager.getString(R.string.connection_error)
+        else -> resourceManager.getString(R.string.unknown_error)
+    }
+}
+
+@MainThread
+inline fun <reified VM : ViewModel> Fragment.simpleViewModels(
+    noinline viewModelCreator: () -> VM
+): Lazy<VM> {
+    return this.viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return viewModelCreator() as T
+            }
+        }
+    }
+}
+
+fun StoreInfo.toCreateChatRequest(contacts: List<Contact>): CreateChatRequest =
+    CreateChatRequest(storeId, storeName, partnerCode, partnerName, agentCode, contacts)
+
+fun UserProfile.toContact(): Contact =
+    Contact(id = id, name = name, avatar = avatar, online = null)

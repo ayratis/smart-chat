@@ -2,8 +2,13 @@ package gb.smartchat.ui.chat_list
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.jakewharton.rxrelay2.BehaviorRelay
+import gb.smartchat.R
 import gb.smartchat.data.http.HttpApi
+import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.socket.SocketApi
+import gb.smartchat.entity.StoreInfo
+import gb.smartchat.utils.SingleEvent
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -12,7 +17,8 @@ import io.reactivex.schedulers.Schedulers
 class ChatListViewModel(
     private val store: ChatListUDF.Store,
     private val httpApi: HttpApi,
-    private val socketApi: SocketApi
+    private val socketApi: SocketApi,
+    private val resourceManager: ResourceManager
 ) : ViewModel() {
 
     companion object {
@@ -20,8 +26,12 @@ class ChatListViewModel(
     }
 
     private val compositeDisposable = CompositeDisposable()
+    private val showProfileErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
+    private val navToCreateChatCommand = BehaviorRelay.create<SingleEvent<StoreInfo>>()
 
     val viewState: Observable<ChatListUDF.State> = Observable.wrap(store)
+    val showProfileErrorDialog: Observable<SingleEvent<String>> = showProfileErrorCommand.hide()
+    val navToCreateChat: Observable<SingleEvent<StoreInfo>> = navToCreateChatCommand.hide()
 
     override fun onCleared() {
         compositeDisposable.dispose()
@@ -35,11 +45,37 @@ class ChatListViewModel(
     private fun setupStateMachine() {
         store.sideEffectListener = { sideEffect ->
             when (sideEffect) {
-                is ChatListUDF.SideEffect.ErrorEvent ->
+                is ChatListUDF.SideEffect.LoadUserProfile -> {
+                    fetchUserProfile()
+                }
+                is ChatListUDF.SideEffect.ShowProfileLoadError -> {
+                    val message = resourceManager.getString(R.string.profile_error)
+                    showProfileErrorCommand.accept(SingleEvent(message))
+                }
+                is ChatListUDF.SideEffect.ErrorEvent -> {
                     Log.d(TAG, "errorEvent", sideEffect.error)
-                is ChatListUDF.SideEffect.LoadPage -> fetchPage(sideEffect.pageCount)
+                }
+                is ChatListUDF.SideEffect.LoadPage -> {
+                    fetchPage(sideEffect.pageCount)
+                }
+                is ChatListUDF.SideEffect.NavToCreateChat -> {
+                    navToCreateChatCommand.accept(SingleEvent(sideEffect.storeInfo))
+                }
             }
         }
+    }
+
+    private fun fetchUserProfile() {
+        httpApi
+            .getUserProfile()
+            .map { it.result }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { store.accept(ChatListUDF.Action.ProfileSuccess(it)) },
+                { store.accept(ChatListUDF.Action.ProfileError(it)) }
+            )
+            .also { compositeDisposable.add(it) }
     }
 
     private fun fetchPage(pageCount: Int) {
@@ -57,5 +93,9 @@ class ChatListViewModel(
                 { store.accept(ChatListUDF.Action.PageError(it)) }
             )
             .also { compositeDisposable.add(it) }
+    }
+
+    fun onCreateChatClick() {
+        store.accept(ChatListUDF.Action.CreateChat)
     }
 }
