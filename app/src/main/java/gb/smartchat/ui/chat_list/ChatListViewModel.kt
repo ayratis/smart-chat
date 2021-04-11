@@ -40,6 +40,7 @@ class ChatListViewModel(
     init {
         setupStateMachine()
         store.accept(ChatListUDF.Action.Refresh)
+        compositeDisposable.add(store)
     }
 
     private fun setupStateMachine() {

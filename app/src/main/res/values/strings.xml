@@ -25,8 +25,12 @@
     <string name="edited">Изменено</string>
     <string name="create_chat">Создать чат</string>
     <string name="create_group">Создать группу</string>
+    <string name="new_group">Новая группа</string>
     <string name="no_connection">Нет подключения к интернету</string>
     <string name="unknown_error">Неизвестная ошибка</string>
     <string name="profile_error">Ошибка при загрузке профиля</string>
     <string name="search">Поиск</string>
+    <string name="upload_photo">Загрузить фотографию</string>
+    <string name="group_name">Название группы</string>
+    <string name="member_count_d">Список участников: %d</string>
 </resources>

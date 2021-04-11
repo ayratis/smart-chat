@@ -10,7 +10,6 @@ import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.humanMessage
-import gb.smartchat.utils.toContact
 import gb.smartchat.utils.toCreateChatRequest
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -84,6 +83,7 @@ class CreateChatViewModel(
             }
         }
         store.accept(CreateChatUDF.Action.Refresh)
+        compositeDisposable.add(store)
     }
 
     private fun fetchContacts() {
@@ -106,9 +106,8 @@ class CreateChatViewModel(
     }
 
     private fun createChat(contact: Contact) {
-        val contacts = listOf(storeInfo.userProfile.toContact(), contact)
         httpApi
-            .postCreateChat(storeInfo.toCreateChatRequest(contacts))
+            .postCreateChat(storeInfo.toCreateChatRequest(listOf(contact)))
             .map { it.result }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())

@@ -17,6 +17,7 @@ import gb.smartchat.entity.StoreInfo
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.custom.MessageDialogFragment
 import gb.smartchat.ui.custom.ProgressDialog
+import gb.smartchat.ui.group_complete.GroupCompleteFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -181,7 +182,10 @@ class CreateChatFragment : Fragment() {
         viewModel.navToGroupComplete
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let { (storeInfo, selectedContacts) ->
-
+                    parentFragmentManager.navigateTo(
+                        GroupCompleteFragment.create(storeInfo, selectedContacts),
+                        NavAnim.SLIDE
+                    )
                 }
             }
             .also { compositeDisposable.add(it) }
