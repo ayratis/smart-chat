@@ -8,13 +8,13 @@ import gb.smartchat.R
 import gb.smartchat.databinding.ItemContactBinding
 import gb.smartchat.entity.Contact
 
-class ContactViewHolder private constructor(
+class SelectableContactViewHolder private constructor(
     private val binding: ItemContactBinding,
     private val clickListener: (Contact) -> Unit
 ) : RecyclerView.ViewHolder(binding.root) {
     companion object {
         fun create(parent: ViewGroup, clickListener: (Contact) -> Unit) =
-            ContactViewHolder(
+            SelectableContactViewHolder(
                 ItemContactBinding.inflate(LayoutInflater.from(parent.context), parent, false),
                 clickListener
             )
@@ -23,13 +23,12 @@ class ContactViewHolder private constructor(
     private lateinit var contact: Contact
 
     init {
-        binding.ivAction.setImageResource(R.drawable.ic_kb_right_24)
         binding.root.setOnClickListener {
             clickListener.invoke(contact)
         }
     }
 
-    fun bind(contact: Contact) {
+    fun bind(contact: Contact, isSelected: Boolean) {
         this.contact = contact
         Glide.with(binding.ivAvatar)
             .load(contact.avatar)
@@ -37,5 +36,9 @@ class ContactViewHolder private constructor(
             .circleCrop()
             .into(binding.ivAvatar)
         binding.tvName.text = contact.name
+        binding.ivAction.setImageResource(
+            if (isSelected) R.drawable.ic_radio_active_24
+            else R.drawable.ic_radio_inactive_24
+        )
     }
 }

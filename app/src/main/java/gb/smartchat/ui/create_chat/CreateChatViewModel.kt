@@ -19,6 +19,7 @@ import io.reactivex.schedulers.Schedulers
 
 class CreateChatViewModel(
     private val storeInfo: StoreInfo,
+    private val mode: CreateChatMode,
     private val httpApi: HttpApi,
     private val store: CreateChatUDF.Store,
     private val resourceManager: ResourceManager
@@ -33,14 +34,31 @@ class CreateChatViewModel(
     private val state: Observable<CreateChatUDF.State> = Observable.wrap(store)
     private val navToChatCommand = BehaviorRelay.create<SingleEvent<Chat>>()
     private val showDialogCommand = BehaviorRelay.create<SingleEvent<String>>()
+    private val navToGroupCompleteCommand =
+        BehaviorRelay.create<SingleEvent<Pair<StoreInfo, List<Contact>>>>()
 
     val items: Observable<List<ContactItem>> = state
         .map { it.mapIntoContactItems() }
         .subscribeOn(Schedulers.computation())
         .observeOn(AndroidSchedulers.mainThread())
     val progressDialog: Observable<Boolean> = state.hide().map { it.createChatProgress }
+    val selectedCount: Observable<Pair<Int, Int>> = state.hide().map {
+        val selectedCount = it.selectedContacts.size
+        val totalCount = (it.contactsResponseState as? CreateChatUDF.ContactsResponseState.Data)
+            ?.let { data ->
+                var size = 0
+                for (group in data.groups) {
+                    size += group.contacts.size
+                }
+                size
+            }
+            ?: 0
+        selectedCount to totalCount
+    }
     val navToChat: Observable<SingleEvent<Chat>> = navToChatCommand.hide()
     val showDialog: Observable<SingleEvent<String>> = showDialogCommand.hide()
+    val navToGroupComplete: Observable<SingleEvent<Pair<StoreInfo, List<Contact>>>> =
+        navToGroupCompleteCommand.hide()
 
     init {
         store.sideEffectListener = { sideEffect ->
@@ -57,6 +75,11 @@ class CreateChatViewModel(
                 is CreateChatUDF.SideEffect.ShowErrorMessage -> {
                     val message = sideEffect.error.humanMessage(resourceManager)
                     showDialogCommand.accept(SingleEvent(message))
+                }
+                is CreateChatUDF.SideEffect.NavigateToGroupComplete -> {
+                    navToGroupCompleteCommand.accept(
+                        SingleEvent(storeInfo to sideEffect.selectedContacts)
+                    )
                 }
             }
         }
@@ -98,12 +121,20 @@ class CreateChatViewModel(
 
     private fun CreateChatUDF.State.mapIntoContactItems(): List<ContactItem> {
         val list = mutableListOf<ContactItem>()
-        list += ContactItem.CreateGroupButton
+        if (mode == CreateChatMode.SINGLE) {
+            list += ContactItem.CreateGroupButton
+        }
         when (this.contactsResponseState) {
             is CreateChatUDF.ContactsResponseState.Data -> {
                 for (group in this.groupsToShow) {
-                    list += ContactItem.Group(group)
-                    list += group.contacts.map { ContactItem.Contact(it) }
+                    if (mode == CreateChatMode.SINGLE) {
+                        list += ContactItem.Group(group)
+                        list += group.contacts.map { ContactItem.Contact(it) }
+                    } else {
+                        list += group.contacts.map {
+                            ContactItem.SelectableContact(it, selectedContacts.contains(it))
+                        }
+                    }
                 }
             }
             is CreateChatUDF.ContactsResponseState.Error -> {
@@ -127,7 +158,7 @@ class CreateChatViewModel(
     }
 
     fun onContactClick(contact: Contact) {
-        store.accept(CreateChatUDF.Action.CreateChatClick(contact))
+        store.accept(CreateChatUDF.Action.OnContactClick(contact))
     }
 
     override fun onCleared() {
@@ -140,5 +171,9 @@ class CreateChatViewModel(
 
     fun onQueryTextChange(query: String?) {
         store.accept(CreateChatUDF.Action.QueryTextChanged(query))
+    }
+
+    fun onCreateGroupNextClick() {
+        store.accept(CreateChatUDF.Action.CreateGroupNextClick)
     }
 }

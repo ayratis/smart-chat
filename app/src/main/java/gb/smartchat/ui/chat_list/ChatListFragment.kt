@@ -13,6 +13,7 @@ import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListBinding
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.create_chat.CreateChatFragment
+import gb.smartchat.ui.create_chat.CreateChatMode
 import gb.smartchat.ui.custom.MessageDialogFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
@@ -110,7 +111,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let { storeInfo ->
                     parentFragmentManager.navigateTo(
-                        CreateChatFragment.create(storeInfo),
+                        CreateChatFragment.create(storeInfo, CreateChatMode.SINGLE),
                         NavAnim.OPEN
                     )
                 }
