@@ -44,7 +44,10 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
             ChatListUDF.Store(),
             component.httpApi,
             component.socketApi,
-            component.resourceManager
+            component.resourceManager,
+            component.chatCreatedPublisher,
+            component.messageReadInternalPublisher,
+            component.chatUnreadMessageCountPublisher
         )
     }
 

@@ -80,7 +80,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             socketApi = component.socketApi,
             httpApi = component.httpApi,
             contentHelper = contentHelper,
-            downloadHelper = component.fileDownloadHelper
+            downloadHelper = component.fileDownloadHelper,
+            messageReadInternalPublisher = component.messageReadInternalPublisher,
+            unreadMessageCountPublisher = component.chatUnreadMessageCountPublisher
         )
     }
     private val linearLayoutManager by lazy {

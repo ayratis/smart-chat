@@ -26,5 +26,9 @@ class ChatListAdapter(
         override fun areContentsTheSame(oldItem: Chat, newItem: Chat): Boolean {
             return oldItem == newItem
         }
+
+        override fun getChangePayload(oldItem: Chat, newItem: Chat): Any {
+            return Any()
+        }
     }
 }

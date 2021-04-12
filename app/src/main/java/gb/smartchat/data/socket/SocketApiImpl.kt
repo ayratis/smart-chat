@@ -5,10 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.BuildConfig
-import gb.smartchat.entity.ChangedMessage
-import gb.smartchat.entity.Message
-import gb.smartchat.entity.ReadInfo
-import gb.smartchat.entity.Typing
+import gb.smartchat.entity.*
 import gb.smartchat.entity.request.*
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -68,9 +65,8 @@ class SocketApiImpl(
                         SocketEvent.Typing(typing)
                     }
                     ServerEvent.READ -> {
-                        val messageIdsRaw = response.getJSONArray("message_ids").toString()
-                        val messageIds = gson.fromJson(messageIdsRaw, Array<Long>::class.java)
-                        SocketEvent.MessageRead(messageIds.toList())
+                        val messageRead = gson.fromJson(response.toString(), MessageRead::class.java)
+                        SocketEvent.MessageRead(messageRead)
                     }
                     ServerEvent.MESSAGE_DELETE -> {
                         val messageIdsRaw =
@@ -111,7 +107,7 @@ class SocketApiImpl(
                         is SocketEvent.Disconnected -> true
                         is SocketEvent.MessageChange -> socketEvent.changedMessage.chatId == chatId
                         is SocketEvent.MessageNew -> socketEvent.message.chatId == chatId
-                        is SocketEvent.MessageRead -> true
+                        is SocketEvent.MessageRead -> socketEvent.messageRead.chatId == chatId
                         is SocketEvent.Typing -> socketEvent.typing.chatId == chatId
                         is SocketEvent.MessagesDeleted ->
                             socketEvent.messages.firstOrNull()?.chatId == chatId
