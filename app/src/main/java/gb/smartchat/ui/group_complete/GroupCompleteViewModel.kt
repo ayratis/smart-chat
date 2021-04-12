@@ -7,6 +7,8 @@ import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.publisher.ChatCreatedPublisher
+import gb.smartchat.publisher.ContactDeletePublisher
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.humanMessage
 import gb.smartchat.utils.toCreateChatRequest
@@ -19,7 +21,9 @@ class GroupCompleteViewModel(
     private val storeInfo: StoreInfo,
     private val store: GroupCompleteUDF.Store,
     private val httpApi: HttpApi,
-    private val resourceManager: ResourceManager
+    private val resourceManager: ResourceManager,
+    private val chatCreatedPublisher: ChatCreatedPublisher,
+    private val contactDeletePublisher: ContactDeletePublisher
 ) : ViewModel() {
 
     private val compositeDisposable = CompositeDisposable()
@@ -39,6 +43,7 @@ class GroupCompleteViewModel(
                     createGroup(sideEffect.contacts)
                 }
                 is GroupCompleteUDF.SideEffect.NavigateToChat -> {
+                    chatCreatedPublisher.accept(sideEffect.chat)
                     navToChatCommand.accept(SingleEvent(sideEffect.chat))
                 }
                 is GroupCompleteUDF.SideEffect.ShowCreateGroupError -> {
@@ -73,6 +78,7 @@ class GroupCompleteViewModel(
 
     fun onContactDelete(contact: Contact) {
         store.accept(GroupCompleteUDF.Action.DeleteContact(contact))
+        contactDeletePublisher.accept(contact)
     }
 
     fun onCreateGroup() {

@@ -8,6 +8,8 @@ import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.publisher.ChatCreatedPublisher
+import gb.smartchat.publisher.ContactDeletePublisher
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.humanMessage
 import gb.smartchat.utils.toCreateChatRequest
@@ -21,7 +23,9 @@ class CreateChatViewModel(
     private val mode: CreateChatMode,
     private val httpApi: HttpApi,
     private val store: CreateChatUDF.Store,
-    private val resourceManager: ResourceManager
+    private val resourceManager: ResourceManager,
+    private val chatCreatedPublisher: ChatCreatedPublisher,
+    contactDeletePublisher: ContactDeletePublisher
 ) : ViewModel() {
 
     companion object {
@@ -69,6 +73,7 @@ class CreateChatViewModel(
                     createChat(sideEffect.contact)
                 }
                 is CreateChatUDF.SideEffect.NavigateToChat -> {
+                    chatCreatedPublisher.accept(sideEffect.chat)
                     navToChatCommand.accept(SingleEvent(sideEffect.chat))
                 }
                 is CreateChatUDF.SideEffect.ShowErrorMessage -> {
@@ -84,6 +89,9 @@ class CreateChatViewModel(
         }
         store.accept(CreateChatUDF.Action.Refresh)
         compositeDisposable.add(store)
+        contactDeletePublisher
+            .subscribe { store.accept(CreateChatUDF.Action.DeleteContact(it)) }
+            .also { compositeDisposable.add(it) }
     }
 
     private fun fetchContacts() {

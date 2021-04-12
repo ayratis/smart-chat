@@ -59,7 +59,9 @@ class CreateChatFragment : Fragment() {
             mode,
             component.httpApi,
             CreateChatUDF.Store(mode),
-            component.resourceManager
+            component.resourceManager,
+            component.chatCreatedPublisher,
+            component.contactDeletePublisher
         )
     }
 

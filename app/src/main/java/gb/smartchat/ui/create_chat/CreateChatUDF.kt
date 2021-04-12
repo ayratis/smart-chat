@@ -40,6 +40,7 @@ object CreateChatUDF {
         data class CreateChatSuccess(val chat: Chat) : Action()
         data class CreateChatError(val error: Throwable) : Action()
         object CreateGroupNextClick : Action()
+        data class DeleteContact(val contact: Contact) : Action()
     }
 
     sealed class SideEffect {
@@ -151,6 +152,13 @@ object CreateChatUDF {
                         )
                     }
                     return state
+                }
+                is Action.DeleteContact -> {
+                    return state.copy(
+                        selectedContacts = state.selectedContacts.filter {
+                            it.id != action.contact.id
+                        }
+                    )
                 }
             }
         }

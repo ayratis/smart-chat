@@ -59,7 +59,9 @@ class GroupCompleteFragment : Fragment() {
             storeInfo,
             GroupCompleteUDF.Store(selectedContacts),
             component.httpApi,
-            component.resourceManager
+            component.resourceManager,
+            component.chatCreatedPublisher,
+            component.contactDeletePublisher
         )
     }
     private val groupInfoAdapter by lazy {
