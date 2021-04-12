@@ -20,7 +20,8 @@ object CreateChatUDF {
         val contactsResponseState: ContactsResponseState = ContactsResponseState.Loading,
         val query: String? = null,
         val groupsToShow: List<Group> = emptyList(),
-        val createChatProgress: Boolean = false
+        val createChatProgress: Boolean = false,
+        val selectedContacts: List<Contact> = emptyList()
     )
 
     sealed class ContactsResponseState {
@@ -35,9 +36,11 @@ object CreateChatUDF {
         data class LoadContactsError(val error: Throwable) : Action()
         data class QueryTextChanged(val query: String?) : Action()
         data class QueryTextSubmit(val text: String?) : Action()
-        data class CreateChatClick(val contact: Contact) : Action()
+        data class OnContactClick(val contact: Contact) : Action()
         data class CreateChatSuccess(val chat: Chat) : Action()
         data class CreateChatError(val error: Throwable) : Action()
+        object CreateGroupNextClick : Action()
+        data class DeleteContact(val contact: Contact) : Action()
     }
 
     sealed class SideEffect {
@@ -45,9 +48,12 @@ object CreateChatUDF {
         data class CreateChat(val contact: Contact) : SideEffect()
         data class ShowErrorMessage(val error: Throwable) : SideEffect()
         data class NavigateToChat(val chat: Chat) : SideEffect()
+        data class NavigateToGroupComplete(val selectedContacts: List<Contact>) : SideEffect()
     }
 
-    class Store : ObservableSource<State>, Consumer<Action>, Disposable {
+    class Store(
+        private val mode: CreateChatMode
+    ) : ObservableSource<State>, Consumer<Action>, Disposable {
 
         private val actions = PublishRelay.create<Action>()
         private val viewState = BehaviorRelay.createDefault(State())
@@ -114,9 +120,22 @@ object CreateChatUDF {
                 is Action.QueryTextSubmit -> {
                     return state
                 }
-                is Action.CreateChatClick -> {
-                    sideEffectListener.invoke(SideEffect.CreateChat(action.contact))
-                    return state.copy(createChatProgress = true)
+                is Action.OnContactClick -> {
+                    return when (mode) {
+                        CreateChatMode.SINGLE -> {
+                            sideEffectListener.invoke(SideEffect.CreateChat(action.contact))
+                            state.copy(createChatProgress = true)
+                        }
+                        CreateChatMode.GROUP -> {
+                            val selectedContacts =
+                                if (state.selectedContacts.contains(action.contact)) {
+                                    state.selectedContacts.filter { it.id != action.contact.id }
+                                } else {
+                                    state.selectedContacts + action.contact
+                                }
+                            state.copy(selectedContacts = selectedContacts)
+                        }
+                    }
                 }
                 is Action.CreateChatError -> {
                     sideEffectListener.invoke(SideEffect.ShowErrorMessage(action.error))
@@ -125,6 +144,21 @@ object CreateChatUDF {
                 is Action.CreateChatSuccess -> {
                     sideEffectListener.invoke(SideEffect.NavigateToChat(action.chat))
                     return state.copy(createChatProgress = false)
+                }
+                is Action.CreateGroupNextClick -> {
+                    if (state.selectedContacts.isNotEmpty()) {
+                        sideEffectListener.invoke(
+                            SideEffect.NavigateToGroupComplete(state.selectedContacts)
+                        )
+                    }
+                    return state
+                }
+                is Action.DeleteContact -> {
+                    return state.copy(
+                        selectedContacts = state.selectedContacts.filter {
+                            it.id != action.contact.id
+                        }
+                    )
                 }
             }
         }

@@ -325,8 +325,19 @@ inline fun <reified VM : ViewModel> Fragment.simpleViewModels(
     }
 }
 
-fun StoreInfo.toCreateChatRequest(contacts: List<Contact>): CreateChatRequest =
-    CreateChatRequest(storeId, storeName, partnerCode, partnerName, agentCode, contacts)
-
-fun UserProfile.toContact(): Contact =
-    Contact(id = id, name = name, avatar = avatar, online = null)
+fun StoreInfo.toCreateChatRequest(contacts: List<Contact>): CreateChatRequest {
+    val myContact = Contact(
+        id = userProfile.id,
+        name = userProfile.name,
+        avatar = userProfile.avatar,
+        online = null
+    )
+    return CreateChatRequest(
+        storeId,
+        storeName,
+        partnerCode,
+        partnerName,
+        agentCode,
+        contacts + myContact
+    )
+}

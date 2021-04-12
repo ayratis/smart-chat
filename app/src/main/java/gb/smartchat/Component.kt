@@ -15,6 +15,8 @@ import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.resources.ResourceManagerImpl
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketApiImpl
+import gb.smartchat.publisher.ChatCreatedPublisher
+import gb.smartchat.publisher.ContactDeletePublisher
 import io.socket.client.IO
 import io.socket.client.Manager
 import io.socket.client.Socket
@@ -104,5 +106,13 @@ class Component constructor(
 
     val fileDownloadHelper: FileDownloadHelper by lazy {
         FileDownloadHelperImpl(application)
+    }
+
+    val contactDeletePublisher: ContactDeletePublisher by lazy {
+        ContactDeletePublisher()
+    }
+
+    val chatCreatedPublisher: ChatCreatedPublisher by lazy {
+        ChatCreatedPublisher()
     }
 }

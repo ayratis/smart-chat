@@ -1,10 +1,13 @@
 package gb.smartchat.ui.create_chat
 
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.R
@@ -14,6 +17,7 @@ import gb.smartchat.entity.StoreInfo
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.custom.MessageDialogFragment
 import gb.smartchat.ui.custom.ProgressDialog
+import gb.smartchat.ui.group_complete.GroupCompleteFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -23,16 +27,21 @@ class CreateChatFragment : Fragment() {
         private const val TAG = "CreateChatFragment"
         private const val PROGRESS_TAG = "progress tag"
         private const val ARG_STORE_INFO = "arg store info"
+        private const val ARG_MODE = "arg mode"
 
-        fun create(storeInfo: StoreInfo) = CreateChatFragment().apply {
+        fun create(storeInfo: StoreInfo, mode: CreateChatMode) = CreateChatFragment().apply {
             arguments = Bundle().apply {
                 putSerializable(ARG_STORE_INFO, storeInfo)
+                putSerializable(ARG_MODE, mode)
             }
         }
     }
 
     private val storeInfo by lazy {
         requireArguments().getSerializable(ARG_STORE_INFO) as StoreInfo
+    }
+    private val mode by lazy {
+        requireArguments().getSerializable(ARG_MODE) as CreateChatMode
     }
     private var _binding: FragmentCreateChatBinding? = null
     private val binding: FragmentCreateChatBinding
@@ -47,17 +56,25 @@ class CreateChatFragment : Fragment() {
     private val viewModel: CreateChatViewModel by simpleViewModels {
         CreateChatViewModel(
             storeInfo,
+            mode,
             component.httpApi,
-            CreateChatUDF.Store(),
-            component.resourceManager
+            CreateChatUDF.Store(mode),
+            component.resourceManager,
+            component.chatCreatedPublisher,
+            component.contactDeletePublisher
         )
     }
 
     private val contactsAdapter by lazy {
         ContactsAdapter(
-            createGroupClickListener = {},
-            contactClickListener = { viewModel.onContactClick(it) },
-            errorActionClickListener = { viewModel.onErrorActionClick(it) }
+            createGroupClickListener = {
+                parentFragmentManager.navigateTo(
+                    create(storeInfo, CreateChatMode.GROUP),
+                    NavAnim.SLIDE
+                )
+            },
+            contactClickListener = viewModel::onContactClick,
+            errorActionClickListener = viewModel::onErrorActionClick
         )
     }
 
@@ -107,6 +124,20 @@ class CreateChatFragment : Fragment() {
             layoutManager = LinearLayoutManager(context)
             adapter = contactsAdapter
         }
+        binding.btnCreateChat.apply {
+            visible(mode == CreateChatMode.GROUP)
+            setOnClickListener {
+                viewModel.onCreateGroupNextClick()
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+               doOnApplyWindowInsets { _, insets, _ ->
+                    updateLayoutParams<CoordinatorLayout.LayoutParams> {
+                        bottomMargin = 16.dp(resources) + insets.systemWindowInsetBottom
+                    }
+                    insets
+                }
+            }
+        }
     }
 
     override fun onResume() {
@@ -114,6 +145,16 @@ class CreateChatFragment : Fragment() {
         viewModel.items
             .subscribe { contactsAdapter.submitList(it) }
             .also { compositeDisposable.add(it) }
+
+        if (mode == CreateChatMode.GROUP) {
+            viewModel.selectedCount
+                .subscribe { (selectedCount, totalCount) ->
+                    binding.toolbar.subtitle = "$selectedCount / $totalCount"
+                    binding.btnCreateChat.isEnabled = selectedCount > 0
+                }
+                .also { compositeDisposable.add(it) }
+
+        }
 
         viewModel.navToChat
             .subscribe { event ->
@@ -138,6 +179,17 @@ class CreateChatFragment : Fragment() {
 
         viewModel.progressDialog
             .subscribe { showProgressDialog(it) }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.navToGroupComplete
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let { (storeInfo, selectedContacts) ->
+                    parentFragmentManager.navigateTo(
+                        GroupCompleteFragment.create(storeInfo, selectedContacts),
+                        NavAnim.SLIDE
+                    )
+                }
+            }
             .also { compositeDisposable.add(it) }
     }
 

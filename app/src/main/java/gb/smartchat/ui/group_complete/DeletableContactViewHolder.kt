@@ -1,4 +1,4 @@
-package gb.smartchat.ui.create_chat.view_holder
+package gb.smartchat.ui.group_complete
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -8,24 +8,27 @@ import gb.smartchat.R
 import gb.smartchat.databinding.ItemContactBinding
 import gb.smartchat.entity.Contact
 
-class ContactViewHolder private constructor(
+class DeletableContactViewHolder private constructor(
     private val binding: ItemContactBinding,
-    private val clickListener: (Contact) -> Unit
+    private val deleteClickListener: (Contact) -> Unit
 ) : RecyclerView.ViewHolder(binding.root) {
     companion object {
-        fun create(parent: ViewGroup, clickListener: (Contact) -> Unit) =
-            ContactViewHolder(
+        fun create(parent: ViewGroup, deleteClickListener: (Contact) -> Unit) =
+            DeletableContactViewHolder(
                 ItemContactBinding.inflate(LayoutInflater.from(parent.context), parent, false),
-                clickListener
+                deleteClickListener
             )
     }
 
     private lateinit var contact: Contact
 
     init {
-        binding.ivAction.setImageResource(R.drawable.ic_kb_right_24)
-        binding.root.setOnClickListener {
-            clickListener.invoke(contact)
+        binding.ivAction.apply {
+            setImageResource(R.drawable.ic_close_red_24)
+            contentDescription = itemView.context.getString(R.string.delete)
+            setOnClickListener {
+                deleteClickListener.invoke(contact)
+            }
         }
     }
 

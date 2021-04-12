@@ -28,6 +28,7 @@
         tools:text="Оксана Гурманова" />
 
     <ImageView
+        android:id="@+id/iv_action"
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_gravity="end|center_vertical"

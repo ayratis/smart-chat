@@ -20,6 +20,7 @@ class ContactsAdapter(
             is ContactItem.Group -> 3
             is ContactItem.Error -> 4
             is ContactItem.Loading -> 5
+            is ContactItem.SelectableContact -> 6
         }
     }
 
@@ -30,6 +31,7 @@ class ContactsAdapter(
             3 -> ContactGroupViewHolder.create(parent)
             4 -> ErrorViewHolder.create(parent, errorActionClickListener)
             5 -> ProgressViewHolder.create(parent)
+            6 -> SelectableContactViewHolder.create(parent, contactClickListener)
             else -> throw RuntimeException("unknown view type")
         }
     }
@@ -47,6 +49,8 @@ class ContactsAdapter(
             )
             is ContactItem.Loading -> {
             }
+            is ContactItem.SelectableContact ->
+                (holder as SelectableContactViewHolder).bind(item.contact, item.isSelected)
         }
     }
 
@@ -56,6 +60,9 @@ class ContactsAdapter(
                 return true
             }
             if (oldItem is ContactItem.Contact && newItem is ContactItem.Contact) {
+                return oldItem.contact.id == newItem.contact.id
+            }
+            if (oldItem is ContactItem.SelectableContact && newItem is ContactItem.SelectableContact) {
                 return oldItem.contact.id == newItem.contact.id
             }
             if (oldItem is ContactItem.Group && newItem is ContactItem.Group) {
@@ -76,6 +83,9 @@ class ContactsAdapter(
             }
             if (oldItem is ContactItem.Contact && newItem is ContactItem.Contact) {
                 return oldItem.contact == newItem.contact
+            }
+            if (oldItem is ContactItem.SelectableContact && newItem is ContactItem.SelectableContact) {
+                return oldItem == newItem
             }
             if (oldItem is ContactItem.Group && newItem is ContactItem.Group) {
                 return oldItem.group == newItem.group
