@@ -66,7 +66,7 @@ object ChatListUDF {
         data class NavToCreateChat(val storeInfo: StoreInfo) : SideEffect()
     }
 
-    class Store : ObservableSource<State>, Consumer<Action>, Disposable {
+    class Store (private val userId: String): ObservableSource<State>, Consumer<Action>, Disposable {
 
         private val actions = PublishRelay.create<Action>()
         private val viewState = BehaviorRelay.createDefault(State())
@@ -203,9 +203,11 @@ object ChatListUDF {
                     if (targetPosition >= 0) {
                         val newChatList = state.chatList.toMutableList().apply {
                             val oldChat = get(targetPosition)
+                            var unreadMessageCount = oldChat.unreadMessagesCount ?: 0
+                            if (!action.message.isOutgoing(userId)) unreadMessageCount ++
                             val newChat = oldChat.copy(
                                 lastMessage = action.message,
-                                unreadMessagesCount = (oldChat.unreadMessagesCount ?: 0) + 1
+                                unreadMessagesCount = unreadMessageCount
                             )
                             removeAt(targetPosition)
                             add(0, newChat)

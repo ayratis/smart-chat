@@ -9,6 +9,9 @@ import androidx.appcompat.widget.SearchView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
@@ -53,16 +56,21 @@ class CreateChatFragment : Fragment() {
         (requireActivity() as SmartChatActivity).component
     }
 
-    private val viewModel: CreateChatViewModel by simpleViewModels {
-        CreateChatViewModel(
-            storeInfo,
-            mode,
-            component.httpApi,
-            CreateChatUDF.Store(mode),
-            component.resourceManager,
-            component.chatCreatedPublisher,
-            component.contactDeletePublisher
-        )
+    private val viewModel: CreateChatViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return CreateChatViewModel(
+                    storeInfo,
+                    mode,
+                    component.httpApi,
+                    CreateChatUDF.Store(mode),
+                    component.resourceManager,
+                    component.chatCreatedPublisher,
+                    component.contactDeletePublisher
+                ) as T
+            }
+        }
     }
 
     private val contactsAdapter by lazy {
@@ -130,7 +138,7 @@ class CreateChatFragment : Fragment() {
                 viewModel.onCreateGroupNextClick()
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-               doOnApplyWindowInsets { _, insets, _ ->
+                doOnApplyWindowInsets { _, insets, _ ->
                     updateLayoutParams<CoordinatorLayout.LayoutParams> {
                         bottomMargin = 16.dp(resources) + insets.systemWindowInsetBottom
                     }

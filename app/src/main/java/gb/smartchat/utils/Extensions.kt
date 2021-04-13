@@ -18,8 +18,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.*
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
@@ -311,20 +309,6 @@ fun Throwable.humanMessage(resourceManager: ResourceManager): String {
     }
 }
 
-@MainThread
-inline fun <reified VM : ViewModel> Fragment.simpleViewModels(
-    noinline viewModelCreator: () -> VM
-): Lazy<VM> {
-    return this.viewModels {
-        object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                return viewModelCreator() as T
-            }
-        }
-    }
-}
-
 fun StoreInfo.toCreateChatRequest(contacts: List<Contact>): CreateChatRequest {
     val myContact = Contact(
         id = userProfile.id,
@@ -335,7 +319,7 @@ fun StoreInfo.toCreateChatRequest(contacts: List<Contact>): CreateChatRequest {
     return CreateChatRequest(
         storeId,
         storeName,
-        partnerCode,
+//        partnerCode,
         partnerName,
         agentCode,
         contacts + myContact

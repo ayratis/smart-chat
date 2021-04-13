@@ -90,7 +90,7 @@ class ChatViewHolder(
         binding.tvLastMsgSenderName.text =
             chat.users.find { it.id == chat.lastMessage?.senderId }?.name
         binding.tvUnreadCounter.apply {
-            text = chat.unreadMessagesCount?.toString()
+            text = if (chat.hasActualMention(userId)) "@" else chat.unreadMessagesCount?.toString()
             visible(chat.unreadMessagesCount ?: 0 > 0)
         }
         binding.tvAgentName.apply {
