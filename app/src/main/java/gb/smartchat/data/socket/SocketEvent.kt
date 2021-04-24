@@ -7,7 +7,7 @@ sealed class SocketEvent {
     data class MessageNew(val message: Message) : SocketEvent()
     data class MessageChange(val changedMessage: ChangedMessage) : SocketEvent()
     data class Typing(val typing: gb.smartchat.entity.Typing) : SocketEvent()
-    data class MessageRead(val messageIds: List<Long>) : SocketEvent()
+    data class MessageRead(val messageRead: gb.smartchat.entity.MessageRead) : SocketEvent()
     data class MessagesDeleted(val messages: List<Message>) : SocketEvent()
     object Connected : SocketEvent()
     object Disconnected : SocketEvent()

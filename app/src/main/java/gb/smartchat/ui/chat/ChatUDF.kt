@@ -96,7 +96,7 @@ object ChatUDF {
         data class DownloadFile(val message: Message) : SideEffect()
         data class CancelDownloadFile(val message: Message) : SideEffect()
         data class OpenFile(val contentUri: Uri) : SideEffect()
-        data class ReadMessage(val messageId: Long) : SideEffect()
+        data class ReadMessage(val messageId: Long, val newUnreadCount: Int) : SideEffect()
         object LoadBottomMessages : SideEffect()
     }
 
@@ -713,10 +713,11 @@ object ChatUDF {
                     if (action.message.senderId != userId &&
                         action.message.id > state.readInfo.readIn
                     ) {
-                        sideEffectListener(SideEffect.ReadMessage(action.message.id))
+                        val newUnreadCount = max(state.readInfo.unreadCount - 1, 0)
+                        sideEffectListener(SideEffect.ReadMessage(action.message.id, newUnreadCount))
                         val readInfo = state.readInfo.copy(
                             readIn = action.message.id,
-                            unreadCount = max(state.readInfo.unreadCount - 1, 0)
+                            unreadCount = newUnreadCount
                         )
                         return state.copy(readInfo = readInfo)
                     }

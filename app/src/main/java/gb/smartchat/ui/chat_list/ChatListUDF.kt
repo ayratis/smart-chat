@@ -1,11 +1,12 @@
 package gb.smartchat.ui.chat_list
 
 import android.util.Log
+import android.util.SparseArray
+import androidx.core.util.forEach
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
-import gb.smartchat.entity.Chat
-import gb.smartchat.entity.StoreInfo
-import gb.smartchat.entity.UserProfile
+import gb.smartchat.entity.*
+import gb.smartchat.utils.composeWithMessage
 import io.reactivex.ObservableSource
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -49,6 +50,12 @@ object ChatListUDF {
         data class ProfileSuccess(val userProfile: UserProfile) : Action()
         data class ProfileError(val error: Throwable) : Action()
         object CreateChat : Action()
+        data class NewMessage(val message: Message) : Action()
+        data class ReadMessage(val messageRead: MessageRead) : Action()
+        data class ChangeMessage(val changedMessage: ChangedMessage) : Action()
+        data class DeleteMessages(val deletedMessages: List<Message>) : Action()
+        data class ChatUnreadMessageCountChanged(val chatId: Long, val unreadCount: Int) : Action()
+        data class NewChatCreated(val chat: Chat) : Action()
     }
 
     sealed class SideEffect {
@@ -59,7 +66,7 @@ object ChatListUDF {
         data class NavToCreateChat(val storeInfo: StoreInfo) : SideEffect()
     }
 
-    class Store : ObservableSource<State>, Consumer<Action>, Disposable {
+    class Store (private val userId: String): ObservableSource<State>, Consumer<Action>, Disposable {
 
         private val actions = PublishRelay.create<Action>()
         private val viewState = BehaviorRelay.createDefault(State())
@@ -189,6 +196,121 @@ object ChatListUDF {
                         sideEffectListener.invoke(SideEffect.NavToCreateChat(fakeStoreInfo))
                     }
                     return state
+                }
+                is Action.NewMessage -> {
+                    val targetPosition =
+                        state.chatList.indexOfFirst { it.id == action.message.chatId }
+                    if (targetPosition >= 0) {
+                        val newChatList = state.chatList.toMutableList().apply {
+                            val oldChat = get(targetPosition)
+                            var unreadMessageCount = oldChat.unreadMessagesCount ?: 0
+                            if (!action.message.isOutgoing(userId)) unreadMessageCount ++
+                            val newChat = oldChat.copy(
+                                lastMessage = action.message,
+                                unreadMessagesCount = unreadMessageCount
+                            )
+                            removeAt(targetPosition)
+                            add(0, newChat)
+                        }
+                        return state.copy(chatList = newChatList)
+                    } else {
+                        sideEffectListener(SideEffect.LoadPage(1))
+                        val newPagingState = when (state.pagingState) {
+                            PagingState.EMPTY,
+                            PagingState.EMPTY_ERROR,
+                            PagingState.EMPTY_PROGRESS -> PagingState.EMPTY_PROGRESS
+                            PagingState.DATA,
+                            PagingState.NEW_PAGE_PROGRESS,
+                            PagingState.FULL_DATA,
+                            PagingState.REFRESH -> PagingState.REFRESH
+                        }
+                        return state.copy(pagingState = newPagingState)
+                    }
+                }
+                is Action.ReadMessage -> {
+                    val targetPosition =
+                        state.chatList.indexOfFirst { it.id == action.messageRead.chatId }
+                    if (targetPosition >= 0) {
+                        val newChatList = state.chatList.toMutableList().apply {
+                            val newUsers = get(targetPosition).users.map { user ->
+                                if (user.id == action.messageRead.senderId) {
+                                    val lastReadMessageId =
+                                        action.messageRead.messageIds.maxOf { it }
+                                    user.copy(lastReadMessageId = lastReadMessageId)
+                                } else {
+                                    user
+                                }
+                            }
+                            val chat = get(targetPosition).copy(users = newUsers)
+                            set(targetPosition, chat)
+                        }
+                        return state.copy(chatList = newChatList)
+                    } else {
+                        return state
+                    }
+                }
+                is Action.ChangeMessage -> {
+                    val targetPosition =
+                        state.chatList.indexOfFirst { it.id == action.changedMessage.chatId }
+                    return if (targetPosition >= 0) {
+                        val newChatList = state.chatList.toMutableList().apply {
+                            val chat = get(targetPosition)
+                            if (chat.lastMessage?.id == action.changedMessage.id) {
+                                val newMessage =
+                                    action.changedMessage.composeWithMessage(chat.lastMessage)
+                                set(targetPosition, chat.copy(lastMessage = newMessage))
+                            }
+                        }
+                        state.copy(chatList = newChatList)
+                    } else {
+                        state
+                    }
+                }
+                is Action.DeleteMessages -> {
+                    val targetAndMessages = SparseArray<Message>()
+                    for (deletedMessage in action.deletedMessages) {
+                        val targetPosition =
+                            state.chatList.indexOfFirst { it.id == deletedMessage.chatId }
+                        if (targetPosition >= 0) {
+                            targetAndMessages.put(targetPosition, deletedMessage)
+                        }
+                    }
+                    val newChatList = state.chatList.toMutableList().apply {
+                        targetAndMessages.forEach { key, value ->
+                            val newMessage = get(key).copy(lastMessage = value)
+                            set(key, newMessage)
+                        }
+                    }
+                    return state.copy(chatList = newChatList)
+                }
+                is Action.ChatUnreadMessageCountChanged -> {
+                    val targetPosition = state.chatList.indexOfFirst { it.id == action.chatId }
+                    return if (targetPosition >= 0) {
+                        val newChatList = state.chatList.toMutableList().apply {
+                            val chat =
+                                get(targetPosition).copy(unreadMessagesCount = action.unreadCount)
+                            set(targetPosition, chat)
+                        }
+                        state.copy(chatList = newChatList)
+                    } else {
+                        state
+                    }
+                }
+                is Action.NewChatCreated -> {
+                    val newChatList = state.chatList.toMutableList().apply {
+                        add(0, action.chat)
+                    }
+                    sideEffectListener(SideEffect.LoadPage(1))
+                    val newPagingState = when (state.pagingState) {
+                        PagingState.EMPTY,
+                        PagingState.EMPTY_ERROR,
+                        PagingState.EMPTY_PROGRESS -> PagingState.EMPTY_PROGRESS
+                        PagingState.DATA,
+                        PagingState.NEW_PAGE_PROGRESS,
+                        PagingState.FULL_DATA,
+                        PagingState.REFRESH -> PagingState.REFRESH
+                    }
+                    return state.copy(chatList = newChatList, pagingState = newPagingState)
                 }
             }
         }

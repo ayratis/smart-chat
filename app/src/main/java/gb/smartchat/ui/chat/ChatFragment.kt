@@ -21,6 +21,9 @@ import androidx.core.content.FileProvider
 import androidx.core.view.updatePadding
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -68,20 +71,27 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
     private val contentHelper by lazy {
         component.contentHelper
     }
-    private val viewModel by simpleViewModels {
-        ChatViewModel(
-            store = ChatUDF.Store(
-                component.userId,
-                argChat.getReadInfo(component.userId),
-                argChat.users
-            ),
-            userId = component.userId,
-            chat = argChat,
-            socketApi = component.socketApi,
-            httpApi = component.httpApi,
-            contentHelper = contentHelper,
-            downloadHelper = component.fileDownloadHelper
-        )
+    private val viewModel: ChatViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return ChatViewModel(
+                    store = ChatUDF.Store(
+                        component.userId,
+                        argChat.getReadInfo(component.userId),
+                        argChat.users
+                    ),
+                    userId = component.userId,
+                    chat = argChat,
+                    socketApi = component.socketApi,
+                    httpApi = component.httpApi,
+                    contentHelper = contentHelper,
+                    downloadHelper = component.fileDownloadHelper,
+                    messageReadInternalPublisher = component.messageReadInternalPublisher,
+                    unreadMessageCountPublisher = component.chatUnreadMessageCountPublisher
+                ) as T
+            }
+        }
     }
     private val linearLayoutManager by lazy {
         LinearLayoutManager(binding.rvChat.context).apply {

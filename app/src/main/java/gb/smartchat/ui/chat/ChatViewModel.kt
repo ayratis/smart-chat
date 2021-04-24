@@ -13,10 +13,13 @@ import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Message
+import gb.smartchat.entity.MessageRead
 import gb.smartchat.entity.User
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.ReadInfoRequest
 import gb.smartchat.entity.request.TypingRequest
+import gb.smartchat.publisher.ChatUnreadMessageCountPublisher
+import gb.smartchat.publisher.MessageReadInternalPublisher
 import gb.smartchat.utils.*
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -37,6 +40,8 @@ class ChatViewModel(
     private val httpApi: HttpApi,
     private val contentHelper: ContentHelper,
     private val downloadHelper: FileDownloadHelper,
+    private val messageReadInternalPublisher: MessageReadInternalPublisher,
+    private val unreadMessageCountPublisher: ChatUnreadMessageCountPublisher
 ) : ViewModel() {
 
     companion object {
@@ -138,6 +143,13 @@ class ChatViewModel(
                 }
 
                 is ChatUDF.SideEffect.ReadMessage -> {
+                    val messageRead = MessageRead(
+                        chatId = chat.id,
+                        messageIds = listOf(sideEffect.messageId),
+                        senderId = userId
+                    )
+                    messageReadInternalPublisher.accept(messageRead)
+                    unreadMessageCountPublisher.accept(chat.id to sideEffect.newUnreadCount)
                     readMessage(sideEffect.messageId)
                 }
                 ChatUDF.SideEffect.LoadBottomMessages -> {
@@ -173,7 +185,7 @@ class ChatViewModel(
                         store.accept(ChatUDF.Action.ServerTyping(event.typing.senderId))
                     }
                     is SocketEvent.MessageRead -> {
-                        store.accept(ChatUDF.Action.ServerMessageRead(event.messageIds))
+                        store.accept(ChatUDF.Action.ServerMessageRead(event.messageRead.messageIds))
                     }
                     is SocketEvent.MessagesDeleted -> {
                         val messages = event.messages.map {

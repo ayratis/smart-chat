@@ -14,6 +14,7 @@
     <string name="outgoing_status">Статус отправки</string>
     <string name="connection_error">Ошибка соединения</string>
     <string name="retry">Повторить</string>
+    <string name="refreshing">Обновление</string>
     <string name="image">Изображение</string>
     <string name="file_open_error">Не удалось открыть файл</string>
     <string name="typing_users_s">Набирает сообщение: %s</string>

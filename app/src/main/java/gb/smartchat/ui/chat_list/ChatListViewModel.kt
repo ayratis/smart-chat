@@ -7,7 +7,11 @@ import gb.smartchat.R
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.socket.SocketApi
+import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.publisher.ChatCreatedPublisher
+import gb.smartchat.publisher.ChatUnreadMessageCountPublisher
+import gb.smartchat.publisher.MessageReadInternalPublisher
 import gb.smartchat.utils.SingleEvent
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -18,7 +22,10 @@ class ChatListViewModel(
     private val store: ChatListUDF.Store,
     private val httpApi: HttpApi,
     private val socketApi: SocketApi,
-    private val resourceManager: ResourceManager
+    private val resourceManager: ResourceManager,
+    chatCreatedPublisher: ChatCreatedPublisher,
+    messageReadInternalPublisher: MessageReadInternalPublisher,
+    chatUnreadMessageCountPublisher: ChatUnreadMessageCountPublisher
 ) : ViewModel() {
 
     companion object {
@@ -41,6 +48,18 @@ class ChatListViewModel(
         setupStateMachine()
         store.accept(ChatListUDF.Action.Refresh)
         compositeDisposable.add(store)
+        observeSocketEvents()
+        chatCreatedPublisher
+            .subscribe { store.accept(ChatListUDF.Action.NewChatCreated(it)) }
+            .also { compositeDisposable.add(it) }
+        messageReadInternalPublisher
+            .subscribe { store.accept(ChatListUDF.Action.ReadMessage(it)) }
+            .also { compositeDisposable.add(it) }
+        chatUnreadMessageCountPublisher
+            .subscribe {
+                store.accept(ChatListUDF.Action.ChatUnreadMessageCountChanged(it.first, it.second))
+            }
+            .also { compositeDisposable.add(it) }
     }
 
     private fun setupStateMachine() {
@@ -64,6 +83,28 @@ class ChatListViewModel(
                 }
             }
         }
+    }
+
+    private fun observeSocketEvents() {
+        socketApi.observeEvents()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { socketEvent ->
+                when (socketEvent) {
+                    is SocketEvent.MessageChange -> {
+                        store.accept(ChatListUDF.Action.ChangeMessage(socketEvent.changedMessage))
+                    }
+                    is SocketEvent.MessageNew -> {
+                        store.accept(ChatListUDF.Action.NewMessage(socketEvent.message))
+                    }
+                    is SocketEvent.MessageRead -> {
+                        store.accept(ChatListUDF.Action.ReadMessage(socketEvent.messageRead))
+                    }
+                    is SocketEvent.MessagesDeleted -> {
+                        store.accept(ChatListUDF.Action.DeleteMessages(socketEvent.messages))
+                    }
+                }
+            }
+            .also { compositeDisposable.add(it) }
     }
 
     private fun fetchUserProfile() {

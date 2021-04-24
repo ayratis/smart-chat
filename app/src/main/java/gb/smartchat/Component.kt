@@ -16,7 +16,9 @@ import gb.smartchat.data.resources.ResourceManagerImpl
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketApiImpl
 import gb.smartchat.publisher.ChatCreatedPublisher
+import gb.smartchat.publisher.ChatUnreadMessageCountPublisher
 import gb.smartchat.publisher.ContactDeletePublisher
+import gb.smartchat.publisher.MessageReadInternalPublisher
 import io.socket.client.IO
 import io.socket.client.Manager
 import io.socket.client.Socket
@@ -114,5 +116,13 @@ class Component constructor(
 
     val chatCreatedPublisher: ChatCreatedPublisher by lazy {
         ChatCreatedPublisher()
+    }
+
+    val messageReadInternalPublisher: MessageReadInternalPublisher by lazy {
+        MessageReadInternalPublisher()
+    }
+
+    val chatUnreadMessageCountPublisher by lazy {
+        ChatUnreadMessageCountPublisher()
     }
 }

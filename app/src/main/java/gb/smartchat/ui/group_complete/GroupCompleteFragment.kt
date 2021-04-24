@@ -9,6 +9,9 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.Component
 import gb.smartchat.R
@@ -54,15 +57,20 @@ class GroupCompleteFragment : Fragment() {
     private val component: Component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
-    private val viewModel: GroupCompleteViewModel by simpleViewModels {
-        GroupCompleteViewModel(
-            storeInfo,
-            GroupCompleteUDF.Store(selectedContacts),
-            component.httpApi,
-            component.resourceManager,
-            component.chatCreatedPublisher,
-            component.contactDeletePublisher
-        )
+    private val viewModel: GroupCompleteViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return GroupCompleteViewModel(
+                    storeInfo,
+                    GroupCompleteUDF.Store(selectedContacts),
+                    component.httpApi,
+                    component.resourceManager,
+                    component.chatCreatedPublisher,
+                    component.contactDeletePublisher
+                ) as T
+            }
+        }
     }
     private val groupInfoAdapter by lazy {
         ContactsAdapter(viewModel::onContactDelete)
