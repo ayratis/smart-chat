@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListBinding
+import gb.smartchat.entity.Chat
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.create_chat.CreateChatFragment
 import gb.smartchat.ui.create_chat.CreateChatMode
@@ -36,13 +37,11 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
         (requireActivity() as SmartChatActivity).component
     }
     private val chatListAdapter by lazy {
-        ChatListAdapter(component.userId) { chat ->
-            parentFragmentManager.navigateTo(
-                ChatFragment.create(chat),
-                NavAnim.SLIDE
-            )
-            parentFragmentManager.executePendingTransactions()
-        }
+        ChatListAdapter(
+            userId = component.userId,
+            clickListener = this::navigateToChat,
+            pinListener = viewModel::onPinChatClick
+        )
     }
     private val viewModel: ChatListViewModel by viewModels {
         object : ViewModelProvider.Factory {
@@ -160,6 +159,13 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 }
             }
             .also { compositeDisposable.add(it) }
+    }
+
+    private fun navigateToChat(chat: Chat) {
+        parentFragmentManager.navigateTo(
+            ChatFragment.create(chat),
+            NavAnim.SLIDE
+        )
     }
 
     override fun onPause() {

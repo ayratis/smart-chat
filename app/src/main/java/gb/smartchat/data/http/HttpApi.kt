@@ -2,6 +2,7 @@ package gb.smartchat.data.http
 
 import gb.smartchat.entity.*
 import gb.smartchat.entity.request.CreateChatRequest
+import gb.smartchat.entity.request.PinChatRequest
 import gb.smartchat.entity.response.BaseResponse
 import gb.smartchat.entity.response.ContactListResponse
 import io.reactivex.Single
@@ -55,4 +56,9 @@ interface HttpApi {
     fun getUserProfile(
         @Query("another_user_id") anotherUserId: String? = null
     ): Single<BaseResponse<UserProfile>>
+
+    @POST("chat/management/pin")
+    fun postPinChat(
+        @Body request: PinChatRequest
+    ): Single<BaseResponse<Any>>
 }

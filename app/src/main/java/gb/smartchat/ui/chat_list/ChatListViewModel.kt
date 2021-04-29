@@ -8,7 +8,9 @@ import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
+import gb.smartchat.entity.Chat
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.entity.request.PinChatRequest
 import gb.smartchat.publisher.ChatCreatedPublisher
 import gb.smartchat.publisher.ChatUnreadMessageCountPublisher
 import gb.smartchat.publisher.MessageReadInternalPublisher
@@ -81,6 +83,9 @@ class ChatListViewModel(
                 is ChatListUDF.SideEffect.NavToCreateChat -> {
                     navToCreateChatCommand.accept(SingleEvent(sideEffect.storeInfo))
                 }
+                is ChatListUDF.SideEffect.PinChat -> {
+                    pinChatOnServer(sideEffect.chat)
+                }
             }
         }
     }
@@ -137,7 +142,23 @@ class ChatListViewModel(
             .also { compositeDisposable.add(it) }
     }
 
+    private fun pinChatOnServer(chat: Chat) {
+        httpApi
+            .postPinChat(PinChatRequest(chat.id))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { store.accept(ChatListUDF.Action.PinChatSuccess(chat)) },
+                { store.accept(ChatListUDF.Action.PinChatError(it)) }
+            )
+            .also { compositeDisposable.add(it) }
+    }
+
     fun onCreateChatClick() {
         store.accept(ChatListUDF.Action.CreateChat)
+    }
+
+    fun onPinChatClick(chat: Chat) {
+        store.accept(ChatListUDF.Action.PinChat(chat))
     }
 }

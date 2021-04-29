@@ -7,11 +7,12 @@ import gb.smartchat.entity.Chat
 
 class ChatListAdapter(
     private val userId: String,
-    private val clickListener: (Chat) -> Unit
+    private val clickListener: (Chat) -> Unit,
+    private val pinListener: (Chat) -> Unit
 ) : ListAdapter<Chat, ChatViewHolder>(DiffUtilItemCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
-        return ChatViewHolder.create(parent, userId, clickListener)
+        return ChatViewHolder.create(parent, userId, clickListener, pinListener)
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {

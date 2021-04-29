@@ -56,6 +56,9 @@ object ChatListUDF {
         data class DeleteMessages(val deletedMessages: List<Message>) : Action()
         data class ChatUnreadMessageCountChanged(val chatId: Long, val unreadCount: Int) : Action()
         data class NewChatCreated(val chat: Chat) : Action()
+        data class PinChat(val chat: Chat) : Action()
+        data class PinChatSuccess(val chat: Chat) : Action()
+        data class PinChatError(val error: Throwable) : Action()
     }
 
     sealed class SideEffect {
@@ -64,9 +67,11 @@ object ChatListUDF {
         data class LoadPage(val pageCount: Int) : SideEffect()
         data class ErrorEvent(val error: Throwable) : SideEffect()
         data class NavToCreateChat(val storeInfo: StoreInfo) : SideEffect()
+        data class PinChat(val chat: Chat) : SideEffect()
     }
 
-    class Store (private val userId: String): ObservableSource<State>, Consumer<Action>, Disposable {
+    class Store(private val userId: String) : ObservableSource<State>, Consumer<Action>,
+        Disposable {
 
         private val actions = PublishRelay.create<Action>()
         private val viewState = BehaviorRelay.createDefault(State())
@@ -204,7 +209,7 @@ object ChatListUDF {
                         val newChatList = state.chatList.toMutableList().apply {
                             val oldChat = get(targetPosition)
                             var unreadMessageCount = oldChat.unreadMessagesCount ?: 0
-                            if (!action.message.isOutgoing(userId)) unreadMessageCount ++
+                            if (!action.message.isOutgoing(userId)) unreadMessageCount++
                             val newChat = oldChat.copy(
                                 lastMessage = action.message,
                                 unreadMessagesCount = unreadMessageCount
@@ -311,6 +316,15 @@ object ChatListUDF {
                         PagingState.REFRESH -> PagingState.REFRESH
                     }
                     return state.copy(chatList = newChatList, pagingState = newPagingState)
+                }
+                is Action.PinChat -> {
+                    return state //todo
+                }
+                is Action.PinChatSuccess -> {
+                    return state //todo
+                }
+                is Action.PinChatError -> {
+                    return state //todo
                 }
             }
         }

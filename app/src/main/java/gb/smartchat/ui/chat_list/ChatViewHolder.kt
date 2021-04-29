@@ -16,17 +16,20 @@ class ChatViewHolder(
     private val binding: ItemChatBinding,
     private val userId: String,
     private val clickListener: (Chat) -> Unit,
+    private val pinListener: (Chat) -> Unit,
 ) : RecyclerView.ViewHolder(binding.root) {
 
     companion object {
         fun create(
             parent: ViewGroup,
             userId: String,
-            clickListener: (Chat) -> Unit
+            clickListener: (Chat) -> Unit,
+            pinListener: (Chat) -> Unit
         ) = ChatViewHolder(
             ItemChatBinding.inflate(LayoutInflater.from(parent.context), parent, false),
             userId,
-            clickListener
+            clickListener,
+            pinListener
         )
     }
 
@@ -48,6 +51,11 @@ class ChatViewHolder(
     init {
         itemView.setOnClickListener {
             clickListener.invoke(chat)
+        }
+
+        itemView.setOnLongClickListener {
+            showMenu()
+            true
         }
     }
 
@@ -97,5 +105,23 @@ class ChatViewHolder(
             text = chat.agentName
             visible(!chat.agentName.isNullOrBlank())
         }
+    }
+
+    private fun showMenu() {
+        val menu = android.widget.PopupMenu(itemView.context, itemView)
+        menu.inflate(R.menu.pin)
+        menu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.action_pin -> {
+                    pinListener.invoke(chat)
+                    return@setOnMenuItemClickListener true
+                }
+            }
+            false
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            menu.setForceShowIcon(true)
+        }
+        menu.show()
     }
 }
