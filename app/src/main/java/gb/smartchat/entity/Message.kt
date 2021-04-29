@@ -3,6 +3,7 @@ package gb.smartchat.entity
 
 import com.google.gson.annotations.SerializedName
 import gb.smartchat.BuildConfig
+import java.io.Serializable
 import java.time.ZonedDateTime
 
 data class Message(
@@ -31,7 +32,7 @@ data class Message(
 
 //custom
     val user: User? = null
-) {
+) : Serializable {
     enum class Type {
         @SerializedName("system")
         SYSTEM,

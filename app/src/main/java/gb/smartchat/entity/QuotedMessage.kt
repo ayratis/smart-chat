@@ -2,6 +2,7 @@ package gb.smartchat.entity
 
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class QuotedMessage(
     @SerializedName("id")
@@ -10,4 +11,4 @@ data class QuotedMessage(
     val text: String?,
     @SerializedName("sender_id")
     val senderId: String?
-)
+) : Serializable

@@ -2,6 +2,7 @@ package gb.smartchat.entity
 
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class Group(
     @SerializedName("id")
@@ -10,4 +11,4 @@ data class Group(
     val name: String?,
     @SerializedName("contacts")
     val contacts: List<Contact>
-)
+) : Serializable

@@ -1,6 +1,7 @@
 package gb.smartchat.entity
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class Typing(
     @SerializedName("sender_id")
@@ -9,4 +10,4 @@ data class Typing(
     val chatId: Long,
     @SerializedName("text")
     val text: String?
-)
+) : Serializable
