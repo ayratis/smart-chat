@@ -1,6 +1,7 @@
 package gb.smartchat.entity
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 import java.time.ZonedDateTime
 
 data class ChangedMessage(
@@ -16,4 +17,4 @@ data class ChangedMessage(
     val timeUpdated: ZonedDateTime,
     @SerializedName("mentions")
     val mentions: List<Mention>?,
-)
+) : Serializable

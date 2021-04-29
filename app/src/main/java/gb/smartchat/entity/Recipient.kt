@@ -2,6 +2,7 @@ package gb.smartchat.entity
 
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class Recipient(
     @SerializedName("id")
@@ -12,4 +13,4 @@ data class Recipient(
 //    val avatar: Any?,
     @SerializedName("online")
     val online: Boolean?
-)
+) : Serializable

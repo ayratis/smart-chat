@@ -28,13 +28,16 @@ data class Chat(
 
     fun getReadInfo(userId: String): ReadInfo {
         val inRead = users.find { it.id == userId }?.lastReadMessageId ?: -1
-        val outRead = users.filter { it.id != userId }.maxOf { it.lastReadMessageId ?: -1 }
+        val otherUsers = users.filter { it.id != userId }
+        val outRead =
+            if (otherUsers.isNotEmpty()) otherUsers.maxOf { it.lastReadMessageId ?: -1 }
+            else -1
         val readInfo = ReadInfo(inRead, outRead, unreadMessagesCount ?: 0)
         Log.d("Chat", "getReadInfo: $readInfo")
         return readInfo
     }
 
-    fun hasActualMention(userId: String) : Boolean {
+    fun hasActualMention(userId: String): Boolean {
         val user = users.find { it.id == userId } ?: return false
         return (user.lastMentionMessageId ?: 0) > (user.lastReadMessageId ?: 0)
     }
