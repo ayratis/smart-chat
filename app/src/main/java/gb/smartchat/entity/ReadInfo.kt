@@ -1,6 +1,7 @@
 package gb.smartchat.entity
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class ReadInfo(
     @SerializedName("read_in")
@@ -9,4 +10,4 @@ data class ReadInfo(
     val readOut: Long,
     @SerializedName("count")
     val unreadCount: Int
-)
+) : Serializable
