@@ -1,4 +1,4 @@
-package gb.smartchat.ui.custom
+package gb.smartchat.ui._global
 
 import android.content.Context
 import android.text.Layout

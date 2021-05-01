@@ -3,6 +3,7 @@ package gb.smartchat.data.http
 import gb.smartchat.entity.*
 import gb.smartchat.entity.request.CreateChatRequest
 import gb.smartchat.entity.response.BaseResponse
+import gb.smartchat.entity.response.ChatSearchResponse
 import gb.smartchat.entity.response.ContactListResponse
 import io.reactivex.Single
 import okhttp3.MultipartBody
@@ -55,4 +56,11 @@ interface HttpApi {
     fun getUserProfile(
         @Query("another_user_id") anotherUserId: String? = null
     ): Single<BaseResponse<UserProfile>>
+
+    @GET("chat/management/search")
+    fun getSearchChats(
+        @Query("search_string") query: String, //min length 3
+        @Query("page_count") pageCount: Int,
+        @Query("page_size") pageSize: Int
+    ): Single<BaseResponse<ChatSearchResponse>>
 }

@@ -5,8 +5,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.entity.Mention
+import gb.smartchat.ui._global.StickyHeaderHelper
 import gb.smartchat.ui.chat.view_holder.*
-import gb.smartchat.ui.custom.StickyHeaderHelper
 import java.time.ZoneId
 
 class ChatAdapter(

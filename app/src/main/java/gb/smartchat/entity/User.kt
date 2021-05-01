@@ -9,6 +9,8 @@ data class User(
     val lastReadMessageId: Long?,
     @SerializedName("last_mention_message_id")
     val lastMentionMessageId: Long?,
+    @SerializedName("role")
+    val role: String?,
     @SerializedName("name")
     val name: String?,
     @SerializedName("avatar")
