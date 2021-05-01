@@ -1,4 +1,4 @@
-package gb.smartchat.ui.chat_list
+package gb.smartchat.ui.chat_list_search
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -6,16 +6,16 @@ import androidx.recyclerview.widget.ListAdapter
 import gb.smartchat.entity.Chat
 import gb.smartchat.ui._global.view_holder.ChatViewHolder
 
-class ChatListAdapter(
+class SearchResultsAdapter(
     private val userId: String,
-    private val clickListener: (Chat) -> Unit,
-    private val nextPageCallback: () -> Unit,
+    private val onChatClickListener: (Chat) -> Unit,
+    private val nextPageCallback: () -> Unit
 ) : ListAdapter<Chat, ChatViewHolder>(DiffUtilItemCallback()) {
 
-    var fullData = false
+    var fullData: Boolean = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
-        return ChatViewHolder.create(parent, userId, clickListener)
+        return ChatViewHolder.create(parent, userId, onChatClickListener)
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
@@ -30,10 +30,6 @@ class ChatListAdapter(
 
         override fun areContentsTheSame(oldItem: Chat, newItem: Chat): Boolean {
             return oldItem == newItem
-        }
-
-        override fun getChangePayload(oldItem: Chat, newItem: Chat): Any {
-            return Any()
         }
     }
 }

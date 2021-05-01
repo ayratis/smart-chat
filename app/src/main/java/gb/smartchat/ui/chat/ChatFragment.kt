@@ -34,9 +34,9 @@ import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.entity.Chat
-import gb.smartchat.ui.custom.CenterSmoothScroller
-import gb.smartchat.ui.custom.HeaderItemDecoration
-import gb.smartchat.ui.custom.ProgressDialog
+import gb.smartchat.ui._global.CenterSmoothScroller
+import gb.smartchat.ui._global.HeaderItemDecoration
+import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 import java.io.File

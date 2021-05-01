@@ -1,4 +1,4 @@
-package gb.smartchat.ui.custom
+package gb.smartchat.ui._global
 
 import android.annotation.SuppressLint
 import android.os.Bundle

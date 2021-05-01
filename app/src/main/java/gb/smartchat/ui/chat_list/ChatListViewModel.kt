@@ -140,4 +140,8 @@ class ChatListViewModel(
     fun onCreateChatClick() {
         store.accept(ChatListUDF.Action.CreateChat)
     }
+
+    fun loadMore() {
+        store.accept(ChatListUDF.Action.LoadMore)
+    }
 }

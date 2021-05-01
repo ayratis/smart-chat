@@ -16,10 +16,11 @@ import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListBinding
+import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui.chat.ChatFragment
+import gb.smartchat.ui.chat_list_search.ChatListSearchFragment
 import gb.smartchat.ui.create_chat.CreateChatFragment
 import gb.smartchat.ui.create_chat.CreateChatMode
-import gb.smartchat.ui.custom.MessageDialogFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -36,13 +37,17 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
         (requireActivity() as SmartChatActivity).component
     }
     private val chatListAdapter by lazy {
-        ChatListAdapter(component.userId) { chat ->
-            parentFragmentManager.navigateTo(
-                ChatFragment.create(chat),
-                NavAnim.SLIDE
-            )
-            parentFragmentManager.executePendingTransactions()
-        }
+        ChatListAdapter(
+            userId = component.userId,
+            clickListener = { chat ->
+                parentFragmentManager.navigateTo(
+                    ChatFragment.create(chat),
+                    NavAnim.SLIDE
+                )
+                parentFragmentManager.executePendingTransactions()
+            },
+            nextPageCallback = viewModel::loadMore
+        )
     }
     private val viewModel: ChatListViewModel by viewModels {
         object : ViewModelProvider.Factory {
@@ -83,6 +88,18 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 activity?.finish()
             }
             inflateMenu(R.menu.search)
+            setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.search -> {
+                        parentFragmentManager.navigateTo(
+                            ChatListSearchFragment(),
+                            NavAnim.OPEN
+                        )
+                        true
+                    }
+                    else -> false
+                }
+            }
         }
         binding.rvChatList.apply {
             addSystemBottomPadding()
@@ -110,6 +127,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
         viewModel.viewState
             .subscribe {
                 chatListAdapter.submitList(it.chatList)
+                chatListAdapter.fullData = it.pagingState == ChatListUDF.PagingState.FULL_DATA
             }
             .also { compositeDisposable.add(it) }
 

@@ -1,4 +1,4 @@
-package gb.smartchat.ui.chat_list
+package gb.smartchat.ui._global.view_holder
 
 import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
