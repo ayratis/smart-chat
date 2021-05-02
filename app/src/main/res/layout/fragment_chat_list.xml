@@ -15,11 +15,10 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:navigationIcon="@drawable/ic_arrow_back_purple_24"
-            app:titleTextColor="@color/gray">
+            app:navigationIcon="@drawable/ic_arrow_back_purple_24">
 
             <LinearLayout
-                android:id="@+id/toolbar_content"
+                android:id="@+id/profile_content"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
@@ -65,6 +64,7 @@
         android:layout_margin="16dp"
         android:contentDescription="@string/create_chat"
         android:src="@drawable/ic_create_chat_24"
+        android:visibility="gone"
         app:layout_behavior="com.google.android.material.floatingactionbutton.FloatingActionButton$Behavior" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

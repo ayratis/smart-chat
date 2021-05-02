@@ -2,7 +2,10 @@ package gb.smartchat.ui.chat_list
 
 import android.util.SparseArray
 import androidx.core.util.forEach
-import gb.smartchat.entity.*
+import gb.smartchat.entity.ChangedMessage
+import gb.smartchat.entity.Chat
+import gb.smartchat.entity.Message
+import gb.smartchat.entity.MessageRead
 import gb.smartchat.ui._global.BaseStore
 import gb.smartchat.utils.composeWithMessage
 
@@ -12,18 +15,10 @@ object ChatListUDF {
     private const val TAG = "ChatListStateMachine"
 
     data class State(
-        val profileState: ProfileState = ProfileState.Empty,
         val chatList: List<Chat> = emptyList(),
         val pagingState: PagingState = PagingState.EMPTY,
         val pageCount: Int = 0
     )
-
-    sealed class ProfileState {
-        object Empty : ProfileState()
-        object Loading : ProfileState()
-        data class Success(val userProfile: UserProfile) : ProfileState()
-        data class Error(val error: Throwable) : ProfileState()
-    }
 
     enum class PagingState {
         EMPTY,
@@ -40,9 +35,6 @@ object ChatListUDF {
         object LoadMore : Action()
         data class NewPage(val pageNumber: Int, val items: List<Chat>) : Action()
         data class PageError(val error: Throwable) : Action()
-        data class ProfileSuccess(val userProfile: UserProfile) : Action()
-        data class ProfileError(val error: Throwable) : Action()
-        object CreateChat : Action()
         data class NewMessage(val message: Message) : Action()
         data class ReadMessage(val messageRead: MessageRead) : Action()
         data class ChangeMessage(val changedMessage: ChangedMessage) : Action()
@@ -63,21 +55,15 @@ object ChatListUDF {
     }
 
     sealed class SideEffect {
-        object LoadUserProfile : SideEffect()
-        data class ShowProfileLoadError(val error: Throwable) : SideEffect()
         data class LoadPage(val pageCount: Int) : SideEffect()
         data class ErrorEvent(val error: Throwable) : SideEffect()
-        data class NavToCreateChat(val storeInfo: StoreInfo) : SideEffect()
         data class PinChat(val chat: Chat, val pin: Boolean) : SideEffect()
         data class ShowPinChatError(val error: Throwable, val pin: Boolean) : SideEffect()
         data class ArchiveChat(val chat: Chat, val archive: Boolean) : SideEffect()
         data class ShowArchiveChatError(val error: Throwable, val archive: Boolean) : SideEffect()
     }
 
-    class Store(
-        private val userId: String,
-//        isArchive: Boolean
-    ) : BaseStore<State, Action, SideEffect>(State()) {
+    class Store(private val userId: String) : BaseStore<State, Action, SideEffect>(State()) {
 
         override fun reduce(
             state: State,
@@ -85,44 +71,18 @@ object ChatListUDF {
             sideEffectListener: (SideEffect) -> Unit
         ): State {
             when (action) {
-                is Action.ProfileSuccess -> {
-                    sideEffectListener(SideEffect.LoadPage(1))
-                    return state.copy(
-                        profileState = ProfileState.Success(action.userProfile),
-                        pagingState = PagingState.EMPTY_PROGRESS
-                    )
-                }
-                is Action.ProfileError -> {
-                    sideEffectListener(SideEffect.ShowProfileLoadError(action.error))
-                    return state.copy(
-                        profileState = ProfileState.Error(action.error)
-                    )
-                }
                 is Action.Refresh -> {
-                    when (state.profileState) {
-                        is ProfileState.Empty,
-                        is ProfileState.Error -> {
-                            sideEffectListener.invoke(SideEffect.LoadUserProfile)
-                            return state.copy(profileState = ProfileState.Loading)
-                        }
-                        is ProfileState.Loading -> {
-                            return state
-                        }
-                        is ProfileState.Success -> {
-                            sideEffectListener(SideEffect.LoadPage(1))
-                            val newPagingState = when (state.pagingState) {
-                                PagingState.EMPTY,
-                                PagingState.EMPTY_ERROR,
-                                PagingState.EMPTY_PROGRESS -> PagingState.EMPTY_PROGRESS
-                                PagingState.DATA,
-                                PagingState.NEW_PAGE_PROGRESS,
-                                PagingState.FULL_DATA,
-                                PagingState.REFRESH -> PagingState.REFRESH
-                            }
-                            return state.copy(pagingState = newPagingState)
-                        }
+                    sideEffectListener(SideEffect.LoadPage(1))
+                    val newPagingState = when (state.pagingState) {
+                        PagingState.EMPTY,
+                        PagingState.EMPTY_ERROR,
+                        PagingState.EMPTY_PROGRESS -> PagingState.EMPTY_PROGRESS
+                        PagingState.DATA,
+                        PagingState.NEW_PAGE_PROGRESS,
+                        PagingState.FULL_DATA,
+                        PagingState.REFRESH -> PagingState.REFRESH
                     }
-
+                    return state.copy(pagingState = newPagingState)
                 }
                 is Action.LoadMore -> {
                     return when (state.pagingState) {
@@ -179,20 +139,6 @@ object ChatListUDF {
                         }
                         else -> state
                     }
-                }
-                is Action.CreateChat -> {
-                    if (state.profileState is ProfileState.Success) {
-                        val fakeStoreInfo = StoreInfo(
-                            "asd",
-                            "asd",
-                            123,
-                            "asd",
-                            123,
-                            state.profileState.userProfile
-                        )
-                        sideEffectListener.invoke(SideEffect.NavToCreateChat(fakeStoreInfo))
-                    }
-                    return state
                 }
                 is Action.NewMessage -> {
                     val targetPosition =

@@ -9,7 +9,6 @@ import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.entity.Chat
-import gb.smartchat.entity.StoreInfo
 import gb.smartchat.entity.request.PinChatRequest
 import gb.smartchat.publisher.ChatCreatedPublisher
 import gb.smartchat.publisher.ChatUnarchivePublisher
@@ -38,13 +37,9 @@ class ChatListViewModel(
     }
 
     private val compositeDisposable = CompositeDisposable()
-    private val showProfileErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
-    private val navToCreateChatCommand = BehaviorRelay.create<SingleEvent<StoreInfo>>()
     private val showErrorMessageCommand = BehaviorRelay.create<SingleEvent<String>>()
 
     val viewState: Observable<ChatListUDF.State> = Observable.wrap(store)
-    val showProfileErrorDialog: Observable<SingleEvent<String>> = showProfileErrorCommand.hide()
-    val navToCreateChat: Observable<SingleEvent<StoreInfo>> = navToCreateChatCommand.hide()
     val showErrorMessage: Observable<SingleEvent<String>> = showErrorMessageCommand.hide()
 
     init {
@@ -73,21 +68,11 @@ class ChatListViewModel(
     private fun setupStateMachine() {
         store.sideEffectListener = { sideEffect ->
             when (sideEffect) {
-                is ChatListUDF.SideEffect.LoadUserProfile -> {
-                    fetchUserProfile()
-                }
-                is ChatListUDF.SideEffect.ShowProfileLoadError -> {
-                    val message = resourceManager.getString(R.string.profile_error)
-                    showProfileErrorCommand.accept(SingleEvent(message))
-                }
                 is ChatListUDF.SideEffect.ErrorEvent -> {
                     Log.d(TAG, "errorEvent", sideEffect.error)
                 }
                 is ChatListUDF.SideEffect.LoadPage -> {
                     fetchPage(sideEffect.pageCount)
-                }
-                is ChatListUDF.SideEffect.NavToCreateChat -> {
-                    navToCreateChatCommand.accept(SingleEvent(sideEffect.storeInfo))
                 }
                 is ChatListUDF.SideEffect.PinChat -> {
                     pinChatOnServer(sideEffect.chat, sideEffect.pin)
@@ -134,19 +119,6 @@ class ChatListViewModel(
                     }
                 }
             }
-            .also { compositeDisposable.add(it) }
-    }
-
-    private fun fetchUserProfile() {
-        httpApi
-            .getUserProfile()
-            .map { it.result }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { store.accept(ChatListUDF.Action.ProfileSuccess(it)) },
-                { store.accept(ChatListUDF.Action.ProfileError(it)) }
-            )
             .also { compositeDisposable.add(it) }
     }
 
@@ -210,10 +182,6 @@ class ChatListViewModel(
                 { store.accept(ChatListUDF.Action.ArchiveChatError(it, chat, archive)) }
             )
             .also { compositeDisposable.add(it) }
-    }
-
-    fun onCreateChatClick() {
-        store.accept(ChatListUDF.Action.CreateChat)
     }
 
     fun onPinChatClick(chat: Chat, pin: Boolean) {

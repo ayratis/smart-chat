@@ -23,6 +23,7 @@ class ChatListProfileViewModel(
     private val showProfileErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
     private val navToCreateChatCommand = BehaviorRelay.create<SingleEvent<StoreInfo>>()
 
+    val viewState: Observable<ChatListProfileUDF.State> = store.hide()
     val showProfileErrorDialog: Observable<SingleEvent<String>> = showProfileErrorCommand.hide()
     val navToCreateChat: Observable<SingleEvent<StoreInfo>> = navToCreateChatCommand.hide()
 
@@ -41,6 +42,7 @@ class ChatListProfileViewModel(
                 }
             }
         }
+        store.accept(ChatListProfileUDF.Action.Refresh)
     }
 
     private fun fetchUserProfile() {
@@ -54,6 +56,10 @@ class ChatListProfileViewModel(
                 { store.accept(ChatListProfileUDF.Action.ProfileError(it)) }
             )
             .also { compositeDisposable.add(it) }
+    }
+
+    fun onCreateChatClick() {
+        store.accept(ChatListProfileUDF.Action.CreateChat)
     }
 
     override fun onCleared() {
