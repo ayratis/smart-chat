@@ -6,6 +6,7 @@ import gb.smartchat.entity.request.PinChatRequest
 import gb.smartchat.entity.response.BaseResponse
 import gb.smartchat.entity.response.ChatSearchResponse
 import gb.smartchat.entity.response.ContactListResponse
+import gb.smartchat.entity.response.PinChatResponse
 import io.reactivex.Single
 import okhttp3.MultipartBody
 import retrofit2.http.*
@@ -68,5 +69,10 @@ interface HttpApi {
     @POST("chat/management/pin")
     fun postPinChat(
         @Body request: PinChatRequest
-    ): Single<BaseResponse<Any>>
+    ): Single<BaseResponse<PinChatResponse>>
+
+    @POST("chat/management/unpin")
+    fun postUnpinChat(
+        @Body request: PinChatRequest
+    ): Single<BaseResponse<PinChatResponse>>
 }

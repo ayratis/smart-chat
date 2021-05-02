@@ -29,6 +29,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
 
     companion object {
         private const val PROFILE_ERROR_TAG = "profile error tag"
+        private const val PIN_ERROR_TAG = "pin error tag"
     }
 
     private var _binding: FragmentChatListBinding? = null
@@ -171,6 +172,16 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                         CreateChatFragment.create(storeInfo, CreateChatMode.SINGLE),
                         NavAnim.OPEN
                     )
+                }
+            }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.showPinError
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let { message ->
+                    MessageDialogFragment
+                        .create(message = message, tag = PIN_ERROR_TAG)
+                        .show(childFragmentManager, PIN_ERROR_TAG)
                 }
             }
             .also { compositeDisposable.add(it) }

@@ -16,7 +16,7 @@ class ChatViewHolder(
     private val binding: ItemChatBinding,
     private val userId: String,
     private val clickListener: (Chat) -> Unit,
-    private val pinListener: (Chat) -> Unit,
+    private val pinListener: (Chat, pin: Boolean) -> Unit,
 ) : RecyclerView.ViewHolder(binding.root) {
 
     companion object {
@@ -24,7 +24,7 @@ class ChatViewHolder(
             parent: ViewGroup,
             userId: String,
             clickListener: (Chat) -> Unit,
-            pinListener: (Chat) -> Unit
+            pinListener: (Chat, pin: Boolean) -> Unit
         ) = ChatViewHolder(
             ItemChatBinding.inflate(LayoutInflater.from(parent.context), parent, false),
             userId,
@@ -105,15 +105,23 @@ class ChatViewHolder(
             text = chat.agentName
             visible(!chat.agentName.isNullOrBlank())
         }
+        binding.ivPin.visible(chat.isPinned == true)
     }
 
     private fun showMenu() {
         val menu = android.widget.PopupMenu(itemView.context, itemView)
-        menu.inflate(R.menu.pin)
+        menu.inflate(
+            if (chat.isPinned == true) R.menu.unpin
+            else R.menu.pin
+        )
         menu.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.action_pin -> {
-                    pinListener.invoke(chat)
+                    pinListener.invoke(chat, true)
+                    return@setOnMenuItemClickListener true
+                }
+                R.id.action_unpin -> {
+                    pinListener.invoke(chat, false)
                     return@setOnMenuItemClickListener true
                 }
             }

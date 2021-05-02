@@ -9,7 +9,7 @@ import gb.smartchat.ui._global.view_holder.ChatViewHolder
 class ChatListAdapter(
     private val userId: String,
     private val clickListener: (Chat) -> Unit,
-    private val pinListener: (Chat) -> Unit,
+    private val pinListener: (Chat, pin: Boolean) -> Unit,
     private val nextPageCallback: () -> Unit,
 ) : ListAdapter<Chat, ChatViewHolder>(DiffUtilItemCallback()) {
 

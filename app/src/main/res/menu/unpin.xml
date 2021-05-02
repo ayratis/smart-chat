@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_pin"
+        android:id="@+id/action_unpin"
         app:showAsAction="withText"
-        android:icon="@drawable/ic_pin_24"
-        android:title="@string/pin" />
+        android:title="@string/unpin" />
 </menu>

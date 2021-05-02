@@ -56,9 +56,9 @@ object ChatListUDF {
         data class DeleteMessages(val deletedMessages: List<Message>) : Action()
         data class ChatUnreadMessageCountChanged(val chatId: Long, val unreadCount: Int) : Action()
         data class NewChatCreated(val chat: Chat) : Action()
-        data class PinChat(val chat: Chat) : Action()
-        data class PinChatSuccess(val chat: Chat) : Action()
-        data class PinChatError(val error: Throwable) : Action()
+        data class PinChat(val chat: Chat, val pin: Boolean) : Action()
+        data class PinChatSuccess(val chat: Chat, val pin: Boolean) : Action()
+        data class PinChatError(val error: Throwable, val chat: Chat, val pin: Boolean) : Action()
     }
 
     sealed class SideEffect {
@@ -67,7 +67,8 @@ object ChatListUDF {
         data class LoadPage(val pageCount: Int) : SideEffect()
         data class ErrorEvent(val error: Throwable) : SideEffect()
         data class NavToCreateChat(val storeInfo: StoreInfo) : SideEffect()
-        data class PinChat(val chat: Chat) : SideEffect()
+        data class PinChat(val chat: Chat, val pin: Boolean) : SideEffect()
+        data class ShowPinChatError(val error: Throwable, val pin: Boolean) : SideEffect()
     }
 
     class Store(private val userId: String) : ObservableSource<State>, Consumer<Action>,
@@ -318,13 +319,29 @@ object ChatListUDF {
                     return state.copy(chatList = newChatList, pagingState = newPagingState)
                 }
                 is Action.PinChat -> {
-                    return state //todo
+                    if (action.chat.isPinned == action.pin) return state
+                    sideEffectListener.invoke(SideEffect.PinChat(action.chat, action.pin))
+                    val newChat = action.chat.copy(isPinned = action.pin)
+                    val newChatList = state.chatList.toMutableList().apply {
+                        val pos = indexOf(action.chat)
+                        set(pos, newChat)
+                        sort()
+                    }
+                    return state.copy(chatList = newChatList)
                 }
                 is Action.PinChatSuccess -> {
-                    return state //todo
+                    return state
                 }
                 is Action.PinChatError -> {
-                    return state //todo
+                    sideEffectListener.invoke(SideEffect.ShowPinChatError(action.error, action.pin))
+                    val newChatList = state.chatList.toMutableList().apply {
+                        val pos = indexOfFirst { it.id == action.chat.id }
+                        if (pos >= 0) {
+                            set(pos, action.chat)
+                            sort()
+                        }
+                    }
+                    return state.copy(chatList = newChatList)
                 }
             }
         }
