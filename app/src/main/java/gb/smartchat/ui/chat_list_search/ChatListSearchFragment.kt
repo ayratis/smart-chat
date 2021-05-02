@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.Component
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListSearchBinding
+import gb.smartchat.entity.Chat
+import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -44,7 +46,7 @@ class ChatListSearchFragment : Fragment() {
     private val searchResultsAdapter by lazy {
         SearchResultsAdapter(
             userId = component.userId,
-            onChatClickListener = {},
+            onChatClickListener = this::navToChat,
             nextPageCallback = viewModel::loadMore
         )
     }
@@ -109,7 +111,15 @@ class ChatListSearchFragment : Fragment() {
     }
 
     override fun onPause() {
+        hideSoftInput()
         compositeDisposable.clear()
         super.onPause()
+    }
+
+    private fun navToChat(chat: Chat) {
+        parentFragmentManager.navigateTo(
+            ChatFragment.create(chat),
+            NavAnim.SLIDE
+        )
     }
 }
