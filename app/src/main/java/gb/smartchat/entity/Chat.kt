@@ -10,6 +10,8 @@ data class Chat(
     val id: Long,
     @SerializedName("name")
     val name: String?,
+    @SerializedName("avatar")
+    val avatar: String?,
     @SerializedName("store_name")
     val storeName: String?,
     @SerializedName("agent_name")

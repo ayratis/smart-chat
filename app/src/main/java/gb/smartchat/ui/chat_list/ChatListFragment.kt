@@ -17,10 +17,11 @@ import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListBinding
 import gb.smartchat.entity.Chat
+import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui.chat.ChatFragment
+import gb.smartchat.ui.chat_list_search.ChatListSearchFragment
 import gb.smartchat.ui.create_chat.CreateChatFragment
 import gb.smartchat.ui.create_chat.CreateChatMode
-import gb.smartchat.ui.custom.MessageDialogFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -40,7 +41,8 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
         ChatListAdapter(
             userId = component.userId,
             clickListener = this::navigateToChat,
-            pinListener = viewModel::onPinChatClick
+            pinListener = viewModel::onPinChatClick,
+            nextPageCallback = viewModel::loadMore
         )
     }
     private val viewModel: ChatListViewModel by viewModels {
@@ -82,6 +84,18 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 activity?.finish()
             }
             inflateMenu(R.menu.search)
+            setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.search -> {
+                        parentFragmentManager.navigateTo(
+                            ChatListSearchFragment(),
+                            NavAnim.OPEN
+                        )
+                        true
+                    }
+                    else -> false
+                }
+            }
         }
         binding.rvChatList.apply {
             addSystemBottomPadding()
@@ -109,6 +123,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
         viewModel.viewState
             .subscribe {
                 chatListAdapter.submitList(it.chatList)
+                chatListAdapter.fullData = it.pagingState == ChatListUDF.PagingState.FULL_DATA
             }
             .also { compositeDisposable.add(it) }
 

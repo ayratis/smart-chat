@@ -19,10 +19,10 @@ import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentGroupCompleteBinding
 import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.ui._global.MessageDialogFragment
+import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.chat_list.ChatListFragment
-import gb.smartchat.ui.custom.MessageDialogFragment
-import gb.smartchat.ui.custom.ProgressDialog
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 

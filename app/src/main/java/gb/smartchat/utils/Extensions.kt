@@ -13,11 +13,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.view.inputmethod.InputMethodManager
 import androidx.annotation.*
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
@@ -324,4 +326,18 @@ fun StoreInfo.toCreateChatRequest(contacts: List<Contact>): CreateChatRequest {
         agentCode,
         contacts + myContact
     )
+}
+
+fun View.showSoftInput() {
+    if (requestFocus()) {
+        (context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+            .showSoftInput(this, 0)
+    }
+}
+
+fun Fragment.hideSoftInput() {
+    view?.let {
+        (context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
+            ?.hideSoftInputFromWindow(it.windowToken, 0)
+    }
 }

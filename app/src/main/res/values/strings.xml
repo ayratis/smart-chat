@@ -34,5 +34,6 @@
     <string name="upload_photo">Загрузить фотографию</string>
     <string name="group_name">Название группы</string>
     <string name="member_count_d">Список участников: %d</string>
+    <string name="clear">Очистить</string>
     <string name="pin">Закрепить</string>
 </resources>

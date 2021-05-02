@@ -161,4 +161,8 @@ class ChatListViewModel(
     fun onPinChatClick(chat: Chat) {
         store.accept(ChatListUDF.Action.PinChat(chat))
     }
+
+    fun loadMore() {
+        store.accept(ChatListUDF.Action.LoadMore)
+    }
 }

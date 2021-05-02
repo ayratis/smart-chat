@@ -17,9 +17,9 @@ import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentCreateChatBinding
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.ui._global.MessageDialogFragment
+import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.ui.chat.ChatFragment
-import gb.smartchat.ui.custom.MessageDialogFragment
-import gb.smartchat.ui.custom.ProgressDialog
 import gb.smartchat.ui.group_complete.GroupCompleteFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
@@ -110,8 +110,8 @@ class CreateChatFragment : Fragment() {
             setNavigationOnClickListener {
                 parentFragmentManager.popBackStack()
             }
-            inflateMenu(R.menu.search)
-            (menu.findItem(R.id.search).actionView as SearchView).setOnQueryTextListener(
+            inflateMenu(R.menu.search_with_action)
+            (menu.findItem(R.id.search_with_action).actionView as SearchView).setOnQueryTextListener(
                 object : SearchView.OnQueryTextListener {
                     override fun onQueryTextSubmit(query: String?): Boolean {
                         viewModel.onQueryTextSubmit(query)
