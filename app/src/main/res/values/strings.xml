@@ -35,4 +35,8 @@
     <string name="group_name">Название группы</string>
     <string name="member_count_d">Список участников: %d</string>
     <string name="clear">Очистить</string>
+    <string name="pin">Закрепить</string>
+    <string name="unpin">Открепить</string>
+    <string name="pin_error">Произошла ошибка при закреплении чата</string>
+    <string name="unpin_error">Произошла ошибка при откреплении чата</string>
 </resources>

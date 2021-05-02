@@ -8,7 +8,9 @@ import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
+import gb.smartchat.entity.Chat
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.entity.request.PinChatRequest
 import gb.smartchat.publisher.ChatCreatedPublisher
 import gb.smartchat.publisher.ChatUnreadMessageCountPublisher
 import gb.smartchat.publisher.MessageReadInternalPublisher
@@ -35,14 +37,12 @@ class ChatListViewModel(
     private val compositeDisposable = CompositeDisposable()
     private val showProfileErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
     private val navToCreateChatCommand = BehaviorRelay.create<SingleEvent<StoreInfo>>()
+    private val showPinErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
 
     val viewState: Observable<ChatListUDF.State> = Observable.wrap(store)
     val showProfileErrorDialog: Observable<SingleEvent<String>> = showProfileErrorCommand.hide()
     val navToCreateChat: Observable<SingleEvent<StoreInfo>> = navToCreateChatCommand.hide()
-
-    override fun onCleared() {
-        compositeDisposable.dispose()
-    }
+    val showPinError: Observable<SingleEvent<String>> = showPinErrorCommand.hide()
 
     init {
         setupStateMachine()
@@ -80,6 +80,16 @@ class ChatListViewModel(
                 }
                 is ChatListUDF.SideEffect.NavToCreateChat -> {
                     navToCreateChatCommand.accept(SingleEvent(sideEffect.storeInfo))
+                }
+                is ChatListUDF.SideEffect.PinChat -> {
+                    pinChatOnServer(sideEffect.chat, sideEffect.pin)
+                }
+                is ChatListUDF.SideEffect.ShowPinChatError -> {
+                    val message = resourceManager.getString(
+                        if (sideEffect.pin) R.string.pin_error
+                        else R.string.unpin_error
+                    )
+                    showPinErrorCommand.accept(SingleEvent(message))
                 }
             }
         }
@@ -137,11 +147,39 @@ class ChatListViewModel(
             .also { compositeDisposable.add(it) }
     }
 
+    private fun pinChatOnServer(chat: Chat, pin: Boolean) {
+        val requestBody = PinChatRequest(chat.id)
+        val pinRequest =
+            if (pin) httpApi.postPinChat(requestBody)
+            else httpApi.postUnpinChat(requestBody)
+
+        pinRequest
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .map {
+                if (!it.result.success) throw RuntimeException("pin chat server error")
+                it.result.success
+            }
+            .subscribe(
+                { store.accept(ChatListUDF.Action.PinChatSuccess(chat, pin)) },
+                { store.accept(ChatListUDF.Action.PinChatError(it, chat, pin)) }
+            )
+            .also { compositeDisposable.add(it) }
+    }
+
     fun onCreateChatClick() {
         store.accept(ChatListUDF.Action.CreateChat)
     }
 
+    fun onPinChatClick(chat: Chat, pin: Boolean) {
+        store.accept(ChatListUDF.Action.PinChat(chat, pin))
+    }
+
     fun loadMore() {
         store.accept(ChatListUDF.Action.LoadMore)
+    }
+
+    override fun onCleared() {
+        compositeDisposable.dispose()
     }
 }

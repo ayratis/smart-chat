@@ -9,13 +9,14 @@ import gb.smartchat.ui._global.view_holder.ChatViewHolder
 class ChatListAdapter(
     private val userId: String,
     private val clickListener: (Chat) -> Unit,
+    private val pinListener: (Chat, pin: Boolean) -> Unit,
     private val nextPageCallback: () -> Unit,
 ) : ListAdapter<Chat, ChatViewHolder>(DiffUtilItemCallback()) {
 
     var fullData = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
-        return ChatViewHolder.create(parent, userId, clickListener)
+        return ChatViewHolder.create(parent, userId, clickListener, pinListener)
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {

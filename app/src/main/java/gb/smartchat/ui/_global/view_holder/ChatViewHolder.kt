@@ -1,6 +1,7 @@
 package gb.smartchat.ui._global.view_holder
 
 import android.graphics.drawable.Drawable
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -16,17 +17,20 @@ class ChatViewHolder(
     private val binding: ItemChatBinding,
     private val userId: String,
     private val clickListener: (Chat) -> Unit,
+    private val pinListener: (Chat, pin: Boolean) -> Unit,
 ) : RecyclerView.ViewHolder(binding.root) {
 
     companion object {
         fun create(
             parent: ViewGroup,
             userId: String,
-            clickListener: (Chat) -> Unit
+            clickListener: (Chat) -> Unit,
+            pinListener: (Chat, pin: Boolean) -> Unit
         ) = ChatViewHolder(
             ItemChatBinding.inflate(LayoutInflater.from(parent.context), parent, false),
             userId,
-            clickListener
+            clickListener,
+            pinListener
         )
     }
 
@@ -48,6 +52,11 @@ class ChatViewHolder(
     init {
         itemView.setOnClickListener {
             clickListener.invoke(chat)
+        }
+
+        itemView.setOnLongClickListener {
+            showMenu()
+            true
         }
     }
 
@@ -97,5 +106,34 @@ class ChatViewHolder(
             text = chat.agentName
             visible(!chat.agentName.isNullOrBlank())
         }
+        binding.ivPin.visible(chat.isPinned == true)
+    }
+
+    private fun showMenu() {
+        val menu = android.widget.PopupMenu(itemView.context, itemView)
+        menu.inflate(
+            if (chat.isPinned == true) R.menu.unpin
+            else R.menu.pin
+        )
+        menu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.action_pin -> {
+                    pinListener.invoke(chat, true)
+                    return@setOnMenuItemClickListener true
+                }
+                R.id.action_unpin -> {
+                    pinListener.invoke(chat, false)
+                    return@setOnMenuItemClickListener true
+                }
+            }
+            false
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            menu.gravity = Gravity.END
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            menu.setForceShowIcon(true)
+        }
+        menu.show()
     }
 }

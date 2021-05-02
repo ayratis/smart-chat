@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListBinding
+import gb.smartchat.entity.Chat
 import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.chat_list_search.ChatListSearchFragment
@@ -28,6 +29,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
 
     companion object {
         private const val PROFILE_ERROR_TAG = "profile error tag"
+        private const val PIN_ERROR_TAG = "pin error tag"
     }
 
     private var _binding: FragmentChatListBinding? = null
@@ -39,13 +41,8 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
     private val chatListAdapter by lazy {
         ChatListAdapter(
             userId = component.userId,
-            clickListener = { chat ->
-                parentFragmentManager.navigateTo(
-                    ChatFragment.create(chat),
-                    NavAnim.SLIDE
-                )
-                parentFragmentManager.executePendingTransactions()
-            },
+            clickListener = this::navigateToChat,
+            pinListener = viewModel::onPinChatClick,
             nextPageCallback = viewModel::loadMore
         )
     }
@@ -178,6 +175,23 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 }
             }
             .also { compositeDisposable.add(it) }
+
+        viewModel.showPinError
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let { message ->
+                    MessageDialogFragment
+                        .create(message = message, tag = PIN_ERROR_TAG)
+                        .show(childFragmentManager, PIN_ERROR_TAG)
+                }
+            }
+            .also { compositeDisposable.add(it) }
+    }
+
+    private fun navigateToChat(chat: Chat) {
+        parentFragmentManager.navigateTo(
+            ChatFragment.create(chat),
+            NavAnim.SLIDE
+        )
     }
 
     override fun onPause() {
