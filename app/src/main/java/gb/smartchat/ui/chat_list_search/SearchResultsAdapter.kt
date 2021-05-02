@@ -15,7 +15,14 @@ class SearchResultsAdapter(
     var fullData: Boolean = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
-        return ChatViewHolder.create(parent, userId, onChatClickListener, { _, _ -> })
+        return ChatViewHolder.create(
+            parent,
+            userId,
+            false,
+            onChatClickListener,
+            null,
+            null
+        )
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {

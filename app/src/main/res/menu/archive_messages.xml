@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_pin"
+        android:id="@+id/action_archive_messages"
         app:showAsAction="withText"
-        android:title="@string/pin" />
+        android:title="@string/archive_messages" />
 </menu>

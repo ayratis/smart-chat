@@ -39,4 +39,9 @@
     <string name="unpin">Открепить</string>
     <string name="pin_error">Произошла ошибка при закреплении чата</string>
     <string name="unpin_error">Произошла ошибка при откреплении чата</string>
+    <string name="archive">В архив</string>
+    <string name="archive_messages">Архив</string>
+    <string name="unarchive">Разархивировать</string>
+    <string name="archive_error">Произошла ошибка при архивации чата</string>
+    <string name="unarchive_error">Произошла ошибка при разархивации чата</string>
 </resources>

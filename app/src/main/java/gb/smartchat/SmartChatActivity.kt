@@ -41,7 +41,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         if (savedInstanceState == null) {
             supportFragmentManager
                 .beginTransaction()
-                .replace(R.id.fragment_container, ChatListFragment())
+                .replace(R.id.fragment_container, ChatListFragment.create(false))
                 .commitNow()
         }
     }

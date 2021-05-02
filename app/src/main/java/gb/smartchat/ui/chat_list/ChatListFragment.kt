@@ -30,19 +30,31 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
     companion object {
         private const val PROFILE_ERROR_TAG = "profile error tag"
         private const val PIN_ERROR_TAG = "pin error tag"
+        private const val ARG_IS_ARCHIVE = "arg is archive"
+
+        fun create(isArchive: Boolean) = ChatListFragment().apply {
+            arguments = Bundle().apply {
+                putBoolean(ARG_IS_ARCHIVE, isArchive)
+            }
+        }
     }
 
     private var _binding: FragmentChatListBinding? = null
     private val binding: FragmentChatListBinding get() = _binding!!
     private val compositeDisposable = CompositeDisposable()
+    private val argIsArchive by lazy {
+        requireArguments().getBoolean(ARG_IS_ARCHIVE)
+    }
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
     private val chatListAdapter by lazy {
         ChatListAdapter(
             userId = component.userId,
+            isArchive = argIsArchive,
             clickListener = this::navigateToChat,
             pinListener = viewModel::onPinChatClick,
+            archiveListener = viewModel::onArchiveChatClick,
             nextPageCallback = viewModel::loadMore
         )
     }
@@ -51,13 +63,15 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatListViewModel(
+                    argIsArchive,
                     ChatListUDF.Store(component.userId),
                     component.httpApi,
                     component.socketApi,
                     component.resourceManager,
                     component.chatCreatedPublisher,
                     component.messageReadInternalPublisher,
-                    component.chatUnreadMessageCountPublisher
+                    component.chatUnreadMessageCountPublisher,
+                    component.chatUnarchivePublisher
                 ) as T
             }
         }
@@ -81,16 +95,25 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
         super.onViewCreated(view, savedInstanceState)
         binding.appBarLayout.addSystemTopPadding()
         binding.toolbar.apply {
+
             setNavigationOnClickListener {
                 activity?.finish()
             }
             inflateMenu(R.menu.search)
+            inflateMenu(R.menu.archive_messages)
             setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.search -> {
                         parentFragmentManager.navigateTo(
                             ChatListSearchFragment(),
                             NavAnim.OPEN
+                        )
+                        true
+                    }
+                    R.id.action_archive_messages -> {
+                        parentFragmentManager.navigateTo(
+                            create(true),
+                            NavAnim.SLIDE
                         )
                         true
                     }
@@ -176,7 +199,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
             }
             .also { compositeDisposable.add(it) }
 
-        viewModel.showPinError
+        viewModel.showErrorMessage
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let { message ->
                     MessageDialogFragment
