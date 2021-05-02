@@ -1,6 +1,7 @@
 package gb.smartchat.ui._global.view_holder
 
 import android.graphics.drawable.Drawable
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -126,6 +127,9 @@ class ChatViewHolder(
                 }
             }
             false
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            menu.gravity = Gravity.END
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             menu.setForceShowIcon(true)
