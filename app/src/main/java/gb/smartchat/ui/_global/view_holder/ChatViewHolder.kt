@@ -16,21 +16,27 @@ import java.time.format.DateTimeFormatter
 class ChatViewHolder(
     private val binding: ItemChatBinding,
     private val userId: String,
+    private val isArchive: Boolean,
     private val clickListener: (Chat) -> Unit,
-    private val pinListener: (Chat, pin: Boolean) -> Unit,
+    private val pinListener: ((Chat, pin: Boolean) -> Unit)?,
+    private val archiveListener: ((Chat, archive: Boolean) -> Unit)?
 ) : RecyclerView.ViewHolder(binding.root) {
 
     companion object {
         fun create(
             parent: ViewGroup,
             userId: String,
+            isArchive: Boolean,
             clickListener: (Chat) -> Unit,
-            pinListener: (Chat, pin: Boolean) -> Unit
+            pinListener: ((Chat, pin: Boolean) -> Unit)?,
+            archiveListener: ((Chat, archive: Boolean) -> Unit)?
         ) = ChatViewHolder(
             ItemChatBinding.inflate(LayoutInflater.from(parent.context), parent, false),
             userId,
+            isArchive,
             clickListener,
-            pinListener
+            pinListener,
+            archiveListener
         )
     }
 
@@ -111,22 +117,38 @@ class ChatViewHolder(
 
     private fun showMenu() {
         val menu = android.widget.PopupMenu(itemView.context, itemView)
-        menu.inflate(
-            if (chat.isPinned == true) R.menu.unpin
-            else R.menu.pin
-        )
+        if (pinListener != null) {
+            menu.inflate(
+                if (chat.isPinned == true) R.menu.unpin
+                else R.menu.pin
+            )
+        }
+        if (archiveListener != null) {
+            menu.inflate(
+                if (isArchive) R.menu.unarhcive
+                else R.menu.arhcive
+            )
+        }
         menu.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.action_pin -> {
-                    pinListener.invoke(chat, true)
-                    return@setOnMenuItemClickListener true
+                    pinListener?.invoke(chat, true)
+                    true
                 }
                 R.id.action_unpin -> {
-                    pinListener.invoke(chat, false)
-                    return@setOnMenuItemClickListener true
+                    pinListener?.invoke(chat, false)
+                    true
                 }
+                R.id.action_archive -> {
+                    archiveListener?.invoke(chat, true)
+                    true
+                }
+                R.id.action_unarchive -> {
+                    archiveListener?.invoke(chat, false)
+                    true
+                }
+                else -> false
             }
-            false
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             menu.gravity = Gravity.END

@@ -9,9 +9,9 @@ import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.entity.Chat
-import gb.smartchat.entity.StoreInfo
 import gb.smartchat.entity.request.PinChatRequest
 import gb.smartchat.publisher.ChatCreatedPublisher
+import gb.smartchat.publisher.ChatUnarchivePublisher
 import gb.smartchat.publisher.ChatUnreadMessageCountPublisher
 import gb.smartchat.publisher.MessageReadInternalPublisher
 import gb.smartchat.utils.SingleEvent
@@ -21,13 +21,15 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 
 class ChatListViewModel(
+    private val isArchive: Boolean,
     private val store: ChatListUDF.Store,
     private val httpApi: HttpApi,
     private val socketApi: SocketApi,
     private val resourceManager: ResourceManager,
     chatCreatedPublisher: ChatCreatedPublisher,
     messageReadInternalPublisher: MessageReadInternalPublisher,
-    chatUnreadMessageCountPublisher: ChatUnreadMessageCountPublisher
+    chatUnreadMessageCountPublisher: ChatUnreadMessageCountPublisher,
+    private val chatUnarchivePublisher: ChatUnarchivePublisher
 ) : ViewModel() {
 
     companion object {
@@ -35,14 +37,10 @@ class ChatListViewModel(
     }
 
     private val compositeDisposable = CompositeDisposable()
-    private val showProfileErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
-    private val navToCreateChatCommand = BehaviorRelay.create<SingleEvent<StoreInfo>>()
-    private val showPinErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
+    private val showErrorMessageCommand = BehaviorRelay.create<SingleEvent<String>>()
 
     val viewState: Observable<ChatListUDF.State> = Observable.wrap(store)
-    val showProfileErrorDialog: Observable<SingleEvent<String>> = showProfileErrorCommand.hide()
-    val navToCreateChat: Observable<SingleEvent<StoreInfo>> = navToCreateChatCommand.hide()
-    val showPinError: Observable<SingleEvent<String>> = showPinErrorCommand.hide()
+    val showErrorMessage: Observable<SingleEvent<String>> = showErrorMessageCommand.hide()
 
     init {
         setupStateMachine()
@@ -60,26 +58,21 @@ class ChatListViewModel(
                 store.accept(ChatListUDF.Action.ChatUnreadMessageCountChanged(it.first, it.second))
             }
             .also { compositeDisposable.add(it) }
+        if (!isArchive) {
+            chatUnarchivePublisher
+                .subscribe { store.accept(ChatListUDF.Action.ChatUnarchived(it)) }
+                .also { compositeDisposable.add(it) }
+        }
     }
 
     private fun setupStateMachine() {
         store.sideEffectListener = { sideEffect ->
             when (sideEffect) {
-                is ChatListUDF.SideEffect.LoadUserProfile -> {
-                    fetchUserProfile()
-                }
-                is ChatListUDF.SideEffect.ShowProfileLoadError -> {
-                    val message = resourceManager.getString(R.string.profile_error)
-                    showProfileErrorCommand.accept(SingleEvent(message))
-                }
                 is ChatListUDF.SideEffect.ErrorEvent -> {
                     Log.d(TAG, "errorEvent", sideEffect.error)
                 }
                 is ChatListUDF.SideEffect.LoadPage -> {
                     fetchPage(sideEffect.pageCount)
-                }
-                is ChatListUDF.SideEffect.NavToCreateChat -> {
-                    navToCreateChatCommand.accept(SingleEvent(sideEffect.storeInfo))
                 }
                 is ChatListUDF.SideEffect.PinChat -> {
                     pinChatOnServer(sideEffect.chat, sideEffect.pin)
@@ -89,7 +82,17 @@ class ChatListViewModel(
                         if (sideEffect.pin) R.string.pin_error
                         else R.string.unpin_error
                     )
-                    showPinErrorCommand.accept(SingleEvent(message))
+                    showErrorMessageCommand.accept(SingleEvent(message))
+                }
+                is ChatListUDF.SideEffect.ArchiveChat -> {
+                    archiveChatOnServer(sideEffect.chat, sideEffect.archive)
+                }
+                is ChatListUDF.SideEffect.ShowArchiveChatError -> {
+                    val message = resourceManager.getString(
+                        if (sideEffect.archive) R.string.archive_error
+                        else R.string.unarchive_error
+                    )
+                    showErrorMessageCommand.accept(SingleEvent(message))
                 }
             }
         }
@@ -112,21 +115,10 @@ class ChatListViewModel(
                     is SocketEvent.MessagesDeleted -> {
                         store.accept(ChatListUDF.Action.DeleteMessages(socketEvent.messages))
                     }
+                    else -> {
+                    }
                 }
             }
-            .also { compositeDisposable.add(it) }
-    }
-
-    private fun fetchUserProfile() {
-        httpApi
-            .getUserProfile()
-            .map { it.result }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { store.accept(ChatListUDF.Action.ProfileSuccess(it)) },
-                { store.accept(ChatListUDF.Action.ProfileError(it)) }
-            )
             .also { compositeDisposable.add(it) }
     }
 
@@ -135,7 +127,7 @@ class ChatListViewModel(
             .getChatList(
                 pageCount = pageCount,
                 pageSize = ChatListUDF.DEFAULT_PAGE_SIZE,
-                fromArchive = null
+                fromArchive = isArchive
             )
             .map { it.result }
             .subscribeOn(Schedulers.io())
@@ -167,12 +159,37 @@ class ChatListViewModel(
             .also { compositeDisposable.add(it) }
     }
 
-    fun onCreateChatClick() {
-        store.accept(ChatListUDF.Action.CreateChat)
+    private fun archiveChatOnServer(chat: Chat, archive: Boolean) {
+        val requestBody = PinChatRequest(chat.id)
+        val archiveRequest =
+            if (archive) httpApi.postArchiveChat(requestBody)
+            else httpApi.postUnarchiveChat(requestBody)
+
+        archiveRequest
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .map {
+                if (!it.result.success) throw RuntimeException("pin chat server error")
+                it.result.success
+            }
+            .doOnSuccess {
+                if (!archive) {
+                    chatUnarchivePublisher.accept(chat)
+                }
+            }
+            .subscribe(
+                { store.accept(ChatListUDF.Action.ArchiveChatSuccess(chat, archive)) },
+                { store.accept(ChatListUDF.Action.ArchiveChatError(it, chat, archive)) }
+            )
+            .also { compositeDisposable.add(it) }
     }
 
     fun onPinChatClick(chat: Chat, pin: Boolean) {
         store.accept(ChatListUDF.Action.PinChat(chat, pin))
+    }
+
+    fun onArchiveChatClick(chat: Chat, archive: Boolean) {
+        store.accept(ChatListUDF.Action.ArchiveChat(chat, archive))
     }
 
     fun loadMore() {

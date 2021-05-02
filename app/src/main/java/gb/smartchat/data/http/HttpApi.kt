@@ -75,4 +75,14 @@ interface HttpApi {
     fun postUnpinChat(
         @Body request: PinChatRequest
     ): Single<BaseResponse<PinChatResponse>>
+
+    @POST("chat/management/archive")
+    fun postArchiveChat(
+        @Body request: PinChatRequest
+    ): Single<BaseResponse<PinChatResponse>>
+
+    @POST("chat/management/unarchive")
+    fun postUnarchiveChat(
+        @Body request: PinChatRequest
+    ): Single<BaseResponse<PinChatResponse>>
 }

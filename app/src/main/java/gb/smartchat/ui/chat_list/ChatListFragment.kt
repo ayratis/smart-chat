@@ -30,19 +30,31 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
     companion object {
         private const val PROFILE_ERROR_TAG = "profile error tag"
         private const val PIN_ERROR_TAG = "pin error tag"
+        private const val ARG_IS_ARCHIVE = "arg is archive"
+
+        fun create(isArchive: Boolean) = ChatListFragment().apply {
+            arguments = Bundle().apply {
+                putBoolean(ARG_IS_ARCHIVE, isArchive)
+            }
+        }
     }
 
     private var _binding: FragmentChatListBinding? = null
     private val binding: FragmentChatListBinding get() = _binding!!
     private val compositeDisposable = CompositeDisposable()
+    private val argIsArchive by lazy {
+        requireArguments().getBoolean(ARG_IS_ARCHIVE)
+    }
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
     private val chatListAdapter by lazy {
         ChatListAdapter(
             userId = component.userId,
+            isArchive = argIsArchive,
             clickListener = this::navigateToChat,
             pinListener = viewModel::onPinChatClick,
+            archiveListener = viewModel::onArchiveChatClick,
             nextPageCallback = viewModel::loadMore
         )
     }
@@ -51,13 +63,28 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatListViewModel(
+                    argIsArchive,
                     ChatListUDF.Store(component.userId),
                     component.httpApi,
                     component.socketApi,
                     component.resourceManager,
                     component.chatCreatedPublisher,
                     component.messageReadInternalPublisher,
-                    component.chatUnreadMessageCountPublisher
+                    component.chatUnreadMessageCountPublisher,
+                    component.chatUnarchivePublisher
+                ) as T
+            }
+        }
+    }
+
+    private val profileViewModel: ChatListProfileViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return ChatListProfileViewModel(
+                    component.httpApi,
+                    ChatListProfileUDF.Store(),
+                    component.resourceManager,
                 ) as T
             }
         }
@@ -80,47 +107,130 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.appBarLayout.addSystemTopPadding()
-        binding.toolbar.apply {
-            setNavigationOnClickListener {
+        registerOnBackPress {
+            if (argIsArchive) {
+                parentFragmentManager.popBackStack()
+            } else {
                 activity?.finish()
             }
-            inflateMenu(R.menu.search)
-            setOnMenuItemClickListener { menuItem ->
-                when (menuItem.itemId) {
-                    R.id.search -> {
-                        parentFragmentManager.navigateTo(
-                            ChatListSearchFragment(),
-                            NavAnim.OPEN
-                        )
-                        true
-                    }
-                    else -> false
-                }
-            }
         }
+
         binding.rvChatList.apply {
             addSystemBottomPadding()
             setHasFixedSize(true)
             layoutManager = LinearLayoutManager(context)
             adapter = chatListAdapter
         }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            binding.btnCreateChat.doOnApplyWindowInsets { _, insets, _ ->
-                binding.btnCreateChat.updateLayoutParams<CoordinatorLayout.LayoutParams> {
-                    bottomMargin = 16.dp(binding.btnCreateChat) + insets.systemWindowInsetBottom
+        if (argIsArchive) {
+            binding.profileContent.visible(false)
+            binding.toolbar.apply {
+                setTitleTextColor(context.color(R.color.black))
+                title = getString(R.string.archive_messages)
+                setNavigationOnClickListener {
+                    parentFragmentManager.popBackStack()
                 }
-                insets
             }
-        }
-
-        binding.btnCreateChat.setOnClickListener {
-            viewModel.onCreateChatClick()
+            binding.btnCreateChat.visible(false)
+        } else {
+            binding.toolbar.apply {
+                setTitleTextColor(context.color(R.color.gray))
+                setNavigationOnClickListener {
+                    activity?.finish()
+                }
+                inflateMenu(R.menu.search)
+                inflateMenu(R.menu.archive_messages)
+                setOnMenuItemClickListener { menuItem ->
+                    when (menuItem.itemId) {
+                        R.id.search -> {
+                            dismissPopupMenus()
+                            parentFragmentManager.navigateTo(
+                                ChatListSearchFragment(),
+                                NavAnim.OPEN
+                            )
+                            true
+                        }
+                        R.id.action_archive_messages -> {
+                            dismissPopupMenus()
+                            parentFragmentManager.navigateTo(
+                                create(true),
+                                NavAnim.SLIDE
+                            )
+                            true
+                        }
+                        else -> false
+                    }
+                }
+            }
+            binding.btnCreateChat.apply {
+                visible(true)
+                setOnClickListener {
+                    profileViewModel.onCreateChatClick()
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    doOnApplyWindowInsets { _, insets, _ ->
+                        updateLayoutParams<CoordinatorLayout.LayoutParams> {
+                            bottomMargin = 16.dp(this@apply) + insets.systemWindowInsetBottom
+                        }
+                        insets
+                    }
+                }
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
+
+        if (!argIsArchive) {
+            profileViewModel.viewState
+                .subscribe { profileState ->
+                    when (profileState) {
+                        is ChatListProfileUDF.State.Error -> {
+                            binding.toolbar.title = null
+                            binding.profileContent.visible(false)
+                        }
+                        is ChatListProfileUDF.State.Empty,
+                        is ChatListProfileUDF.State.Loading -> {
+                            binding.toolbar.title = getString(R.string.refreshing)
+                            binding.profileContent.visible(false)
+                        }
+                        is ChatListProfileUDF.State.Success -> {
+                            binding.toolbar.title = null
+                            binding.profileContent.visible(true)
+                            Glide.with(binding.ivProfileAvatar)
+                                .load(profileState.userProfile.avatar)
+                                .placeholder(R.drawable.profile_avatar_placeholder)
+                                .circleCrop()
+                                .into(binding.ivProfileAvatar)
+                            binding.tvProfileName.text = profileState.userProfile.name
+                        }
+                    }
+                }
+                .also { compositeDisposable.add(it) }
+
+            profileViewModel.showProfileErrorDialog
+                .subscribe { event ->
+                    event.getContentIfNotHandled()?.let {
+                        MessageDialogFragment
+                            .create(message = it, tag = PROFILE_ERROR_TAG)
+                            .show(childFragmentManager, PROFILE_ERROR_TAG)
+                    }
+                }
+                .also { compositeDisposable.add(it) }
+
+            profileViewModel.navToCreateChat
+                .subscribe { event ->
+                    event.getContentIfNotHandled()?.let { storeInfo ->
+                        parentFragmentManager.navigateTo(
+                            CreateChatFragment.create(storeInfo, CreateChatMode.SINGLE),
+                            NavAnim.OPEN
+                        )
+                    }
+                }
+                .also { compositeDisposable.add(it) }
+
+        }
+
         viewModel.viewState
             .subscribe {
                 chatListAdapter.submitList(it.chatList)
@@ -128,55 +238,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
             }
             .also { compositeDisposable.add(it) }
 
-        viewModel.viewState
-            .map { it.profileState }
-            .subscribe { profileState ->
-                when (profileState) {
-                    is ChatListUDF.ProfileState.Error -> {
-                        binding.toolbar.title = null
-                        binding.toolbarContent.visible(false)
-                    }
-                    is ChatListUDF.ProfileState.Empty,
-                    is ChatListUDF.ProfileState.Loading -> {
-                        binding.toolbar.title = getString(R.string.refreshing)
-                        binding.toolbarContent.visible(false)
-                    }
-                    is ChatListUDF.ProfileState.Success -> {
-                        binding.toolbar.title = null
-                        binding.toolbarContent.visible(true)
-                        Glide.with(binding.ivProfileAvatar)
-                            .load(profileState.userProfile.avatar)
-                            .placeholder(R.drawable.profile_avatar_placeholder)
-                            .circleCrop()
-                            .into(binding.ivProfileAvatar)
-                        binding.tvProfileName.text = profileState.userProfile.name
-                    }
-                }
-            }
-            .also { compositeDisposable.add(it) }
-
-        viewModel.showProfileErrorDialog
-            .subscribe { event ->
-                event.getContentIfNotHandled()?.let {
-                    MessageDialogFragment
-                        .create(message = it, tag = PROFILE_ERROR_TAG)
-                        .show(childFragmentManager, PROFILE_ERROR_TAG)
-                }
-            }
-            .also { compositeDisposable.add(it) }
-
-        viewModel.navToCreateChat
-            .subscribe { event ->
-                event.getContentIfNotHandled()?.let { storeInfo ->
-                    parentFragmentManager.navigateTo(
-                        CreateChatFragment.create(storeInfo, CreateChatMode.SINGLE),
-                        NavAnim.OPEN
-                    )
-                }
-            }
-            .also { compositeDisposable.add(it) }
-
-        viewModel.showPinError
+        viewModel.showErrorMessage
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let { message ->
                     MessageDialogFragment
