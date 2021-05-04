@@ -22,6 +22,7 @@ import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.chat_list_search.ChatListSearchFragment
 import gb.smartchat.ui.create_chat.CreateChatFragment
 import gb.smartchat.ui.create_chat.CreateChatMode
+import gb.smartchat.ui.user_profile.UserProfileFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -203,6 +204,12 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                                 .circleCrop()
                                 .into(binding.ivProfileAvatar)
                             binding.tvProfileName.text = profileState.userProfile.name
+                            binding.profileContent.setOnClickListener {
+                                parentFragmentManager.navigateTo(
+                                    UserProfileFragment.create(profileState.userProfile),
+                                    NavAnim.SLIDE
+                                )
+                            }
                         }
                     }
                 }

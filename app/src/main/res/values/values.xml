@@ -54,4 +54,10 @@
         <item name="fontFamily">@font/gerbera_medium</item>
     </style>
 
+    <style name="H3">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="fontFamily">@font/gerbera_medium</item>
+    </style>
+
 </resources>
