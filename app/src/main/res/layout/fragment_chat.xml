@@ -11,6 +11,7 @@
         android:layout_height="wrap_content">
 
         <LinearLayout
+            android:id="@+id/chat_profile_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -21,16 +22,18 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 app:navigationIcon="@drawable/ic_baseline_arrow_back_24"
-                tools:subtitle="158579 ООО Мясокомбинат"
                 app:subtitleTextColor="@color/razzmatazz"
+                tools:subtitle="158579 ООО Мясокомбинат"
                 tools:title="@string/app_name" />
 
-            <ImageButton
+            <ImageView
+                android:id="@+id/iv_chat_avatar"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_gravity="center_vertical"
                 android:layout_marginHorizontal="14dp"
                 android:background="?attr/actionBarItemBackground"
+                android:contentDescription="@null"
                 android:padding="2dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/group_avatar_placeholder" />
@@ -41,9 +44,9 @@
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/content"
-        android:layout_below="@id/app_bar_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_below="@id/app_bar_layout">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_chat"
@@ -54,11 +57,11 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_mentions"
-            tools:listitem="@layout/item_mention"
-            tools:itemCount="4"
-            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+            tools:itemCount="4"
+            tools:listitem="@layout/item_mention" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
