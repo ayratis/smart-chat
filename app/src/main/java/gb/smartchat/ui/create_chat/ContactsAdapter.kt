@@ -5,7 +5,12 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.entity.Contact
-import gb.smartchat.ui.create_chat.view_holder.*
+import gb.smartchat.ui._global.view_holder.ErrorViewHolder
+import gb.smartchat.ui._global.view_holder.ProgressViewHolder
+import gb.smartchat.ui.create_chat.view_holder.ContactGroupViewHolder
+import gb.smartchat.ui.create_chat.view_holder.ContactViewHolder
+import gb.smartchat.ui.create_chat.view_holder.CreateGroupButtonViewHolder
+import gb.smartchat.ui.create_chat.view_holder.SelectableContactViewHolder
 
 class ContactsAdapter(
     private val createGroupClickListener: () -> Unit,

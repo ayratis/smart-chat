@@ -24,7 +24,7 @@ interface HttpApi {
     @GET("chat/management/recipients")
     fun getRecipients(
         @Query("chat_id") chatId: Long
-    ): Single<BaseResponse<List<Recipient>>>
+    ): Single<BaseResponse<List<Contact>>>
 
     @GET("chat/management/list")
     fun getChatList(

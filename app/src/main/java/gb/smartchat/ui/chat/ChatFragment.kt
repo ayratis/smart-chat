@@ -207,9 +207,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         binding.layoutInput.addOnLayoutChangeListener(onLayoutChangeListener)
         binding.appBarLayout.addSystemTopPadding()
         binding.layoutInput.addSystemBottomPadding()
-        binding.chatProfileLayout.setOnClickListener {
+        binding.ivChatAvatar.setOnClickListener {
             parentFragmentManager.navigateTo(
-                GroupProfileFragment(),
+                GroupProfileFragment.create(argChat),
                 NavAnim.SLIDE
             )
         }
