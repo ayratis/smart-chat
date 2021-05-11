@@ -13,10 +13,11 @@ import io.reactivex.schedulers.Schedulers
 
 class ChatProfileFilesViewModel(
     private val chatId: Long,
+    private val isMedia: Boolean,
+    private val userId: String?,
     private val httpApi: HttpApi,
     private val resourceManager: ResourceManager,
     private val store: ChatProfileFilesUDF.Store,
-    private val isMedia: Boolean
 ) : ViewModel() {
 
     companion object {
@@ -69,6 +70,7 @@ class ChatProfileFilesViewModel(
             .getFiles(
                 chatId = chatId,
                 type = if (isMedia) "media" else "regular",
+                userId = userId,
                 pageCount = pageCount,
                 pageSize = 20
             )

@@ -18,12 +18,15 @@ class ChatProfileLinksFragment : Fragment() {
 
     companion object {
         private const val ARG_CHAT_ID = "arg chat id"
+        private const val ARG_USER_ID = "arg user id"
 
-        fun create(chatId: Long) = ChatProfileLinksFragment().apply {
-            arguments = Bundle().apply {
-                putLong(ARG_CHAT_ID, chatId)
+        fun create(chatId: Long, userId: String? = null) =
+            ChatProfileLinksFragment().apply {
+                arguments = Bundle().apply {
+                    putLong(ARG_CHAT_ID, chatId)
+                    userId?.let { putString(ARG_USER_ID, it) }
+                }
             }
-        }
     }
 
     private var _binding: FragmentChatProfilePageBinding? = null
@@ -36,6 +39,10 @@ class ChatProfileLinksFragment : Fragment() {
         requireArguments().getLong(ARG_CHAT_ID)
     }
 
+    private val userId: String? by lazy {
+        requireArguments().getString(ARG_USER_ID)
+    }
+
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
@@ -46,6 +53,7 @@ class ChatProfileLinksFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatProfileLinksViewModel(
                     chatId,
+                    userId,
                     component.httpApi,
                     component.resourceManager,
                     ChatProfileLinksUDF.Store(),

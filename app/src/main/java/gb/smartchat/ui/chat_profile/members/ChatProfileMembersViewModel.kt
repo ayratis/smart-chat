@@ -5,7 +5,6 @@ import com.jakewharton.rxrelay2.BehaviorRelay
 import gb.smartchat.R
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.resources.ResourceManager
-import gb.smartchat.entity.Contact
 import gb.smartchat.utils.humanMessage
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -55,9 +54,6 @@ class ChatProfileMembersViewModel(
                     state.accept(listOf(errorItem))
                 }
             )
-    }
-
-    fun onContactClick(contact: Contact) {
     }
 
     fun onErrorActionClick(tag: String) {
