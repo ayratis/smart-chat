@@ -11,6 +11,7 @@ import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatProfileBinding
 import gb.smartchat.entity.Chat
 import gb.smartchat.ui.chat_profile.files.ChatProfileFilesFragment
+import gb.smartchat.ui.chat_profile.links.ChatProfileLinksFragment
 import gb.smartchat.ui.chat_profile.members.ChatProfileMembersFragment
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.registerOnBackPress
@@ -78,14 +79,15 @@ class ChatProfileFragment : Fragment() {
 
     inner class ViewPageAdapter : FragmentPagerAdapter(childFragmentManager) {
         override fun getCount(): Int {
-            return 3
+            return 4
         }
 
         override fun getPageTitle(position: Int): CharSequence? {
             return when(position) {
                 0 -> getString(R.string.members)
                 1 -> getString(R.string.media)
-                2 -> getString(R.string.documents)
+                2 -> getString(R.string.links)
+                3 -> getString(R.string.documents)
                 else -> throw RuntimeException()
             }
         }
@@ -94,7 +96,8 @@ class ChatProfileFragment : Fragment() {
             return when(position) {
                 0 -> ChatProfileMembersFragment.create(chat.id)
                 1 -> ChatProfileFilesFragment.create(chat.id, true)
-                2 -> ChatProfileFilesFragment.create(chat.id, false)
+                2 -> ChatProfileLinksFragment.create(chat.id)
+                3 -> ChatProfileFilesFragment.create(chat.id, false)
                 else -> throw RuntimeException()
             }
         }

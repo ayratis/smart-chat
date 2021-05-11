@@ -3,10 +3,7 @@ package gb.smartchat.data.http
 import gb.smartchat.entity.*
 import gb.smartchat.entity.request.CreateChatRequest
 import gb.smartchat.entity.request.PinChatRequest
-import gb.smartchat.entity.response.BaseResponse
-import gb.smartchat.entity.response.ChatSearchResponse
-import gb.smartchat.entity.response.ContactListResponse
-import gb.smartchat.entity.response.PinChatResponse
+import gb.smartchat.entity.response.*
 import io.reactivex.Single
 import okhttp3.MultipartBody
 import retrofit2.http.*
@@ -94,4 +91,12 @@ interface HttpApi {
         @Query("page_count") pageCount: Int,
         @Query("page_size") pageSize: Int
     ): Single<BaseResponse<List<File>>>
+
+    @GET("chat/management/links")
+    fun getLinks(
+        @Query("chat_id") chatId: Long,
+        @Query("user_id") userId: String? = null,
+        @Query("page_count") pageCount: Int,
+        @Query("page_size") pageSize: Int
+    ): Single<BaseResponse<LinksResponse>>
 }
