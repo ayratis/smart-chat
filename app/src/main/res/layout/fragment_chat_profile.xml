@@ -148,35 +148,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom"
-                    android:paddingBottom="1dp"
-                    android:paddingHorizontal="8dp"
                     android:clipToPadding="false"
+                    android:paddingHorizontal="8dp"
+                    android:paddingBottom="1dp"
                     app:tabMode="scrollable"
                     app:tabSelectedTextColor="@color/black"
                     app:tabTextAppearance="@style/Body3"
-                    app:tabTextColor="@color/black">
-
-                    <com.google.android.material.tabs.TabItem
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/members" />
-
-                    <com.google.android.material.tabs.TabItem
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/media" />
-
-                    <com.google.android.material.tabs.TabItem
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/links" />
-
-                    <com.google.android.material.tabs.TabItem
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/documents" />
-
-                </com.google.android.material.tabs.TabLayout>
+                    app:tabTextColor="@color/black" />
 
                 <View
                     android:layout_width="match_parent"

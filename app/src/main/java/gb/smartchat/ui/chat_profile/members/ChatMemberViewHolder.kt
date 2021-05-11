@@ -1,24 +1,24 @@
-package gb.smartchat.ui.group_profile.members
+package gb.smartchat.ui.chat_profile.members
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemGroupMemberBinding
+import gb.smartchat.databinding.ItemChatMemberBinding
 import gb.smartchat.entity.Contact
 import gb.smartchat.utils.color
 import gb.smartchat.utils.visible
 
-class GroupMemberViewHolder private constructor(
-    private val binding: ItemGroupMemberBinding,
+class ChatMemberViewHolder private constructor(
+    private val binding: ItemChatMemberBinding,
     onClickListener: (Contact) -> Unit
 ) : RecyclerView.ViewHolder(binding.root) {
 
     companion object {
         fun create(parent: ViewGroup, onClickListener: (Contact) -> Unit) =
-            GroupMemberViewHolder(
-                ItemGroupMemberBinding.inflate(LayoutInflater.from(parent.context), parent, false),
+            ChatMemberViewHolder(
+                ItemChatMemberBinding.inflate(LayoutInflater.from(parent.context), parent, false),
                 onClickListener
             )
     }

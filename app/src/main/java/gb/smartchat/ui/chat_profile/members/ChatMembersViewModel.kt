@@ -1,4 +1,4 @@
-package gb.smartchat.ui.group_profile.members
+package gb.smartchat.ui.chat_profile.members
 
 import androidx.lifecycle.ViewModel
 import com.jakewharton.rxrelay2.BehaviorRelay
@@ -12,7 +12,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
-class GroupMembersViewModel(
+class ChatMembersViewModel(
     private val chatId: Long,
     private val httpApi: HttpApi,
     private val resourceManager: ResourceManager
@@ -23,9 +23,9 @@ class GroupMembersViewModel(
     }
 
     private var fetchDisposable: Disposable? = null
-    private val state = BehaviorRelay.create<List<GroupMembersItem>>()
+    private val state = BehaviorRelay.create<List<ChatMembersItem>>()
 
-    val viewState: Observable<List<GroupMembersItem>> = state.hide()
+    val viewState: Observable<List<ChatMembersItem>> = state.hide()
 
     init {
         fetchContacts()
@@ -36,18 +36,18 @@ class GroupMembersViewModel(
         fetchDisposable = httpApi
             .getRecipients(chatId)
             .doOnSubscribe {
-                state.accept(listOf(GroupMembersItem.Progress))
+                state.accept(listOf(ChatMembersItem.Progress))
             }
             .map { it.result }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { contacts ->
-                    val data = contacts.map { GroupMembersItem.Data(it) }
+                    val data = contacts.map { ChatMembersItem.Data(it) }
                     state.accept(data)
                 },
                 { error ->
-                    val errorItem = GroupMembersItem.Error(
+                    val errorItem = ChatMembersItem.Error(
                         error.humanMessage(resourceManager),
                         resourceManager.getString(R.string.retry),
                         RETRY_TAG

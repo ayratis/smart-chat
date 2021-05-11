@@ -37,7 +37,7 @@ import gb.smartchat.entity.Chat
 import gb.smartchat.ui._global.CenterSmoothScroller
 import gb.smartchat.ui._global.HeaderItemDecoration
 import gb.smartchat.ui._global.ProgressDialog
-import gb.smartchat.ui.group_profile.GroupProfileFragment
+import gb.smartchat.ui.chat_profile.ChatProfileFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 import java.io.File
@@ -209,7 +209,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         binding.layoutInput.addSystemBottomPadding()
         binding.ivChatAvatar.setOnClickListener {
             parentFragmentManager.navigateTo(
-                GroupProfileFragment.create(argChat),
+                ChatProfileFragment.create(argChat),
                 NavAnim.SLIDE
             )
         }

@@ -85,4 +85,13 @@ interface HttpApi {
     fun postUnarchiveChat(
         @Body request: PinChatRequest
     ): Single<BaseResponse<PinChatResponse>>
+
+    @GET("chat/file/files")
+    fun getFiles(
+        @Query("chat_id") chatId: Long,
+        @Query("user_id") userId: String? = null,
+        @Query("type") type: String? = null,  //media|regular
+        @Query("page_count") pageCount: Int,
+        @Query("page_size") pageSize: Int
+    ): Single<BaseResponse<List<File>>>
 }

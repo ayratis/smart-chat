@@ -1,4 +1,4 @@
-package gb.smartchat.ui.group_profile.members
+package gb.smartchat.ui.chat_profile.media
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,25 +8,25 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import gb.smartchat.SmartChatActivity
-import gb.smartchat.databinding.FragmentGroupMembersBinding
+import gb.smartchat.databinding.FragmentChatMediaBinding
 import gb.smartchat.utils.addSystemBottomPadding
 import io.reactivex.disposables.CompositeDisposable
 
-class GroupMembersFragment : Fragment() {
+class ChatMediaFragment : Fragment() {
 
     companion object {
         private const val ARG_CHAT_ID = "arg chat id"
-        fun create(chatId: Long) = GroupMembersFragment().apply {
+        fun create(chatId: Long) = ChatMediaFragment().apply {
             arguments = Bundle().apply {
                 putLong(ARG_CHAT_ID, chatId)
             }
         }
     }
 
-    private var _binding: FragmentGroupMembersBinding? = null
-    private val binding: FragmentGroupMembersBinding
+    private var _binding: FragmentChatMediaBinding? = null
+    private val binding: FragmentChatMediaBinding
         get() = _binding!!
 
     private val compositeDisposable = CompositeDisposable()
@@ -39,23 +39,25 @@ class GroupMembersFragment : Fragment() {
         (requireActivity() as SmartChatActivity).component
     }
 
-    private val viewModel: GroupMembersViewModel by viewModels {
+    private val viewModel: ChatMediaViewModel by viewModels {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                return GroupMembersViewModel(
+                return ChatMediaViewModel(
                     chatId,
                     component.httpApi,
-                    component.resourceManager
+                    component.resourceManager,
+                    ChatMediaUDF.Store()
                 ) as T
             }
         }
     }
 
     private val listAdapter by lazy {
-        GroupMembersAdapter(
-            onContactClickListener = viewModel::onContactClick,
-            onErrorActionClickListener = viewModel::onErrorActionClick
+        ChatMediaAdapter(
+            onFileClickListener = viewModel::onFileClick,
+            onErrorActionClickListener = viewModel::onErrorActionClick,
+            loadMoreCallback = viewModel::loadMore
         )
     }
 
@@ -64,7 +66,7 @@ class GroupMembersFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentGroupMembersBinding.inflate(inflater, container, false)
+        _binding = FragmentChatMediaBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -78,14 +80,20 @@ class GroupMembersFragment : Fragment() {
         binding.root.apply {
             addSystemBottomPadding()
             setHasFixedSize(true)
-            layoutManager = LinearLayoutManager(context)
+            layoutManager = GridLayoutManager(context, 4).apply {
+                spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                    override fun getSpanSize(position: Int): Int {
+                        return if (listAdapter.getItemViewType(position) == 1) 1 else 4
+                    }
+                }
+            }
             adapter = listAdapter
         }
     }
 
     override fun onResume() {
         super.onResume()
-        viewModel.viewState
+        viewModel.listItems
             .subscribe { listAdapter.submitList(it) }
             .also { compositeDisposable.add(it) }
     }

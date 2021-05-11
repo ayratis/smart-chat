@@ -54,4 +54,5 @@
     <string name="creator">Создатель</string>
     <string name="online">В сети</string>
     <string name="offline">Не в сети</string>
+    <string name="base_error_message">Не удалось загрузить информацию</string>
 </resources>

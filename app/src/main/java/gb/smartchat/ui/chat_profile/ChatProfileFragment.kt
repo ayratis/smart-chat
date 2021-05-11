@@ -1,4 +1,4 @@
-package gb.smartchat.ui.group_profile
+package gb.smartchat.ui.chat_profile
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,26 +8,27 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentPagerAdapter
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.FragmentGroupProfileBinding
+import gb.smartchat.databinding.FragmentChatProfileBinding
 import gb.smartchat.entity.Chat
-import gb.smartchat.ui.group_profile.members.GroupMembersFragment
+import gb.smartchat.ui.chat_profile.media.ChatMediaFragment
+import gb.smartchat.ui.chat_profile.members.ChatMembersFragment
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.registerOnBackPress
 
-class GroupProfileFragment : Fragment() {
+class ChatProfileFragment : Fragment() {
 
     companion object {
         private const val ARG_CHAT = "arg chat"
 
-        fun create(chat: Chat) = GroupProfileFragment().apply {
+        fun create(chat: Chat) = ChatProfileFragment().apply {
             arguments = Bundle().apply {
                 putSerializable(ARG_CHAT, chat)
             }
         }
     }
 
-    private var _binding: FragmentGroupProfileBinding? = null
-    private val binding: FragmentGroupProfileBinding
+    private var _binding: FragmentChatProfileBinding? = null
+    private val binding: FragmentChatProfileBinding
         get() = _binding!!
 
     private val chat: Chat by lazy {
@@ -39,7 +40,7 @@ class GroupProfileFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentGroupProfileBinding.inflate(inflater, container, false)
+        _binding = FragmentChatProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -71,16 +72,29 @@ class GroupProfileFragment : Fragment() {
         binding.tvMemberCount.text = getString(R.string.d_members, chat.users.size)
         binding.tvAgentName.text = chat.agentName
         binding.viewPager.adapter = ViewPageAdapter()
+        binding.tabLayout.setupWithViewPager(binding.viewPager)
 
     }
 
     inner class ViewPageAdapter : FragmentPagerAdapter(childFragmentManager) {
         override fun getCount(): Int {
-            return 1
+            return 2
+        }
+
+        override fun getPageTitle(position: Int): CharSequence? {
+            return when(position) {
+                0 -> getString(R.string.members)
+                1 -> getString(R.string.media)
+                else -> throw RuntimeException()
+            }
         }
 
         override fun getItem(position: Int): Fragment {
-            return GroupMembersFragment.create(chat.id)
+            return when(position) {
+                0 -> ChatMembersFragment.create(chat.id)
+                1 -> ChatMediaFragment.create(chat.id)
+                else -> throw RuntimeException()
+            }
         }
 
     }
