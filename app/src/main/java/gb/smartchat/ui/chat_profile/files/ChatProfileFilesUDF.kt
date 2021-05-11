@@ -1,9 +1,9 @@
-package gb.smartchat.ui.chat_profile.media
+package gb.smartchat.ui.chat_profile.files
 
 import gb.smartchat.entity.File
 import gb.smartchat.ui._global.BaseStore
 
-object ChatMediaUDF {
+object ChatProfileFilesUDF {
 
     data class State(
         val list: List<File> = emptyList(),

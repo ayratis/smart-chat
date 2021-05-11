@@ -1,4 +1,4 @@
-package gb.smartchat.ui.chat_profile.media
+package gb.smartchat.ui.chat_profile.files
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -11,11 +11,12 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
-class ChatMediaViewModel(
+class ChatProfileFilesViewModel(
     private val chatId: Long,
     private val httpApi: HttpApi,
     private val resourceManager: ResourceManager,
-    private val store: ChatMediaUDF.Store
+    private val store: ChatProfileFilesUDF.Store,
+    private val isMedia: Boolean
 ) : ViewModel() {
 
     companion object {
@@ -25,35 +26,41 @@ class ChatMediaViewModel(
 
     private var fetchDisposable: Disposable? = null
 
-    val listItems: Observable<List<MediaItem>> = store.hide().map { state ->
+    val listItems: Observable<List<ChatProfileFileItem>> = store.hide().map { state ->
         when (state.pagingState) {
-            ChatMediaUDF.PagingState.EMPTY -> emptyList()
-            ChatMediaUDF.PagingState.EMPTY_PROGRESS -> listOf(MediaItem.Progress)
-            ChatMediaUDF.PagingState.EMPTY_ERROR -> listOf(
-                MediaItem.Error(
+            ChatProfileFilesUDF.PagingState.EMPTY -> emptyList()
+            ChatProfileFilesUDF.PagingState.EMPTY_PROGRESS -> listOf(ChatProfileFileItem.Progress)
+            ChatProfileFilesUDF.PagingState.EMPTY_ERROR -> listOf(
+                ChatProfileFileItem.Error(
                     message = resourceManager.getString(R.string.base_error_message),
                     action = resourceManager.getString(R.string.retry),
                     tag = RETRY_TAG
                 )
             )
-            ChatMediaUDF.PagingState.DATA -> state.list.map { MediaItem.Data(it) }
-            ChatMediaUDF.PagingState.NEW_PAGE_PROGRESS -> state.list.map { MediaItem.Data(it) }
-            ChatMediaUDF.PagingState.FULL_DATA -> state.list.map { MediaItem.Data(it) }
+            ChatProfileFilesUDF.PagingState.DATA -> state.list.map {
+                if (isMedia) ChatProfileFileItem.Media(it) else ChatProfileFileItem.Doc(it)
+            }
+            ChatProfileFilesUDF.PagingState.NEW_PAGE_PROGRESS -> state.list.map {
+                if (isMedia) ChatProfileFileItem.Media(it) else ChatProfileFileItem.Doc(it)
+            }
+            ChatProfileFilesUDF.PagingState.FULL_DATA -> state.list.map {
+                if (isMedia) ChatProfileFileItem.Media(it) else ChatProfileFileItem.Doc(it)
+            }
         }
     }
 
     init {
         store.sideEffectListener = { sideEffect ->
             when (sideEffect) {
-                is ChatMediaUDF.SideEffect.ErrorEvent -> {
+                is ChatProfileFilesUDF.SideEffect.ErrorEvent -> {
                     Log.d(TAG, "error event: ${sideEffect.error}")
                 }
-                is ChatMediaUDF.SideEffect.LoadPage -> {
+                is ChatProfileFilesUDF.SideEffect.LoadPage -> {
                     fetchFiles(sideEffect.pageCount)
                 }
             }
         }
-        store.accept(ChatMediaUDF.Action.Refresh)
+        store.accept(ChatProfileFilesUDF.Action.Refresh)
     }
 
     private fun fetchFiles(pageCount: Int) {
@@ -61,7 +68,7 @@ class ChatMediaViewModel(
         fetchDisposable = httpApi
             .getFiles(
                 chatId = chatId,
-                type = "media",
+                type = if (isMedia) "media" else "regular",
                 pageCount = pageCount,
                 pageSize = 20
             )
@@ -69,8 +76,8 @@ class ChatMediaViewModel(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
-                { store.accept(ChatMediaUDF.Action.NewPage(pageCount, it)) },
-                { store.accept(ChatMediaUDF.Action.PageError(it)) }
+                { store.accept(ChatProfileFilesUDF.Action.NewPage(pageCount, it)) },
+                { store.accept(ChatProfileFilesUDF.Action.PageError(it)) }
             )
     }
 
@@ -80,13 +87,13 @@ class ChatMediaViewModel(
 
     fun onErrorActionClick(tag: String) {
         if (tag == RETRY_TAG) {
-            store.accept(ChatMediaUDF.Action.Refresh)
+            store.accept(ChatProfileFilesUDF.Action.Refresh)
         }
     }
 
     fun loadMore() {
-        if (store.currentState.pagingState != ChatMediaUDF.PagingState.FULL_DATA) {
-            store.accept(ChatMediaUDF.Action.LoadMore)
+        if (store.currentState.pagingState != ChatProfileFilesUDF.PagingState.FULL_DATA) {
+            store.accept(ChatProfileFilesUDF.Action.LoadMore)
         }
     }
 

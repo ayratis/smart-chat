@@ -12,7 +12,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
-class ChatMembersViewModel(
+class ChatProfileMembersViewModel(
     private val chatId: Long,
     private val httpApi: HttpApi,
     private val resourceManager: ResourceManager
@@ -23,9 +23,9 @@ class ChatMembersViewModel(
     }
 
     private var fetchDisposable: Disposable? = null
-    private val state = BehaviorRelay.create<List<ChatMembersItem>>()
+    private val state = BehaviorRelay.create<List<ChatProfileMembersItem>>()
 
-    val viewState: Observable<List<ChatMembersItem>> = state.hide()
+    val viewState: Observable<List<ChatProfileMembersItem>> = state.hide()
 
     init {
         fetchContacts()
@@ -36,18 +36,18 @@ class ChatMembersViewModel(
         fetchDisposable = httpApi
             .getRecipients(chatId)
             .doOnSubscribe {
-                state.accept(listOf(ChatMembersItem.Progress))
+                state.accept(listOf(ChatProfileMembersItem.Progress))
             }
             .map { it.result }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { contacts ->
-                    val data = contacts.map { ChatMembersItem.Data(it) }
+                    val data = contacts.map { ChatProfileMembersItem.Data(it) }
                     state.accept(data)
                 },
                 { error ->
-                    val errorItem = ChatMembersItem.Error(
+                    val errorItem = ChatProfileMembersItem.Error(
                         error.humanMessage(resourceManager),
                         resourceManager.getString(R.string.retry),
                         RETRY_TAG

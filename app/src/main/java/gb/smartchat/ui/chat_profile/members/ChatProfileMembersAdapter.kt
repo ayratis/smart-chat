@@ -8,22 +8,22 @@ import gb.smartchat.entity.Contact
 import gb.smartchat.ui._global.view_holder.ErrorViewHolder
 import gb.smartchat.ui._global.view_holder.ProgressViewHolder
 
-class ChatMembersAdapter(
+class ChatProfileMembersAdapter(
     private val onContactClickListener: (Contact) -> Unit,
     private val onErrorActionClickListener: (tag: String) -> Unit
-) : ListAdapter<ChatMembersItem, RecyclerView.ViewHolder>(DiffUtilItemCallback()) {
+) : ListAdapter<ChatProfileMembersItem, RecyclerView.ViewHolder>(DiffUtilItemCallback()) {
 
     override fun getItemViewType(position: Int): Int {
         return when (getItem(position)) {
-            is ChatMembersItem.Data -> 1
-            is ChatMembersItem.Error -> 2
-            is ChatMembersItem.Progress -> 3
+            is ChatProfileMembersItem.Data -> 1
+            is ChatProfileMembersItem.Error -> 2
+            is ChatProfileMembersItem.Progress -> 3
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            1 -> ChatMemberViewHolder.create(parent, onContactClickListener)
+            1 -> ChatProfileMemberViewHolder.create(parent, onContactClickListener)
             2 -> ErrorViewHolder.create(parent, onErrorActionClickListener)
             3 -> ProgressViewHolder.create(parent)
             else -> throw RuntimeException()
@@ -32,10 +32,10 @@ class ChatMembersAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = getItem(position)) {
-            is ChatMembersItem.Data -> (holder as ChatMemberViewHolder).bind(item.contact)
-            is ChatMembersItem.Progress -> {
+            is ChatProfileMembersItem.Data -> (holder as ChatProfileMemberViewHolder).bind(item.contact)
+            is ChatProfileMembersItem.Progress -> {
             }
-            is ChatMembersItem.Error -> (holder as ErrorViewHolder).bind(
+            is ChatProfileMembersItem.Error -> (holder as ErrorViewHolder).bind(
                 item.message,
                 item.action,
                 item.tag
@@ -44,34 +44,34 @@ class ChatMembersAdapter(
         }
     }
 
-    class DiffUtilItemCallback : DiffUtil.ItemCallback<ChatMembersItem>() {
+    class DiffUtilItemCallback : DiffUtil.ItemCallback<ChatProfileMembersItem>() {
         override fun areItemsTheSame(
-            oldItem: ChatMembersItem,
-            newItem: ChatMembersItem
+            oldItem: ChatProfileMembersItem,
+            newItem: ChatProfileMembersItem
         ): Boolean {
-            if (oldItem is ChatMembersItem.Data && newItem is ChatMembersItem.Data) {
+            if (oldItem is ChatProfileMembersItem.Data && newItem is ChatProfileMembersItem.Data) {
                 return oldItem.contact.id == newItem.contact.id
             }
-            if (oldItem is ChatMembersItem.Error && newItem is ChatMembersItem.Error) {
+            if (oldItem is ChatProfileMembersItem.Error && newItem is ChatProfileMembersItem.Error) {
                 return true
             }
-            if (oldItem is ChatMembersItem.Progress && newItem is ChatMembersItem.Progress) {
+            if (oldItem is ChatProfileMembersItem.Progress && newItem is ChatProfileMembersItem.Progress) {
                 return true
             }
             return false
         }
 
         override fun areContentsTheSame(
-            oldItem: ChatMembersItem,
-            newItem: ChatMembersItem
+            oldItem: ChatProfileMembersItem,
+            newItem: ChatProfileMembersItem
         ): Boolean {
-            if (oldItem is ChatMembersItem.Data && newItem is ChatMembersItem.Data) {
+            if (oldItem is ChatProfileMembersItem.Data && newItem is ChatProfileMembersItem.Data) {
                 return oldItem.contact == newItem.contact
             }
-            if (oldItem is ChatMembersItem.Error && newItem is ChatMembersItem.Error) {
+            if (oldItem is ChatProfileMembersItem.Error && newItem is ChatProfileMembersItem.Error) {
                 return oldItem == newItem
             }
-            if (oldItem is ChatMembersItem.Progress && newItem is ChatMembersItem.Progress) {
+            if (oldItem is ChatProfileMembersItem.Progress && newItem is ChatProfileMembersItem.Progress) {
                 return true
             }
             return false

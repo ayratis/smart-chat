@@ -10,8 +10,8 @@ import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatProfileBinding
 import gb.smartchat.entity.Chat
-import gb.smartchat.ui.chat_profile.media.ChatMediaFragment
-import gb.smartchat.ui.chat_profile.members.ChatMembersFragment
+import gb.smartchat.ui.chat_profile.files.ChatProfileFilesFragment
+import gb.smartchat.ui.chat_profile.members.ChatProfileMembersFragment
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.registerOnBackPress
 
@@ -78,21 +78,23 @@ class ChatProfileFragment : Fragment() {
 
     inner class ViewPageAdapter : FragmentPagerAdapter(childFragmentManager) {
         override fun getCount(): Int {
-            return 2
+            return 3
         }
 
         override fun getPageTitle(position: Int): CharSequence? {
             return when(position) {
                 0 -> getString(R.string.members)
                 1 -> getString(R.string.media)
+                2 -> getString(R.string.documents)
                 else -> throw RuntimeException()
             }
         }
 
         override fun getItem(position: Int): Fragment {
             return when(position) {
-                0 -> ChatMembersFragment.create(chat.id)
-                1 -> ChatMediaFragment.create(chat.id)
+                0 -> ChatProfileMembersFragment.create(chat.id)
+                1 -> ChatProfileFilesFragment.create(chat.id, true)
+                2 -> ChatProfileFilesFragment.create(chat.id, false)
                 else -> throw RuntimeException()
             }
         }

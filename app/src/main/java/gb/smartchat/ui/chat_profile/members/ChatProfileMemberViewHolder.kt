@@ -10,14 +10,14 @@ import gb.smartchat.entity.Contact
 import gb.smartchat.utils.color
 import gb.smartchat.utils.visible
 
-class ChatMemberViewHolder private constructor(
+class ChatProfileMemberViewHolder private constructor(
     private val binding: ItemChatMemberBinding,
     onClickListener: (Contact) -> Unit
 ) : RecyclerView.ViewHolder(binding.root) {
 
     companion object {
         fun create(parent: ViewGroup, onClickListener: (Contact) -> Unit) =
-            ChatMemberViewHolder(
+            ChatProfileMemberViewHolder(
                 ItemChatMemberBinding.inflate(LayoutInflater.from(parent.context), parent, false),
                 onClickListener
             )
