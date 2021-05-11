@@ -4,18 +4,18 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import gb.smartchat.databinding.ItemChatMediaBinding
+import gb.smartchat.databinding.ItemChatProfileMediaBinding
 import gb.smartchat.entity.File
 
 class ChatProfileMediaViewHolder private constructor(
-    private val binding: ItemChatMediaBinding,
+    private val binding: ItemChatProfileMediaBinding,
     onClickListener: (File) -> Unit
 ) : RecyclerView.ViewHolder(binding.root) {
 
     companion object {
         fun create(parent: ViewGroup, onClickListener: (File) -> Unit) =
             ChatProfileMediaViewHolder(
-                ItemChatMediaBinding.inflate(LayoutInflater.from(parent.context), parent, false),
+                ItemChatProfileMediaBinding.inflate(LayoutInflater.from(parent.context), parent, false),
                 onClickListener
             )
     }

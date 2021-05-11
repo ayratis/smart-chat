@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.SmartChatActivity
-import gb.smartchat.databinding.FragmentChatMembersBinding
+import gb.smartchat.databinding.FragmentChatProfilePageBinding
 import gb.smartchat.utils.addSystemBottomPadding
 import io.reactivex.disposables.CompositeDisposable
 
@@ -25,8 +25,8 @@ class ChatProfileMembersFragment : Fragment() {
         }
     }
 
-    private var _binding: FragmentChatMembersBinding? = null
-    private val binding: FragmentChatMembersBinding
+    private var _binding: FragmentChatProfilePageBinding? = null
+    private val binding: FragmentChatProfilePageBinding
         get() = _binding!!
 
     private val compositeDisposable = CompositeDisposable()
@@ -64,7 +64,7 @@ class ChatProfileMembersFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentChatMembersBinding.inflate(inflater, container, false)
+        _binding = FragmentChatProfilePageBinding.inflate(inflater, container, false)
         return binding.root
     }
 

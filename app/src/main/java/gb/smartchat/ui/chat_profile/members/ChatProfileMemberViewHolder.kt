@@ -5,20 +5,20 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemChatMemberBinding
+import gb.smartchat.databinding.ItemChatProfileMemberBinding
 import gb.smartchat.entity.Contact
 import gb.smartchat.utils.color
 import gb.smartchat.utils.visible
 
 class ChatProfileMemberViewHolder private constructor(
-    private val binding: ItemChatMemberBinding,
+    private val binding: ItemChatProfileMemberBinding,
     onClickListener: (Contact) -> Unit
 ) : RecyclerView.ViewHolder(binding.root) {
 
     companion object {
         fun create(parent: ViewGroup, onClickListener: (Contact) -> Unit) =
             ChatProfileMemberViewHolder(
-                ItemChatMemberBinding.inflate(LayoutInflater.from(parent.context), parent, false),
+                ItemChatProfileMemberBinding.inflate(LayoutInflater.from(parent.context), parent, false),
                 onClickListener
             )
     }
