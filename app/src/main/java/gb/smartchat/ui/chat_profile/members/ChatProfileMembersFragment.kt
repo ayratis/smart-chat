@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatProfilePageBinding
+import gb.smartchat.entity.Contact
 import gb.smartchat.utils.addSystemBottomPadding
 import io.reactivex.disposables.CompositeDisposable
 
@@ -23,6 +24,10 @@ class ChatProfileMembersFragment : Fragment() {
                 putLong(ARG_CHAT_ID, chatId)
             }
         }
+    }
+
+    interface Router {
+        fun navigateToContactProfile(contact: Contact)
     }
 
     private var _binding: FragmentChatProfilePageBinding? = null
@@ -54,7 +59,7 @@ class ChatProfileMembersFragment : Fragment() {
 
     private val listAdapter by lazy {
         ChatProfileMembersAdapter(
-            onContactClickListener = viewModel::onContactClick,
+            onContactClickListener = this::navigateToContactProfile,
             onErrorActionClickListener = viewModel::onErrorActionClick
         )
     }
@@ -93,5 +98,9 @@ class ChatProfileMembersFragment : Fragment() {
     override fun onPause() {
         compositeDisposable.clear()
         super.onPause()
+    }
+
+    private fun navigateToContactProfile(contact: Contact) {
+        (parentFragment as? Router)?.navigateToContactProfile(contact)
     }
 }

@@ -19,12 +19,16 @@ class ChatProfileFilesFragment : Fragment() {
     companion object {
         private const val ARG_CHAT_ID = "arg chat id"
         private const val ARG_IS_MEDIA = "arg is media"
-        fun create(chatId: Long, isMedia: Boolean) = ChatProfileFilesFragment().apply {
-            arguments = Bundle().apply {
-                putLong(ARG_CHAT_ID, chatId)
-                putBoolean(ARG_IS_MEDIA, isMedia)
+        private const val ARG_USER_ID = "arg user id"
+
+        fun create(chatId: Long, isMedia: Boolean, userId: String? = null) =
+            ChatProfileFilesFragment().apply {
+                arguments = Bundle().apply {
+                    putLong(ARG_CHAT_ID, chatId)
+                    putBoolean(ARG_IS_MEDIA, isMedia)
+                    userId?.let { putString(ARG_USER_ID, it) }
+                }
             }
-        }
     }
 
     private var _binding: FragmentChatProfilePageBinding? = null
@@ -41,6 +45,10 @@ class ChatProfileFilesFragment : Fragment() {
         requireArguments().getBoolean(ARG_IS_MEDIA)
     }
 
+    private val userId: String? by lazy {
+        requireArguments().getString(ARG_USER_ID)
+    }
+
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
@@ -51,10 +59,11 @@ class ChatProfileFilesFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatProfileFilesViewModel(
                     chatId,
+                    isMedia,
+                    userId,
                     component.httpApi,
                     component.resourceManager,
                     ChatProfileFilesUDF.Store(),
-                    isMedia
                 ) as T
             }
         }

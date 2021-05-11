@@ -12,10 +12,11 @@ import io.reactivex.schedulers.Schedulers
 
 class ChatProfileLinksViewModel(
     private val chatId: Long,
+    private val userId: String?,
     private val httpApi: HttpApi,
     private val resourceManager: ResourceManager,
     private val store: ChatProfileLinksUDF.Store
-    ) : ViewModel() {
+) : ViewModel() {
 
     companion object {
         private const val TAG = "ChatMediaViewModel"
@@ -62,6 +63,7 @@ class ChatProfileLinksViewModel(
         fetchDisposable = httpApi
             .getLinks(
                 chatId = chatId,
+                userId = userId,
                 pageCount = pageCount,
                 pageSize = 20
             )
