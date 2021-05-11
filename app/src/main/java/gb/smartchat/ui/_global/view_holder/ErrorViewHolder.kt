@@ -1,4 +1,4 @@
-package gb.smartchat.ui.create_chat.view_holder
+package gb.smartchat.ui._global.view_holder
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

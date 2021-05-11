@@ -34,6 +34,7 @@
     <string name="upload_photo">Загрузить фотографию</string>
     <string name="group_name">Название группы</string>
     <string name="member_count_d">Список участников: %d</string>
+    <string name="d_members">%d участников</string>
     <string name="clear">Очистить</string>
     <string name="pin">Закрепить</string>
     <string name="unpin">Открепить</string>
@@ -44,4 +45,14 @@
     <string name="unarchive">Разархивировать</string>
     <string name="archive_error">Произошла ошибка при архивации чата</string>
     <string name="unarchive_error">Произошла ошибка при разархивации чата</string>
+    <string name="add_members">Добавить участников</string>
+    <string name="leave_chat">Покинуть чат</string>
+    <string name="members">Участники</string>
+    <string name="media">Медиа</string>
+    <string name="links">Ссылки</string>
+    <string name="documents">Документы</string>
+    <string name="creator">Создатель</string>
+    <string name="online">В сети</string>
+    <string name="offline">Не в сети</string>
+    <string name="base_error_message">Не удалось загрузить информацию</string>
 </resources>

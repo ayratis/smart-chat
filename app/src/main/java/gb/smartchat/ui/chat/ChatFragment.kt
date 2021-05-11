@@ -37,6 +37,7 @@ import gb.smartchat.entity.Chat
 import gb.smartchat.ui._global.CenterSmoothScroller
 import gb.smartchat.ui._global.HeaderItemDecoration
 import gb.smartchat.ui._global.ProgressDialog
+import gb.smartchat.ui.chat_profile.ChatProfileFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 import java.io.File
@@ -93,11 +94,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             }
         }
     }
-    private val linearLayoutManager by lazy {
-        LinearLayoutManager(binding.rvChat.context).apply {
-            stackFromEnd = true
-        }
-    }
+    private val linearLayoutManager: LinearLayoutManager
+        get() = binding.rvChat.layoutManager as LinearLayoutManager
     private val chatAdapter by lazy {
         ChatAdapter(
             onItemBindListener = { chatItem ->
@@ -189,6 +187,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentChatBinding.inflate(inflater, container, false)
+        Log.d(TAG, "onCreateView")
         return binding.root
     }
 
@@ -197,6 +196,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         binding.layoutInput.removeOnLayoutChangeListener(onLayoutChangeListener)
         super.onDestroyView()
         _binding = null
+        Log.d(TAG, "onDestroyView")
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -207,6 +207,12 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         binding.layoutInput.addOnLayoutChangeListener(onLayoutChangeListener)
         binding.appBarLayout.addSystemTopPadding()
         binding.layoutInput.addSystemBottomPadding()
+        binding.ivChatAvatar.setOnClickListener {
+            parentFragmentManager.navigateTo(
+                ChatProfileFragment.create(argChat),
+                NavAnim.SLIDE
+            )
+        }
         binding.toolbar.apply {
             title = argChat.storeName
             subtitle = argChat.agentName
@@ -215,7 +221,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             }
         }
         binding.rvChat.apply {
-            layoutManager = linearLayoutManager
+            layoutManager = LinearLayoutManager(binding.rvChat.context).apply {
+                stackFromEnd = true
+            }
             setHasFixedSize(true)
             itemAnimator = null
             isNestedScrollingEnabled = false

@@ -21,6 +21,8 @@ abstract class BaseStore<State: Any, Action: Any, SideEffect: Any>(
     private val actions = PublishRelay.create<Action>()
     private val viewState = BehaviorRelay.createDefault(initialState)
     var sideEffectListener: (SideEffect) -> Unit = {}
+    val currentState: State
+        get() = viewState.value!!
 
     private val disposable: Disposable = actions
         .hide()
