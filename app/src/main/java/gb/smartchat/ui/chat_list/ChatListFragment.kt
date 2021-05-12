@@ -229,7 +229,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 .subscribe { event ->
                     event.getContentIfNotHandled()?.let { storeInfo ->
                         parentFragmentManager.navigateTo(
-                            CreateChatFragment.create(storeInfo, CreateChatMode.SINGLE),
+                            CreateChatFragment.create(storeInfo, CreateChatMode.CREATE_SINGLE),
                             NavAnim.OPEN
                         )
                     }

@@ -46,6 +46,7 @@
     <string name="archive_error">Произошла ошибка при архивации чата</string>
     <string name="unarchive_error">Произошла ошибка при разархивации чата</string>
     <string name="add_members">Добавить участников</string>
+    <string name="add">Добавить</string>
     <string name="leave_chat">Покинуть чат</string>
     <string name="members">Участники</string>
     <string name="media">Медиа</string>
