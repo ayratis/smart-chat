@@ -7,6 +7,8 @@ import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.BuildConfig
 import gb.smartchat.entity.*
 import gb.smartchat.entity.request.*
+import gb.smartchat.entity.response.AddRecipientsResponse
+import gb.smartchat.entity.response.DeleteRecipientsResponse
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.socket.client.Ack
@@ -65,16 +67,28 @@ class SocketApiImpl(
                         SocketEvent.Typing(typing)
                     }
                     ServerEvent.READ -> {
-                        val messageRead = gson.fromJson(response.toString(), MessageRead::class.java)
+                        val messageRead =
+                            gson.fromJson(response.toString(), MessageRead::class.java)
                         SocketEvent.MessageRead(messageRead)
                     }
                     ServerEvent.MESSAGE_DELETE -> {
                         val messageIdsRaw =
                             response.getJSONArray("deleted_messages").toString()
-                        val typeToken = object: TypeToken<List<Message>>(){}.type
+                        val typeToken = object : TypeToken<List<Message>>() {}.type
                         val messages: List<Message> = gson.fromJson(messageIdsRaw, typeToken)
                         SocketEvent.MessagesDeleted(messages)
                     }
+                    ServerEvent.ADD_RECIPIENTS -> {
+                        val result =
+                            gson.fromJson(response.toString(), AddRecipientsResponse::class.java)
+                        SocketEvent.AddRecipients(result)
+                    }
+                    ServerEvent.DELETE_RECIPIENTS -> {
+                        val result =
+                            gson.fromJson(response.toString(), DeleteRecipientsResponse::class.java)
+                        SocketEvent.DeleteRecipients(result)
+                    }
+
                     ServerEvent.USERNAME_MISSING -> null
                     ServerEvent.USER_MISSING -> null
                 }
@@ -111,6 +125,10 @@ class SocketApiImpl(
                         is SocketEvent.Typing -> socketEvent.typing.chatId == chatId
                         is SocketEvent.MessagesDeleted ->
                             socketEvent.messages.firstOrNull()?.chatId == chatId
+                        is SocketEvent.AddRecipients ->
+                            socketEvent.addRecipientsResponse.chatId == chatId
+                        is SocketEvent.DeleteRecipients ->
+                            socketEvent.deleteRecipientsResponse.chatId == chatId
                     }
                 }
             if (isConnected()) observable.startWith(SocketEvent.Connected)

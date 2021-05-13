@@ -34,7 +34,7 @@ data class Message(
     val user: User? = null
 ) : Serializable {
     enum class Type {
-        @SerializedName("system")
+        @SerializedName("SYSTEM")
         SYSTEM,
 
         @SerializedName("DELETED")

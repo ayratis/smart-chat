@@ -2,10 +2,7 @@ package gb.smartchat.ui.chat_list
 
 import android.util.SparseArray
 import androidx.core.util.forEach
-import gb.smartchat.entity.ChangedMessage
-import gb.smartchat.entity.Chat
-import gb.smartchat.entity.Message
-import gb.smartchat.entity.MessageRead
+import gb.smartchat.entity.*
 import gb.smartchat.ui._global.BaseStore
 import gb.smartchat.utils.composeWithMessage
 
@@ -52,6 +49,8 @@ object ChatListUDF {
             val archive: Boolean
         ) : Action()
         data class ChatUnarchived(val chat: Chat) : Action()
+        data class AddRecipients(val chatId: Long, val newRecipients: List<Contact>) : Action()
+        data class DeleteRecipients(val chatId: Long, val deletedUserIds: List<String>) : Action()
     }
 
     sealed class SideEffect {
@@ -122,7 +121,6 @@ object ChatListUDF {
                         }
                         else -> state
                     }
-
                 }
                 is Action.PageError -> {
                     return when (state.pagingState) {
@@ -319,6 +317,39 @@ object ChatListUDF {
                         PagingState.REFRESH -> PagingState.REFRESH
                     }
                     return state.copy(chatList = newChatList, pagingState = newPagingState)
+                }
+                is Action.AddRecipients -> {
+                    val index = state.chatList.indexOfFirst { it.id == action.chatId }
+                    if (index < 0) return state
+                    val chat = state.chatList[index]
+                    val newUsers = action.newRecipients
+                        .map { contact ->
+                            User(
+                                id = contact.id,
+                                name = contact.name,
+                                avatar = contact.avatar,
+                                role = null,
+                                lastReadMessageId = null,
+                                lastMentionMessageId = null
+                            )
+                        }
+                        .filter { newUser ->
+                            chat.users.find { it.id == newUser.id } == null //не нашли в имеющихся пользователях
+                        }
+                    val editedChatList = state.chatList.toMutableList().apply {
+                        set(index, chat.copy(users = chat.users + newUsers))
+                    }
+                    return state.copy(chatList = editedChatList)
+                }
+                is Action.DeleteRecipients -> {
+                    val index = state.chatList.indexOfFirst { it.id == action.chatId }
+                    if (index < 0) return state
+                    val chat = state.chatList[index]
+                    val users = chat.users.filter { !action.deletedUserIds.contains(it.id) }
+                    val editedChatList = state.chatList.toMutableList().apply {
+                        set(index, chat.copy(users = users))
+                    }
+                    return state.copy(chatList = editedChatList)
                 }
             }
         }

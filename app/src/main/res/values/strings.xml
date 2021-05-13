@@ -56,4 +56,6 @@
     <string name="online">В сети</string>
     <string name="offline">Не в сети</string>
     <string name="base_error_message">Не удалось загрузить информацию</string>
+    <string name="delete_member">Исключить</string>
+    <string name="delete_member_error">Ошибка при исключении пользователя из чата</string>
 </resources>

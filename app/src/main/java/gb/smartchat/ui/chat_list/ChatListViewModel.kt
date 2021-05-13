@@ -115,6 +115,22 @@ class ChatListViewModel(
                     is SocketEvent.MessagesDeleted -> {
                         store.accept(ChatListUDF.Action.DeleteMessages(socketEvent.messages))
                     }
+                    is SocketEvent.AddRecipients -> {
+                        store.accept(
+                            ChatListUDF.Action.AddRecipients(
+                                socketEvent.addRecipientsResponse.chatId,
+                                socketEvent.addRecipientsResponse.contacts
+                            )
+                        )
+                    }
+                    is SocketEvent.DeleteRecipients -> {
+                        store.accept(
+                            ChatListUDF.Action.DeleteRecipients(
+                                socketEvent.deleteRecipientsResponse.chatId,
+                                socketEvent.deleteRecipientsResponse.deletedUserIds
+                            )
+                        )
+                    }
                     else -> {
                     }
                 }

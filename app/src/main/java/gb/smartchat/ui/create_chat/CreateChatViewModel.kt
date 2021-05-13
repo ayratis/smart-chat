@@ -10,6 +10,7 @@ import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
 import gb.smartchat.entity.UserProfile
 import gb.smartchat.entity.request.AddRecipientsRequest
+import gb.smartchat.publisher.AddRecipientsPublisher
 import gb.smartchat.publisher.ChatCreatedPublisher
 import gb.smartchat.publisher.ContactDeletePublisher
 import gb.smartchat.utils.SingleEvent
@@ -30,7 +31,8 @@ class CreateChatViewModel(
     private val store: CreateChatUDF.Store,
     private val resourceManager: ResourceManager,
     private val chatCreatedPublisher: ChatCreatedPublisher,
-    contactDeletePublisher: ContactDeletePublisher
+    contactDeletePublisher: ContactDeletePublisher,
+    private val addRecipientsPublisher: AddRecipientsPublisher
 ) : ViewModel() {
 
     companion object {
@@ -151,7 +153,10 @@ class CreateChatViewModel(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
-                { store.accept(CreateChatUDF.Action.AddMembersSuccess) },
+                {
+                    addRecipientsPublisher.accept(contacts)
+                    store.accept(CreateChatUDF.Action.AddMembersSuccess)
+                },
                 { store.accept(CreateChatUDF.Action.AddMembersError(it)) }
             )
             .also { compositeDisposable.add(it) }

@@ -105,4 +105,9 @@ interface HttpApi {
     fun postAddRecipients(
         @Body request: AddRecipientsRequest
     ): Single<BaseResponse<Any>>
+
+    @POST("chat/management/delete_recipients")
+    fun postDeleteRecipients(
+        @Body request: AddRecipientsRequest
+    ): Single<BaseResponse<Any>>
 }

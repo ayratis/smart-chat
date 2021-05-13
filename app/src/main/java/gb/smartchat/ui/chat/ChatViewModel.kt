@@ -193,6 +193,18 @@ class ChatViewModel(
                         }
                         store.accept(ChatUDF.Action.ServerMessagesDeleted(messages))
                     }
+                    is SocketEvent.AddRecipients -> {
+                        store.accept(
+                            ChatUDF.Action.ServerAddRecipients(event.addRecipientsResponse.contacts)
+                        )
+                    }
+                    is SocketEvent.DeleteRecipients -> {
+                        store.accept(
+                            ChatUDF.Action.ServerDeleteRecipients(
+                                event.deleteRecipientsResponse.deletedUserIds
+                            )
+                        )
+                    }
                 }
             }
             .also { compositeDisposable.add(it) }

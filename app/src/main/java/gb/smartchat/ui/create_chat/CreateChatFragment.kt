@@ -88,7 +88,8 @@ class CreateChatFragment : Fragment() {
                     CreateChatUDF.Store(mode),
                     component.resourceManager,
                     component.chatCreatedPublisher,
-                    component.contactDeletePublisher
+                    component.contactDeletePublisher,
+                    component.addRecipientsPublisher
                 ) as T
             }
         }

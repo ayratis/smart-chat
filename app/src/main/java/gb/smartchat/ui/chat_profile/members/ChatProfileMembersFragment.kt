@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatProfilePageBinding
 import gb.smartchat.entity.Contact
+import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.utils.addSystemBottomPadding
 import io.reactivex.disposables.CompositeDisposable
 
@@ -19,9 +20,12 @@ class ChatProfileMembersFragment : Fragment() {
 
     companion object {
         private const val ARG_CHAT_ID = "arg chat id"
-        fun create(chatId: Long) = ChatProfileMembersFragment().apply {
+        private const val ARG_IS_CREATOR = "arg is creator"
+
+        fun create(chatId: Long, isCreator: Boolean) = ChatProfileMembersFragment().apply {
             arguments = Bundle().apply {
                 putLong(ARG_CHAT_ID, chatId)
+                putBoolean(ARG_IS_CREATOR, isCreator)
             }
         }
     }
@@ -40,6 +44,10 @@ class ChatProfileMembersFragment : Fragment() {
         requireArguments().getLong(ARG_CHAT_ID)
     }
 
+    private val isCreator by lazy {
+        requireArguments().getBoolean(ARG_IS_CREATOR)
+    }
+
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
@@ -51,7 +59,8 @@ class ChatProfileMembersFragment : Fragment() {
                 return ChatProfileMembersViewModel(
                     chatId,
                     component.httpApi,
-                    component.resourceManager
+                    component.resourceManager,
+                    component.addRecipientsPublisher
                 ) as T
             }
         }
@@ -60,7 +69,8 @@ class ChatProfileMembersFragment : Fragment() {
     private val listAdapter by lazy {
         ChatProfileMembersAdapter(
             onContactClickListener = this::navigateToContactProfile,
-            onErrorActionClickListener = viewModel::onErrorActionClick
+            onErrorActionClickListener = viewModel::onErrorActionClick,
+            deleteContactListener = if (isCreator) viewModel::onDeleteUserClick else null
         )
     }
 
@@ -92,6 +102,16 @@ class ChatProfileMembersFragment : Fragment() {
         super.onResume()
         viewModel.viewState
             .subscribe { listAdapter.submitList(it) }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.showErrorDialog
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let { message ->
+                    MessageDialogFragment
+                        .create(message = message)
+                        .show(childFragmentManager, null)
+                }
+            }
             .also { compositeDisposable.add(it) }
     }
 
