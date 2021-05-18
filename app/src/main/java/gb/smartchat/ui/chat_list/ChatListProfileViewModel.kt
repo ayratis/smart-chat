@@ -6,6 +6,8 @@ import gb.smartchat.R
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.entity.UserProfile
+import gb.smartchat.publisher.UserAvatarChangedPublisher
 import gb.smartchat.utils.SingleEvent
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -16,16 +18,19 @@ class ChatListProfileViewModel(
     private val httpApi: HttpApi,
     private val store: ChatListProfileUDF.Store,
     private val resourceManager: ResourceManager,
+    userAvatarChangedPublisher: UserAvatarChangedPublisher
 ) : ViewModel() {
 
     private val compositeDisposable = CompositeDisposable()
 
     private val showProfileErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
-    private val navToCreateChatCommand = BehaviorRelay.create<SingleEvent<StoreInfo>>()
+    private val navToCreateChatCommand =
+        BehaviorRelay.create<SingleEvent<Pair<StoreInfo, UserProfile>>>()
 
     val viewState: Observable<ChatListProfileUDF.State> = store.hide()
     val showProfileErrorDialog: Observable<SingleEvent<String>> = showProfileErrorCommand.hide()
-    val navToCreateChat: Observable<SingleEvent<StoreInfo>> = navToCreateChatCommand.hide()
+    val navToCreateChat: Observable<SingleEvent<Pair<StoreInfo, UserProfile>>> =
+        navToCreateChatCommand.hide()
 
     init {
         store.sideEffectListener = { sideEffect ->
@@ -34,7 +39,9 @@ class ChatListProfileViewModel(
                     fetchUserProfile()
                 }
                 is ChatListProfileUDF.SideEffect.NavToCreateChat -> {
-                    navToCreateChatCommand.accept(SingleEvent(sideEffect.storeInfo))
+                    navToCreateChatCommand.accept(
+                        SingleEvent(sideEffect.storeInfo to sideEffect.userProfile)
+                    )
                 }
                 is ChatListProfileUDF.SideEffect.ShowProfileLoadError -> {
                     val message = resourceManager.getString(R.string.profile_error)
@@ -43,6 +50,10 @@ class ChatListProfileViewModel(
             }
         }
         store.accept(ChatListProfileUDF.Action.Refresh)
+
+        userAvatarChangedPublisher
+            .subscribe { store.accept(ChatListProfileUDF.Action.AvatarChanged(it)) }
+            .also { compositeDisposable.add(it) }
     }
 
     private fun fetchUserProfile() {

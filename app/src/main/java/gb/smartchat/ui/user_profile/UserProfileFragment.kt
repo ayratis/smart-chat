@@ -7,14 +7,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import gb.smartchat.R
+import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentUserProfileBinding
 import gb.smartchat.entity.UserProfile
+import gb.smartchat.ui._global.MessageDialogFragment
+import gb.smartchat.ui.chat.AttachDialogFragment
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.registerOnBackPress
+import gb.smartchat.utils.visible
+import io.reactivex.disposables.CompositeDisposable
 
-class UserProfileFragment : Fragment() {
+class UserProfileFragment : Fragment(), AttachDialogFragment.Listener {
 
     companion object {
         private const val ARG_USER_PROFILE = "arg user profile"
@@ -30,8 +38,29 @@ class UserProfileFragment : Fragment() {
     private val binding: FragmentUserProfileBinding
         get() = _binding!!
 
+    private val compositeDisposable = CompositeDisposable()
+
     private val userProfile: UserProfile by lazy {
         requireArguments().getSerializable(ARG_USER_PROFILE) as UserProfile
+    }
+
+    private val component by lazy {
+        (requireActivity() as SmartChatActivity).component
+    }
+
+    private val viewModel: UserProfileViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return UserProfileViewModel(
+                    component.httpApi,
+                    component.contentHelper,
+                    component.userAvatarChangedPublisher,
+                    component.resourceManager
+                ) as T
+            }
+
+        }
     }
 
     override fun onCreateView(
@@ -59,13 +88,7 @@ class UserProfileFragment : Fragment() {
                 parentFragmentManager.popBackStack()
             }
         }
-        userProfile.avatar?.let {
-            Glide.with(binding.ivAvatar)
-                .load(it)
-                .placeholder(R.drawable.profile_avatar_placeholder)
-                .circleCrop()
-                .into(binding.ivAvatar)
-        }
+
         binding.tvName.text = userProfile.name
         binding.tvPosition.text = userProfile.description
         binding.tvPhone.apply {
@@ -81,5 +104,69 @@ class UserProfileFragment : Fragment() {
                 }
             }
         }
+        binding.layoutAvatar.setOnClickListener {
+            AttachDialogFragment
+                .create(camera = true, gallery = true, files = false)
+                .show(childFragmentManager, null)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.avatarState
+            .subscribe { avatarState ->
+                when (avatarState) {
+                    is AvatarState.Empty -> {
+                        Glide
+                            .with(binding.ivPhoto)
+                            .load(userProfile.avatar)
+                            .placeholder(R.drawable.profile_avatar_placeholder)
+                            .circleCrop()
+                            .into(binding.ivPhoto)
+                        binding.progressBarPhoto.visible(false)
+                    }
+                    is AvatarState.Uploading -> {
+                        Glide
+                            .with(binding.ivPhoto)
+                            .load(avatarState.uri)
+                            .placeholder(R.drawable.profile_avatar_placeholder)
+                            .circleCrop()
+                            .into(binding.ivPhoto)
+                        binding.progressBarPhoto.visible(true)
+                    }
+                    is AvatarState.UploadSuccess -> {
+                        Glide
+                            .with(binding.ivPhoto)
+                            .load(avatarState.uri)
+                            .placeholder(R.drawable.profile_avatar_placeholder)
+                            .circleCrop()
+                            .into(binding.ivPhoto)
+                        binding.progressBarPhoto.visible(false)
+                    }
+                }
+            }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.showDialog
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let { message ->
+                    MessageDialogFragment.create(message = message)
+                        .show(childFragmentManager, null)
+                }
+            }
+            .also { compositeDisposable.add(it) }
+    }
+
+    override fun onPause() {
+        compositeDisposable.clear()
+        super.onPause()
+    }
+
+    override fun onPhotoFromGallery(uri: Uri) {
+        viewModel.uploadAvatar(uri)
+    }
+
+    override fun onCameraPicture(uri: Uri) {
+        viewModel.uploadAvatar(uri)
     }
 }

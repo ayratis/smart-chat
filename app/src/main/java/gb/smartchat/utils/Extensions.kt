@@ -320,14 +320,20 @@ fun UserProfile.toContact(): Contact {
     )
 }
 
-fun StoreInfo.toCreateChatRequest(contacts: List<Contact>): CreateChatRequest {
+fun StoreInfo.toCreateChatRequest(
+    chatName: String,
+    avatarUrl: String?,
+    contacts: List<Contact>
+): CreateChatRequest {
     return CreateChatRequest(
-        storeId,
-        storeName,
+        chatName = chatName,
+        fileUrl = avatarUrl,
+        contacts = contacts,
+        storeId = storeId,
+        storeName = storeName,
 //        partnerCode,
-        partnerName,
-        agentCode,
-        contacts
+        partnerName = partnerName,
+        agentCode = agentCode,
     )
 }
 

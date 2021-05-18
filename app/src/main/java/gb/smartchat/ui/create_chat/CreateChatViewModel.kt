@@ -131,8 +131,8 @@ class CreateChatViewModel(
     private fun createChat(contact: Contact) {
         val myContact = userProfile!!.toContact()
         httpApi
-            .postCreateChat(storeInfo.toCreateChatRequest(listOf(contact, myContact)))
-            .map { it.result }
+            .postCreateChat(storeInfo.toCreateChatRequest("", null, listOf(contact, myContact))) //todo
+            .map { it.result.chat }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(

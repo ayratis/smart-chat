@@ -186,6 +186,11 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
         binding.layoutInput.addOnLayoutChangeListener(onLayoutChangeListener)
         binding.appBarLayout.addSystemTopPadding()
         binding.layoutInput.addSystemBottomPadding()
+        Glide.with(binding.ivChatAvatar)
+            .load(argChat.avatar)
+            .placeholder(R.drawable.group_avatar_placeholder)
+            .circleCrop()
+            .into(binding.ivChatAvatar)
         binding.ivChatAvatar.setOnClickListener {
             parentFragmentManager.navigateTo(
                 ChatProfileFragment.create(argChat),
@@ -193,7 +198,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
             )
         }
         binding.toolbar.apply {
-            title = argChat.storeName
+            title = argChat.name
             subtitle = argChat.agentName
             setNavigationOnClickListener {
                 parentFragmentManager.popBackStack()

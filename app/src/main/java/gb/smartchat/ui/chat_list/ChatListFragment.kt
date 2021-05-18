@@ -86,6 +86,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                     component.httpApi,
                     ChatListProfileUDF.Store(),
                     component.resourceManager,
+                    component.userAvatarChangedPublisher
                 ) as T
             }
         }
@@ -227,15 +228,18 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
 
             profileViewModel.navToCreateChat
                 .subscribe { event ->
-                    event.getContentIfNotHandled()?.let { storeInfo ->
+                    event.getContentIfNotHandled()?.let { (storeInfo, userProfile) ->
                         parentFragmentManager.navigateTo(
-                            CreateChatFragment.create(storeInfo, CreateChatMode.CREATE_SINGLE),
+                            CreateChatFragment.create(
+                                storeInfo,
+                                CreateChatMode.CREATE_SINGLE,
+                                userProfile
+                            ),
                             NavAnim.OPEN
                         )
                     }
                 }
                 .also { compositeDisposable.add(it) }
-
         }
 
         viewModel.viewState

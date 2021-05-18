@@ -1,25 +1,25 @@
 package gb.smartchat.ui.group_complete
 
-import android.util.Log
-import com.jakewharton.rxrelay2.BehaviorRelay
-import com.jakewharton.rxrelay2.PublishRelay
+import android.net.Uri
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Contact
-import io.reactivex.Observable
-import io.reactivex.Observer
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.functions.Consumer
+import gb.smartchat.entity.File
+import gb.smartchat.ui._global.BaseStore
 
 object GroupCompleteUDF {
 
     data class State(
-        val photoUrl: String? = null,
         val groupName: String = "",
         val contacts: List<Contact>,
-        val createGroupEnabled: Boolean = false,
-        val loading: Boolean = false
+        val loading: Boolean = false,
+        val avatarState: AvatarState = AvatarState.Empty
     )
+
+    sealed class AvatarState {
+        object Empty : AvatarState()
+        data class Uploading(val uri: Uri) : AvatarState()
+        data class UploadSuccess(val uri: Uri, val file: File) : AvatarState()
+    }
 
     sealed class Action {
         data class GroupNameChanged(val name: String) : Action()
@@ -27,6 +27,9 @@ object GroupCompleteUDF {
         object CreateGroup : Action()
         data class CreateGroupSuccess(val chat: Chat) : Action()
         data class CreateGroupError(val error: Throwable) : Action()
+        data class AttachAvatar(val contentUri: Uri) : Action()
+        data class UploadAvatarSuccess(val contentUri: Uri, val file: File) : Action()
+        data class UploadAvatarError(val contentUri: Uri, val error: Throwable) : Action()
     }
 
     sealed class SideEffect {
@@ -38,31 +41,14 @@ object GroupCompleteUDF {
 
         data class ShowCreateGroupError(val error: Throwable) : SideEffect()
         data class NavigateToChat(val chat: Chat) : SideEffect()
+        data class UploadAvatar(val contentUri: Uri) : SideEffect()
+        data class ShowUploadAvatarError(val error: Throwable) : SideEffect()
     }
 
-    class Store(
-        selectedContacts: List<Contact>
-    ) : Observable<State>(), Consumer<Action>, Disposable {
+    class Store(selectedContacts: List<Contact>) :
+        BaseStore<State, Action, SideEffect>(State(contacts = selectedContacts)) {
 
-        companion object {
-            private const val TAG = "GroupCompleteUDF"
-        }
-
-        private val actions = PublishRelay.create<Action>()
-        private val viewState = BehaviorRelay.createDefault(State(contacts = selectedContacts))
-        var sideEffectListener: (SideEffect) -> Unit = {}
-
-        private val disposable: Disposable = actions
-            .hide()
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { action ->
-                Log.d(TAG, "action: $action")
-                val newState = reduce(viewState.value!!, action, sideEffectListener)
-                Log.d(TAG, "state: $newState")
-                viewState.accept(newState)
-            }
-
-        private fun reduce(
+        override fun reduce(
             state: State,
             action: Action,
             sideEffectListener: (SideEffect) -> Unit
@@ -73,7 +59,7 @@ object GroupCompleteUDF {
                         SideEffect.CreateGroup(
                             state.contacts,
                             state.groupName,
-                            state.photoUrl
+                            (state.avatarState as? AvatarState.UploadSuccess)?.file?.url
                         )
                     )
                     return state.copy(loading = true)
@@ -88,34 +74,28 @@ object GroupCompleteUDF {
                 }
                 is Action.DeleteContact -> {
                     val contacts = state.contacts.filter { it.id != action.contact.id }
-                    return state.copy(
-                        contacts = contacts,
-                        createGroupEnabled = contacts.isNotEmpty() && state.groupName.isNotBlank()
-                    )
+                    return state.copy(contacts = contacts)
                 }
                 is Action.GroupNameChanged -> {
+                    return state.copy(groupName = action.name)
+                }
+                is Action.AttachAvatar -> {
+                    sideEffectListener.invoke(SideEffect.UploadAvatar(action.contentUri))
+                    return state.copy(avatarState = AvatarState.Uploading(action.contentUri))
+                }
+                is Action.UploadAvatarError -> {
+                    sideEffectListener.invoke(SideEffect.ShowUploadAvatarError(action.error))
+                    return state.copy(avatarState = AvatarState.Empty)
+                }
+                is Action.UploadAvatarSuccess -> {
                     return state.copy(
-                        groupName = action.name,
-                        createGroupEnabled = state.contacts.isNotEmpty() && action.name.isNotBlank()
+                        avatarState = AvatarState.UploadSuccess(
+                            action.contentUri,
+                            action.file
+                        )
                     )
                 }
             }
-        }
-
-        override fun accept(t: Action) {
-            actions.accept(t)
-        }
-
-        override fun dispose() {
-            disposable.dispose()
-        }
-
-        override fun isDisposed(): Boolean {
-            return disposable.isDisposed
-        }
-
-        override fun subscribeActual(observer: Observer<in State>) {
-            viewState.hide().subscribe(observer)
         }
     }
 }
