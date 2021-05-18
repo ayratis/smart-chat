@@ -20,7 +20,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                app:navigationIcon="@drawable/ic_baseline_arrow_back_24"
+                app:navigationIcon="@drawable/ic_arrow_back_purple_24"
                 app:subtitleTextColor="@color/razzmatazz"
                 tools:subtitle="158579 ООО Мясокомбинат"
                 tools:title="@string/app_name" />

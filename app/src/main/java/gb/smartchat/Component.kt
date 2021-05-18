@@ -130,4 +130,8 @@ class Component constructor(
     val addRecipientsPublisher by lazy {
         AddRecipientsPublisher()
     }
+
+    val userAvatarChangedPublisher by lazy {
+        UserAvatarChangedPublisher()
+    }
 }

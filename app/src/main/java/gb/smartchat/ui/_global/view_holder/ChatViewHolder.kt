@@ -68,16 +68,12 @@ class ChatViewHolder(
 
     fun bind(chat: Chat) {
         this.chat = chat
-        if (chat.users.size <= 2) {
-            val avatar = chat.users.firstOrNull { it.id != userId }?.avatar
-            Glide.with(binding.ivAvatar)
-                .load(avatar)
-                .placeholder(R.drawable.profile_avatar_placeholder)
-                .circleCrop()
-                .into(binding.ivAvatar)
-        } else {
-            binding.ivAvatar.setImageResource(R.drawable.group_avatar_placeholder)
-        }
+        Glide.with(binding.ivAvatar)
+            .load(chat.avatar)
+            .placeholder(R.drawable.profile_avatar_placeholder)
+            .circleCrop()
+            .into(binding.ivAvatar)
+        
         val icon: Drawable? = when {
             chat.lastMessage?.file == null -> null
             chat.lastMessage.file.isImage() -> imgIcon

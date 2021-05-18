@@ -1,23 +1,15 @@
 package gb.smartchat.ui.chat
 
-import android.Manifest
-import android.app.Activity.RESULT_OK
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.addCallback
-import androidx.activity.result.contract.ActivityResultContracts.*
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.core.view.updatePadding
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -40,12 +32,11 @@ import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.ui.chat_profile.ChatProfileFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
-import java.io.File
 import kotlin.math.max
 import kotlin.math.min
 
 
-class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
+class ChatFragment : Fragment(), AttachDialogFragment.Listener {
 
     companion object {
         private const val TAG = "ChatFragment"
@@ -61,17 +52,22 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
 
     private var _binding: FragmentChatBinding? = null
     private val binding: FragmentChatBinding get() = _binding!!
+
+    private val renderDisposables = CompositeDisposable()
+    private val newsDisposables = CompositeDisposable()
+
     private val argChat: Chat by lazy {
         requireArguments().getSerializable(ARG_CHAT) as Chat
     }
-    private val renderDisposables = CompositeDisposable()
-    private val newsDisposables = CompositeDisposable()
+
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
+
     private val contentHelper by lazy {
         component.contentHelper
     }
+
     private val viewModel: ChatViewModel by viewModels {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -94,8 +90,10 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             }
         }
     }
+
     private val linearLayoutManager: LinearLayoutManager
         get() = binding.rvChat.layoutManager as LinearLayoutManager
+
     private val chatAdapter by lazy {
         ChatAdapter(
             onItemBindListener = { chatItem ->
@@ -143,36 +141,17 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             setHasStableIds(true)
         }
     }
+
     private val mentionAdapter by lazy {
         MentionAdapter { user ->
             viewModel.onMentionClick(user)
         }
     }
+
     private val mentionSheetBehavior: BottomSheetBehavior<RecyclerView> by lazy {
         BottomSheetBehavior.from(binding.rvMentions)
     }
-    private val requestCameraPermission =
-        registerForActivityResult(RequestPermission()) { isGranted ->
-            if (isGranted) {
-                takePhoto()
-            } else {
-                Toast.makeText(requireContext(), "require permission", Toast.LENGTH_SHORT).show()
-            }
-        }
-    private var cameraPictureUri: Uri? = null
-    private val getCameraImage = registerForActivityResult(TakePicture()) { isOK ->
-        if (isOK) {
-            cameraPictureUri?.let { viewModel.attach(it) }
-        }
-    }
-    private val getPicFromGallery = registerForActivityResult(StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result.data?.data?.let { viewModel.attach(it) }
-        }
-    }
-    private val getContent = registerForActivityResult(GetContent()) { uri: Uri? ->
-        uri?.let { viewModel.attach(it) }
-    }
+
     private val onLayoutChangeListener =
         View.OnLayoutChangeListener { _, _, top, _, bottom, _, _, _, _ ->
             val height = bottom - top
@@ -207,6 +186,11 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         binding.layoutInput.addOnLayoutChangeListener(onLayoutChangeListener)
         binding.appBarLayout.addSystemTopPadding()
         binding.layoutInput.addSystemBottomPadding()
+        Glide.with(binding.ivChatAvatar)
+            .load(argChat.avatar)
+            .placeholder(R.drawable.group_avatar_placeholder)
+            .circleCrop()
+            .into(binding.ivChatAvatar)
         binding.ivChatAvatar.setOnClickListener {
             parentFragmentManager.navigateTo(
                 ChatProfileFragment.create(argChat),
@@ -214,7 +198,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             )
         }
         binding.toolbar.apply {
-            title = argChat.storeName
+            title = argChat.name
             subtitle = argChat.agentName
             setNavigationOnClickListener {
                 parentFragmentManager.popBackStack()
@@ -245,7 +229,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
             viewModel.onEditMessageReject()
         }
         binding.btnAttach.setOnClickListener {
-            AttachDialogFragment().show(childFragmentManager, null)
+            AttachDialogFragment
+                .create(camera = true, gallery = true, files = true)
+                .show(childFragmentManager, null)
         }
         binding.btnDetach.setOnClickListener {
             viewModel.detach()
@@ -302,42 +288,16 @@ class ChatFragment : Fragment(), AttachDialogFragment.OnOptionSelected {
         super.onPause()
     }
 
-    override fun onSelectFromGallery() {
-        getPicFromGallery.launch(
-            Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        )
+    override fun onCameraPicture(uri: Uri) {
+        viewModel.attach(uri)
     }
 
-    override fun onAttachFile() {
-        getContent.launch("*/*")
+    override fun onPhotoFromGallery(uri: Uri) {
+        viewModel.attach(uri)
     }
 
-    override fun onTakePhoto() {
-        if (isCameraPermissionGranted()) takePhoto()
-        else requestCameraPermission.launch(Manifest.permission.CAMERA)
-    }
-
-    private fun takePhoto() {
-        val storageDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        val file = File.createTempFile(
-            "JPEG_${System.currentTimeMillis()}",
-            ".jpg",
-            storageDir
-        )
-        val cameraPictureUri: Uri = FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.fileprovider",
-            file
-        )
-        this.cameraPictureUri = cameraPictureUri
-        getCameraImage.launch(cameraPictureUri)
-    }
-
-    private fun isCameraPermissionGranted(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
+    override fun onAttachFile(uri: Uri) {
+        viewModel.attach(uri)
     }
 
     private fun showProgressDialog(progress: Boolean) {

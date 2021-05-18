@@ -50,7 +50,7 @@ interface HttpApi {
     @POST("chat/management/create")
     fun postCreateChat(
         @Body createChatRequest: CreateChatRequest
-    ): Single<BaseResponse<Chat>>
+    ): Single<BaseResponse<CreateChatResponse>>
 
     @GET("chat/contacts/profile")
     fun getUserProfile(
@@ -110,4 +110,16 @@ interface HttpApi {
     fun postDeleteRecipients(
         @Body request: AddRecipientsRequest
     ): Single<BaseResponse<Any>>
+
+    @Multipart
+    @POST("chat/management/avatar")
+    fun postUploadChatAvatar(
+        @Part file: MultipartBody.Part
+    ): Single<BaseResponse<File>>
+
+    @Multipart
+    @POST("chat/contacts/avatar")
+    fun postUploadUserAvatar(
+        @Part file: MultipartBody.Part
+    ): Single<BaseResponse<File>>
 }

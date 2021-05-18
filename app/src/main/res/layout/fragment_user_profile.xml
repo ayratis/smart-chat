@@ -12,14 +12,31 @@
         android:layout_height="wrap_content"
         app:navigationIcon="@drawable/ic_arrow_back_purple_24" />
 
-    <ImageView
-        android:id="@+id/iv_avatar"
+    <FrameLayout
+        android:id="@+id/layout_avatar"
         android:layout_width="96dp"
         android:layout_height="96dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dp"
-        android:contentDescription="@string/upload_photo"
-        tools:src="@drawable/profile_avatar_placeholder" />
+        android:layout_marginTop="24dp">
+
+        <ImageView
+            android:id="@+id/iv_photo"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:contentDescription="@string/upload_photo"
+            android:src="@drawable/profile_avatar_placeholder" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar_photo"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_photo_progress"
+            android:padding="2dp"
+            android:theme="@style/ProgressDialogTheme"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
     <TextView
         android:id="@+id/tv_name"

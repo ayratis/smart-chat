@@ -1,5 +1,6 @@
 package gb.smartchat.ui.group_complete
 
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,6 +14,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import gb.smartchat.Component
 import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
@@ -22,12 +24,12 @@ import gb.smartchat.entity.StoreInfo
 import gb.smartchat.entity.UserProfile
 import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui._global.ProgressDialog
+import gb.smartchat.ui.chat.AttachDialogFragment
 import gb.smartchat.ui.chat.ChatFragment
-import gb.smartchat.ui.chat_list.ChatListFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
-class GroupCompleteFragment : Fragment() {
+class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
 
     companion object {
         private const val TAG = "GroupCompleteFragment"
@@ -78,7 +80,8 @@ class GroupCompleteFragment : Fragment() {
                     component.httpApi,
                     component.resourceManager,
                     component.chatCreatedPublisher,
-                    component.contactDeletePublisher
+                    component.contactDeletePublisher,
+                    component.contentHelper
                 ) as T
             }
         }
@@ -140,7 +143,9 @@ class GroupCompleteFragment : Fragment() {
         }
 
         binding.ivPhoto.setOnClickListener {
-            viewModel.onPhotoClick()
+            AttachDialogFragment
+                .create(camera = true, gallery = true, files = false)
+                .show(childFragmentManager, null)
         }
     }
 
@@ -157,6 +162,24 @@ class GroupCompleteFragment : Fragment() {
             .subscribe { binding.btnCreateChat.isEnabled = it }
             .also { compositeDisposable.add(it) }
 
+        viewModel.avatar
+            .subscribe { avatarState ->
+                val uri: Uri? = when (avatarState) {
+                    is GroupCompleteUDF.AvatarState.Empty -> null
+                    is GroupCompleteUDF.AvatarState.UploadSuccess -> avatarState.uri
+                    is GroupCompleteUDF.AvatarState.Uploading -> avatarState.uri
+                }
+                Glide.with(binding.ivPhoto)
+                    .load(uri)
+                    .placeholder(R.drawable.group_avatar_placeholder)
+                    .circleCrop()
+                    .into(binding.ivPhoto)
+                binding.progressBarPhoto.visible(
+                    avatarState is GroupCompleteUDF.AvatarState.Uploading
+                )
+            }
+            .also { compositeDisposable.add(it) }
+
         viewModel.progressDialog
             .subscribe { showProgressDialog(it) }
             .also { compositeDisposable.add(it) }
@@ -164,8 +187,7 @@ class GroupCompleteFragment : Fragment() {
         viewModel.navToChat
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let {
-                    parentFragmentManager.backTo(ChatListFragment::class)
-                    parentFragmentManager.navigateTo(ChatFragment.create(it), NavAnim.SLIDE)
+                    parentFragmentManager.newScreenFromRoot(ChatFragment.create(it), NavAnim.SLIDE)
                 }
             }
             .also { compositeDisposable.add(it) }
@@ -182,6 +204,14 @@ class GroupCompleteFragment : Fragment() {
     override fun onPause() {
         compositeDisposable.clear()
         super.onPause()
+    }
+
+    override fun onCameraPicture(uri: Uri) {
+        viewModel.attachAvatar(uri)
+    }
+
+    override fun onPhotoFromGallery(uri: Uri) {
+        viewModel.attachAvatar(uri)
     }
 
     private fun showProgressDialog(progress: Boolean) {

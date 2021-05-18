@@ -11,7 +11,7 @@ data class StoreInfo(
 ): Serializable {
     companion object {
         fun fake(): StoreInfo = StoreInfo(
-            "asd",
+            "7abc24fe-b7ec-11eb-8529-0242ac130003",
             "asd",
             123,
             "asd",

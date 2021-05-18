@@ -17,12 +17,16 @@ object ChatListProfileUDF {
         data class ProfileSuccess(val userProfile: UserProfile) : Action()
         data class ProfileError(val error: Throwable) : Action()
         object CreateChat : Action()
+        data class AvatarChanged(val url: String) : Action()
     }
 
     sealed class SideEffect {
         object LoadUserProfile : SideEffect()
         data class ShowProfileLoadError(val error: Throwable) : SideEffect()
-        data class NavToCreateChat(val storeInfo: StoreInfo) : SideEffect()
+        data class NavToCreateChat(
+            val storeInfo: StoreInfo,
+            val userProfile: UserProfile
+        ) : SideEffect()
     }
 
     class Store : BaseStore<State, Action, SideEffect>(State.Empty) {
@@ -56,7 +60,22 @@ object ChatListProfileUDF {
                     if (state is State.Success) {
                         //todo
                         val fakeStoreInfo = StoreInfo.fake()
-                        sideEffectListener.invoke(SideEffect.NavToCreateChat(fakeStoreInfo))
+                        sideEffectListener.invoke(
+                            SideEffect.NavToCreateChat(
+                                fakeStoreInfo,
+                                state.userProfile
+                            )
+                        )
+                    }
+                    return state
+                }
+                is Action.AvatarChanged -> {
+                    if (state is State.Success) {
+                        return state.copy(
+                            userProfile = state.userProfile.copy(
+                                avatar = action.url
+                            )
+                        )
                     }
                     return state
                 }

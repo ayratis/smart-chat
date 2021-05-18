@@ -87,9 +87,19 @@ fun FragmentManager.newRootScreen(
     fragment: Fragment,
     navAnim: NavAnim = NavAnim.NONE,
     setupFragmentTransaction: ((FragmentTransaction) -> Unit)? = null,
-    containerId: Int = defaultContainerId
+    containerId: Int = defaultContainerId,
 ) {
     backTo(null)
+    replace(fragment, navAnim, setupFragmentTransaction, containerId)
+}
+
+fun FragmentManager.newScreenFromRoot(
+    fragment: Fragment,
+    navAnim: NavAnim = NavAnim.NONE,
+    setupFragmentTransaction: ((FragmentTransaction) -> Unit)? = null,
+    containerId: Int = defaultContainerId,
+) {
+    popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     replace(fragment, navAnim, setupFragmentTransaction, containerId)
 }
 

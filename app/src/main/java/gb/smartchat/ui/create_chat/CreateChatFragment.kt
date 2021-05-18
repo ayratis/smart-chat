@@ -99,7 +99,7 @@ class CreateChatFragment : Fragment() {
         ContactsAdapter(
             createGroupClickListener = {
                 parentFragmentManager.navigateTo(
-                    create(storeInfo, CreateChatMode.CREATE_GROUP),
+                    create(storeInfo, CreateChatMode.CREATE_GROUP, userProfile!!),
                     NavAnim.SLIDE
                 )
             },
