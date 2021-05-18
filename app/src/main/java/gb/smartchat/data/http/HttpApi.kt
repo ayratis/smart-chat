@@ -1,6 +1,7 @@
 package gb.smartchat.data.http
 
 import gb.smartchat.entity.*
+import gb.smartchat.entity.request.AddRecipientsRequest
 import gb.smartchat.entity.request.CreateChatRequest
 import gb.smartchat.entity.request.PinChatRequest
 import gb.smartchat.entity.response.*
@@ -99,4 +100,14 @@ interface HttpApi {
         @Query("page_count") pageCount: Int,
         @Query("page_size") pageSize: Int
     ): Single<BaseResponse<LinksResponse>>
+
+    @POST("chat/management/add_recipients")
+    fun postAddRecipients(
+        @Body request: AddRecipientsRequest
+    ): Single<BaseResponse<Any>>
+
+    @POST("chat/management/delete_recipients")
+    fun postDeleteRecipients(
+        @Body request: AddRecipientsRequest
+    ): Single<BaseResponse<Any>>
 }

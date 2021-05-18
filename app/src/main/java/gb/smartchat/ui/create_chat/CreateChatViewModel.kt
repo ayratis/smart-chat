@@ -8,10 +8,14 @@ import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.entity.UserProfile
+import gb.smartchat.entity.request.AddRecipientsRequest
+import gb.smartchat.publisher.AddRecipientsPublisher
 import gb.smartchat.publisher.ChatCreatedPublisher
 import gb.smartchat.publisher.ContactDeletePublisher
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.humanMessage
+import gb.smartchat.utils.toContact
 import gb.smartchat.utils.toCreateChatRequest
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -20,12 +24,15 @@ import io.reactivex.schedulers.Schedulers
 
 class CreateChatViewModel(
     private val storeInfo: StoreInfo,
+    private val userProfile: UserProfile?,
+    private val chatId: Long?,
     private val mode: CreateChatMode,
     private val httpApi: HttpApi,
     private val store: CreateChatUDF.Store,
     private val resourceManager: ResourceManager,
     private val chatCreatedPublisher: ChatCreatedPublisher,
-    contactDeletePublisher: ContactDeletePublisher
+    contactDeletePublisher: ContactDeletePublisher,
+    private val addRecipientsPublisher: AddRecipientsPublisher
 ) : ViewModel() {
 
     companion object {
@@ -39,12 +46,13 @@ class CreateChatViewModel(
     private val showDialogCommand = BehaviorRelay.create<SingleEvent<String>>()
     private val navToGroupCompleteCommand =
         BehaviorRelay.create<SingleEvent<Pair<StoreInfo, List<Contact>>>>()
+    private val exitCommand = BehaviorRelay.create<SingleEvent<Unit>>()
 
     val items: Observable<List<ContactItem>> = state
         .map { it.mapIntoContactItems() }
         .subscribeOn(Schedulers.computation())
         .observeOn(AndroidSchedulers.mainThread())
-    val progressDialog: Observable<Boolean> = state.hide().map { it.createChatProgress }
+    val progressDialog: Observable<Boolean> = state.hide().map { it.blockingProgress }
     val selectedCount: Observable<Pair<Int, Int>> = state.hide().map {
         val selectedCount = it.selectedContacts.size
         val totalCount = (it.contactsResponseState as? CreateChatUDF.ContactsResponseState.Data)
@@ -62,6 +70,7 @@ class CreateChatViewModel(
     val showDialog: Observable<SingleEvent<String>> = showDialogCommand.hide()
     val navToGroupComplete: Observable<SingleEvent<Pair<StoreInfo, List<Contact>>>> =
         navToGroupCompleteCommand.hide()
+    val exit: Observable<SingleEvent<Unit>> = exitCommand.hide()
 
     init {
         store.sideEffectListener = { sideEffect ->
@@ -84,6 +93,12 @@ class CreateChatViewModel(
                     navToGroupCompleteCommand.accept(
                         SingleEvent(storeInfo to sideEffect.selectedContacts)
                     )
+                }
+                is CreateChatUDF.SideEffect.AddMembersToChat -> {
+                    addMembersToChat(sideEffect.selectedContacts)
+                }
+                CreateChatUDF.SideEffect.Exit -> {
+                    exitCommand.accept(SingleEvent(Unit))
                 }
             }
         }
@@ -114,8 +129,9 @@ class CreateChatViewModel(
     }
 
     private fun createChat(contact: Contact) {
+        val myContact = userProfile!!.toContact()
         httpApi
-            .postCreateChat(storeInfo.toCreateChatRequest(listOf(contact)))
+            .postCreateChat(storeInfo.toCreateChatRequest(listOf(contact, myContact)))
             .map { it.result }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -126,15 +142,35 @@ class CreateChatViewModel(
             .also { compositeDisposable.add(it) }
     }
 
+    private fun addMembersToChat(contacts: List<Contact>) {
+        httpApi
+            .postAddRecipients(
+                AddRecipientsRequest(
+                    chatId = chatId!!,
+                    contacts = contacts
+                )
+            )
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {
+                    addRecipientsPublisher.accept(contacts)
+                    store.accept(CreateChatUDF.Action.AddMembersSuccess)
+                },
+                { store.accept(CreateChatUDF.Action.AddMembersError(it)) }
+            )
+            .also { compositeDisposable.add(it) }
+    }
+
     private fun CreateChatUDF.State.mapIntoContactItems(): List<ContactItem> {
         val list = mutableListOf<ContactItem>()
-        if (mode == CreateChatMode.SINGLE) {
+        if (mode == CreateChatMode.CREATE_SINGLE) {
             list += ContactItem.CreateGroupButton
         }
         when (this.contactsResponseState) {
             is CreateChatUDF.ContactsResponseState.Data -> {
                 for (group in this.groupsToShow) {
-                    if (mode == CreateChatMode.SINGLE) {
+                    if (mode == CreateChatMode.CREATE_SINGLE) {
                         list += ContactItem.Group(group)
                         list += group.contacts.map { ContactItem.Contact(it) }
                     } else {
@@ -181,6 +217,6 @@ class CreateChatViewModel(
     }
 
     fun onCreateGroupNextClick() {
-        store.accept(CreateChatUDF.Action.CreateGroupNextClick)
+        store.accept(CreateChatUDF.Action.DoneClick)
     }
 }

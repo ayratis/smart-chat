@@ -10,7 +10,8 @@ import gb.smartchat.ui._global.view_holder.ProgressViewHolder
 
 class ChatProfileMembersAdapter(
     private val onContactClickListener: (Contact) -> Unit,
-    private val onErrorActionClickListener: (tag: String) -> Unit
+    private val onErrorActionClickListener: (tag: String) -> Unit,
+    private val deleteContactListener: ((Contact) -> Unit)?
 ) : ListAdapter<ChatProfileMembersItem, RecyclerView.ViewHolder>(DiffUtilItemCallback()) {
 
     override fun getItemViewType(position: Int): Int {
@@ -23,7 +24,11 @@ class ChatProfileMembersAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            1 -> ChatProfileMemberViewHolder.create(parent, onContactClickListener)
+            1 -> ChatProfileMemberViewHolder.create(
+                parent,
+                onContactClickListener,
+                deleteContactListener
+            )
             2 -> ErrorViewHolder.create(parent, onErrorActionClickListener)
             3 -> ProgressViewHolder.create(parent)
             else -> throw RuntimeException()

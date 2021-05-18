@@ -20,7 +20,7 @@ object CreateChatUDF {
         val contactsResponseState: ContactsResponseState = ContactsResponseState.Loading,
         val query: String? = null,
         val groupsToShow: List<Group> = emptyList(),
-        val createChatProgress: Boolean = false,
+        val blockingProgress: Boolean = false,
         val selectedContacts: List<Contact> = emptyList()
     )
 
@@ -39,8 +39,10 @@ object CreateChatUDF {
         data class OnContactClick(val contact: Contact) : Action()
         data class CreateChatSuccess(val chat: Chat) : Action()
         data class CreateChatError(val error: Throwable) : Action()
-        object CreateGroupNextClick : Action()
+        object DoneClick : Action()
         data class DeleteContact(val contact: Contact) : Action()
+        object AddMembersSuccess : Action()
+        data class AddMembersError(val error: Throwable) : Action()
     }
 
     sealed class SideEffect {
@@ -49,6 +51,8 @@ object CreateChatUDF {
         data class ShowErrorMessage(val error: Throwable) : SideEffect()
         data class NavigateToChat(val chat: Chat) : SideEffect()
         data class NavigateToGroupComplete(val selectedContacts: List<Contact>) : SideEffect()
+        data class AddMembersToChat(val selectedContacts: List<Contact>) : SideEffect()
+        object Exit: SideEffect()
     }
 
     class Store(
@@ -122,11 +126,12 @@ object CreateChatUDF {
                 }
                 is Action.OnContactClick -> {
                     return when (mode) {
-                        CreateChatMode.SINGLE -> {
+                        CreateChatMode.CREATE_SINGLE -> {
                             sideEffectListener.invoke(SideEffect.CreateChat(action.contact))
-                            state.copy(createChatProgress = true)
+                            state.copy(blockingProgress = true)
                         }
-                        CreateChatMode.GROUP -> {
+                        CreateChatMode.CREATE_GROUP,
+                        CreateChatMode.ADD_MEMBERS -> {
                             val selectedContacts =
                                 if (state.selectedContacts.contains(action.contact)) {
                                     state.selectedContacts.filter { it.id != action.contact.id }
@@ -139,19 +144,35 @@ object CreateChatUDF {
                 }
                 is Action.CreateChatError -> {
                     sideEffectListener.invoke(SideEffect.ShowErrorMessage(action.error))
-                    return state.copy(createChatProgress = false)
+                    return state.copy(blockingProgress = false)
                 }
                 is Action.CreateChatSuccess -> {
                     sideEffectListener.invoke(SideEffect.NavigateToChat(action.chat))
-                    return state.copy(createChatProgress = false)
+                    return state.copy(blockingProgress = false)
                 }
-                is Action.CreateGroupNextClick -> {
-                    if (state.selectedContacts.isNotEmpty()) {
-                        sideEffectListener.invoke(
-                            SideEffect.NavigateToGroupComplete(state.selectedContacts)
-                        )
+                is Action.DoneClick -> {
+                    when (mode) {
+                        CreateChatMode.CREATE_SINGLE -> {
+                            return state
+                        }
+                        CreateChatMode.CREATE_GROUP -> {
+                            if (state.selectedContacts.isNotEmpty()) {
+                                sideEffectListener.invoke(
+                                    SideEffect.NavigateToGroupComplete(state.selectedContacts)
+                                )
+                            }
+                            return state
+                        }
+                        CreateChatMode.ADD_MEMBERS -> {
+                            if (state.selectedContacts.isNotEmpty()) {
+                                sideEffectListener.invoke(
+                                    SideEffect.AddMembersToChat(state.selectedContacts)
+                                )
+                            }
+                            return state.copy(blockingProgress = true)
+                        }
                     }
-                    return state
+
                 }
                 is Action.DeleteContact -> {
                     return state.copy(
@@ -159,6 +180,14 @@ object CreateChatUDF {
                             it.id != action.contact.id
                         }
                     )
+                }
+                is Action.AddMembersSuccess -> {
+                    sideEffectListener.invoke(SideEffect.Exit)
+                    return state.copy(blockingProgress = false)
+                }
+                is Action.AddMembersError -> {
+                    sideEffectListener.invoke(SideEffect.ShowErrorMessage(action.error))
+                    return state.copy(blockingProgress = false)
                 }
             }
         }

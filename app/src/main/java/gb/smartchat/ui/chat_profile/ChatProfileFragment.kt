@@ -8,13 +8,18 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentPagerAdapter
 import com.bumptech.glide.Glide
 import gb.smartchat.R
+import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatProfileBinding
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Contact
+import gb.smartchat.entity.StoreInfo
+import gb.smartchat.entity.User
 import gb.smartchat.ui.chat_profile.files.ChatProfileFilesFragment
 import gb.smartchat.ui.chat_profile.links.ChatProfileLinksFragment
 import gb.smartchat.ui.chat_profile.members.ChatProfileMembersFragment
 import gb.smartchat.ui.contact_profile.ContactProfileFragment
+import gb.smartchat.ui.create_chat.CreateChatFragment
+import gb.smartchat.ui.create_chat.CreateChatMode
 import gb.smartchat.utils.NavAnim
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.navigateTo
@@ -35,6 +40,10 @@ class ChatProfileFragment : Fragment(), ChatProfileMembersFragment.Router {
     private var _binding: FragmentChatProfileBinding? = null
     private val binding: FragmentChatProfileBinding
         get() = _binding!!
+
+    private val component by lazy {
+        (requireActivity() as SmartChatActivity).component
+    }
 
     private val chat: Chat by lazy {
         requireArguments().getSerializable(ARG_CHAT) as Chat
@@ -78,6 +87,15 @@ class ChatProfileFragment : Fragment(), ChatProfileMembersFragment.Router {
         binding.tvAgentName.text = chat.agentName
         binding.viewPager.adapter = ViewPageAdapter()
         binding.tabLayout.setupWithViewPager(binding.viewPager)
+        binding.btnAddMembers.setOnClickListener {
+            parentFragmentManager.navigateTo(
+                CreateChatFragment.create(
+                    storeInfo = StoreInfo.fake(),
+                    mode = CreateChatMode.ADD_MEMBERS,
+                    chat = chat
+                )
+            )
+        }
     }
 
     override fun navigateToContactProfile(contact: Contact) {
@@ -93,7 +111,7 @@ class ChatProfileFragment : Fragment(), ChatProfileMembersFragment.Router {
         }
 
         override fun getPageTitle(position: Int): CharSequence? {
-            return when(position) {
+            return when (position) {
                 0 -> getString(R.string.members)
                 1 -> getString(R.string.media)
                 2 -> getString(R.string.links)
@@ -103,8 +121,12 @@ class ChatProfileFragment : Fragment(), ChatProfileMembersFragment.Router {
         }
 
         override fun getItem(position: Int): Fragment {
-            return when(position) {
-                0 -> ChatProfileMembersFragment.create(chat.id)
+            return when (position) {
+                0 -> {
+                    val creator = chat.users.find { it.role == User.Role.CREATOR }
+                    val isCreator = creator?.id == component.userId
+                    ChatProfileMembersFragment.create(chat.id, isCreator)
+                }
                 1 -> ChatProfileFilesFragment.create(chat.id, true)
                 2 -> ChatProfileLinksFragment.create(chat.id)
                 3 -> ChatProfileFilesFragment.create(chat.id, false)

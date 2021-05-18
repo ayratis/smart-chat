@@ -8,5 +8,14 @@ data class StoreInfo(
     val partnerCode: Int,
     val partnerName: String,
     val agentCode: Int,
-    val userProfile: UserProfile
-): Serializable
+): Serializable {
+    companion object {
+        fun fake(): StoreInfo = StoreInfo(
+            "asd",
+            "asd",
+            123,
+            "asd",
+            123,
+        )
+    }
+}

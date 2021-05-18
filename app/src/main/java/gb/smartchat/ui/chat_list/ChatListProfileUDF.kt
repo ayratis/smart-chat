@@ -55,14 +55,7 @@ object ChatListProfileUDF {
                 Action.CreateChat -> {
                     if (state is State.Success) {
                         //todo
-                        val fakeStoreInfo = StoreInfo(
-                            "asd",
-                            "asd",
-                            123,
-                            "asd",
-                            123,
-                            state.userProfile
-                        )
+                        val fakeStoreInfo = StoreInfo.fake()
                         sideEffectListener.invoke(SideEffect.NavToCreateChat(fakeStoreInfo))
                     }
                     return state

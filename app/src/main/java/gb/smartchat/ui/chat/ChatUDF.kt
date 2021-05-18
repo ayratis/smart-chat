@@ -79,6 +79,9 @@ object ChatUDF {
         data class ReadMessage(val message: Message) : Action()
         data class InternalUpdateMessage(val message: Message) : Action()
         data class ClientMentionClick(val mention: User) : Action()
+
+        data class ServerAddRecipients(val newRecipients: List<Contact>) : Action()
+        data class ServerDeleteRecipients(val deletedUserIds: List<String>) : Action()
     }
 
     sealed class SideEffect {
@@ -714,7 +717,12 @@ object ChatUDF {
                         action.message.id > state.readInfo.readIn
                     ) {
                         val newUnreadCount = max(state.readInfo.unreadCount - 1, 0)
-                        sideEffectListener(SideEffect.ReadMessage(action.message.id, newUnreadCount))
+                        sideEffectListener(
+                            SideEffect.ReadMessage(
+                                action.message.id,
+                                newUnreadCount
+                            )
+                        )
                         val readInfo = state.readInfo.copy(
                             readIn = action.message.id,
                             unreadCount = newUnreadCount
@@ -722,6 +730,27 @@ object ChatUDF {
                         return state.copy(readInfo = readInfo)
                     }
                     return state
+                }
+                is Action.ServerAddRecipients -> {
+                    val newUsers = action.newRecipients
+                        .map { contact ->
+                            User(
+                                id = contact.id,
+                                name = contact.name,
+                                avatar = contact.avatar,
+                                role = null,
+                                lastReadMessageId = null,
+                                lastMentionMessageId = null
+                            )
+                        }
+                        .filter { newUser ->
+                            state.users.find { it.id == newUser.id } == null //не нашли в имеющихся пользователях
+                        }
+                    return state.copy(users = state.users + newUsers)
+                }
+                is Action.ServerDeleteRecipients -> {
+                    val users = state.users.filter { !action.deletedUserIds.contains(it.id) }
+                    return state.copy(users = users)
                 }
             }
         }
@@ -742,7 +771,7 @@ object ChatUDF {
             return list
         }
 
-       private fun String.getMentions(users: List<User>): List<Mention> {
+        private fun String.getMentions(users: List<User>): List<Mention> {
             val mentions = mutableListOf<Mention>()
             users.forEach { user ->
                 if (user.name != null) {

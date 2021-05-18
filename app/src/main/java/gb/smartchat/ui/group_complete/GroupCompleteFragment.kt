@@ -19,6 +19,7 @@ import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentGroupCompleteBinding
 import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
+import gb.smartchat.entity.UserProfile
 import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.ui.chat.ChatFragment
@@ -32,12 +33,18 @@ class GroupCompleteFragment : Fragment() {
         private const val TAG = "GroupCompleteFragment"
         private const val PROGRESS_TAG = "progress tag"
         private const val ARG_STORE_INFO = "arg store info"
+        private const val ARG_USER_PROFILE = "arg user profile"
         private const val ARG_SELECTED_CONTACTS = "arg selected contacts"
 
-        fun create(storeInfo: StoreInfo, selectedContacts: List<Contact>) =
+        fun create(
+            storeInfo: StoreInfo,
+            userProfile: UserProfile,
+            selectedContacts: List<Contact>
+        ) =
             GroupCompleteFragment().apply {
                 arguments = Bundle().apply {
                     putSerializable(ARG_STORE_INFO, storeInfo)
+                    putSerializable(ARG_USER_PROFILE, userProfile)
                     putSerializable(ARG_SELECTED_CONTACTS, ArrayList(selectedContacts))
                 }
             }
@@ -49,6 +56,9 @@ class GroupCompleteFragment : Fragment() {
     private val compositeDisposable = CompositeDisposable()
     private val storeInfo by lazy {
         requireArguments().getSerializable(ARG_STORE_INFO) as StoreInfo
+    }
+    private val userProfile by lazy {
+        requireArguments().getSerializable(ARG_USER_PROFILE) as UserProfile
     }
     private val selectedContacts: List<Contact> by lazy {
         @Suppress("UNCHECKED_CAST")
@@ -63,6 +73,7 @@ class GroupCompleteFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return GroupCompleteViewModel(
                     storeInfo,
+                    userProfile,
                     GroupCompleteUDF.Store(selectedContacts),
                     component.httpApi,
                     component.resourceManager,

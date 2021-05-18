@@ -126,4 +126,8 @@ class Component constructor(
     val chatUnarchivePublisher by lazy {
         ChatUnarchivePublisher()
     }
+
+    val addRecipientsPublisher by lazy {
+        AddRecipientsPublisher()
+    }
 }
