@@ -122,4 +122,10 @@ interface HttpApi {
     fun postUploadUserAvatar(
         @Part file: MultipartBody.Part
     ): Single<BaseResponse<File>>
+
+    @POST("chat/management/leave")
+    fun postLeaveChat(
+        @Body request: AddRecipientsRequest
+    ): Single<BaseResponse<Any>>
+
 }

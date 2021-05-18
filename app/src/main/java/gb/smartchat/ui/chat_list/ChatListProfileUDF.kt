@@ -18,6 +18,7 @@ object ChatListProfileUDF {
         data class ProfileError(val error: Throwable) : Action()
         object CreateChat : Action()
         data class AvatarChanged(val url: String) : Action()
+
     }
 
     sealed class SideEffect {

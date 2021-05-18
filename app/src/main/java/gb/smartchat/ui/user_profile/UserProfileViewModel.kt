@@ -36,7 +36,7 @@ class UserProfileViewModel(
         val filePart = MultipartBody.Part
             .createFormData("upload_file", name, contentHelper.requestBody(contentUri))
         httpApi
-            .postUploadChatAvatar(filePart)
+            .postUploadUserAvatar(filePart)
             .map { it.result }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())

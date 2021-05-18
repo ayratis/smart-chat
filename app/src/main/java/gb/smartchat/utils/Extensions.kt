@@ -320,6 +320,15 @@ fun UserProfile.toContact(): Contact {
     )
 }
 
+fun User.toContact(): Contact {
+    return Contact(
+        id = id,
+        name = name,
+        avatar = avatar,
+        online = null
+    )
+}
+
 fun StoreInfo.toCreateChatRequest(
     chatName: String,
     avatarUrl: String?,
