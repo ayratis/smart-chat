@@ -51,6 +51,7 @@ object ChatListUDF {
         data class ChatUnarchived(val chat: Chat) : Action()
         data class AddRecipients(val chatId: Long, val newRecipients: List<Contact>) : Action()
         data class DeleteRecipients(val chatId: Long, val deletedUserIds: List<String>) : Action()
+        data class LeaveChat(val chat: Chat) : Action()
     }
 
     sealed class SideEffect {
@@ -348,6 +349,14 @@ object ChatListUDF {
                     val users = chat.users.filter { !action.deletedUserIds.contains(it.id) }
                     val editedChatList = state.chatList.toMutableList().apply {
                         set(index, chat.copy(users = users))
+                    }
+                    return state.copy(chatList = editedChatList)
+                }
+                is Action.LeaveChat -> {
+                    val index = state.chatList.indexOfFirst { it.id == action.chat.id }
+                    if (index < 0) return state
+                    val editedChatList = state.chatList.toMutableList().apply {
+                        removeAt(index)
                     }
                     return state.copy(chatList = editedChatList)
                 }

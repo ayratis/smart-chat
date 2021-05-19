@@ -49,6 +49,8 @@
     <string name="add_members">Добавить участников</string>
     <string name="add">Добавить</string>
     <string name="leave_chat">Покинуть чат</string>
+    <string name="leave_chat_error">Ошибка при попытке покинуть чат</string>
+    <string name="leave_chat_dialog_message">Вы действительно хотите покинуть этот чат?</string>
     <string name="members">Участники</string>
     <string name="media">Медиа</string>
     <string name="links">Ссылки</string>
@@ -59,4 +61,6 @@
     <string name="base_error_message">Не удалось загрузить информацию</string>
     <string name="delete_member">Исключить</string>
     <string name="delete_member_error">Ошибка при исключении пользователя из чата</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
 </resources>

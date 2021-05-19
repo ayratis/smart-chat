@@ -10,10 +10,7 @@ import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.request.PinChatRequest
-import gb.smartchat.publisher.ChatCreatedPublisher
-import gb.smartchat.publisher.ChatUnarchivePublisher
-import gb.smartchat.publisher.ChatUnreadMessageCountPublisher
-import gb.smartchat.publisher.MessageReadInternalPublisher
+import gb.smartchat.publisher.*
 import gb.smartchat.utils.SingleEvent
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -29,7 +26,8 @@ class ChatListViewModel(
     chatCreatedPublisher: ChatCreatedPublisher,
     messageReadInternalPublisher: MessageReadInternalPublisher,
     chatUnreadMessageCountPublisher: ChatUnreadMessageCountPublisher,
-    private val chatUnarchivePublisher: ChatUnarchivePublisher
+    private val chatUnarchivePublisher: ChatUnarchivePublisher,
+    leaveChatPublisher: LeaveChatPublisher
 ) : ViewModel() {
 
     companion object {
@@ -63,6 +61,9 @@ class ChatListViewModel(
                 .subscribe { store.accept(ChatListUDF.Action.ChatUnarchived(it)) }
                 .also { compositeDisposable.add(it) }
         }
+        leaveChatPublisher
+            .subscribe { store.accept(ChatListUDF.Action.LeaveChat(it)) }
+            .also { compositeDisposable.add(it) }
     }
 
     private fun setupStateMachine() {

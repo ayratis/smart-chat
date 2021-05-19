@@ -6,6 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentPagerAdapter
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
@@ -14,21 +17,23 @@ import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
 import gb.smartchat.entity.User
+import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui.chat_profile.files.ChatProfileFilesFragment
 import gb.smartchat.ui.chat_profile.links.ChatProfileLinksFragment
 import gb.smartchat.ui.chat_profile.members.ChatProfileMembersFragment
 import gb.smartchat.ui.contact_profile.ContactProfileFragment
 import gb.smartchat.ui.create_chat.CreateChatFragment
 import gb.smartchat.ui.create_chat.CreateChatMode
-import gb.smartchat.utils.NavAnim
-import gb.smartchat.utils.addSystemTopPadding
-import gb.smartchat.utils.navigateTo
-import gb.smartchat.utils.registerOnBackPress
+import gb.smartchat.utils.*
+import io.reactivex.disposables.CompositeDisposable
 
-class ChatProfileFragment : Fragment(), ChatProfileMembersFragment.Router {
+class ChatProfileFragment : Fragment(),
+    ChatProfileMembersFragment.Router,
+    MessageDialogFragment.OnClickListener {
 
     companion object {
         private const val ARG_CHAT = "arg chat"
+        private const val LEAVE_CHAT_DIALOG_TAG = "leave chat dialog tag"
 
         fun create(chat: Chat) = ChatProfileFragment().apply {
             arguments = Bundle().apply {
@@ -41,12 +46,29 @@ class ChatProfileFragment : Fragment(), ChatProfileMembersFragment.Router {
     private val binding: FragmentChatProfileBinding
         get() = _binding!!
 
+    private val compositeDisposable = CompositeDisposable()
+
     private val component by lazy {
         (requireActivity() as SmartChatActivity).component
     }
 
     private val chat: Chat by lazy {
         requireArguments().getSerializable(ARG_CHAT) as Chat
+    }
+
+    private val viewModel: ChatProfileViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return ChatProfileViewModel(
+                    component.httpApi,
+                    chat,
+                    component.userId,
+                    component.resourceManager,
+                    component.leaveChatPublisher
+                ) as T
+            }
+        }
     }
 
     override fun onCreateView(
@@ -96,6 +118,40 @@ class ChatProfileFragment : Fragment(), ChatProfileMembersFragment.Router {
                 )
             )
         }
+        binding.btnLeaveChat.setOnClickListener {
+            MessageDialogFragment
+                .create(
+                    message = getString(R.string.leave_chat_dialog_message),
+                    positive = getString(R.string.yes),
+                    negative = getString(R.string.no),
+                    tag = LEAVE_CHAT_DIALOG_TAG
+                )
+                .show(childFragmentManager, LEAVE_CHAT_DIALOG_TAG)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.exitToRootScreen
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let {
+                    parentFragmentManager.backTo(null)
+                }
+            }
+            .also { compositeDisposable.add(it) }
+        viewModel.showDialog
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let { message ->
+                    MessageDialogFragment.create(message = message)
+                        .show(childFragmentManager, null)
+                }
+            }
+            .also { compositeDisposable.add(it) }
+    }
+
+    override fun onPause() {
+        compositeDisposable.clear()
+        super.onPause()
     }
 
     override fun navigateToContactProfile(contact: Contact) {
@@ -103,6 +159,10 @@ class ChatProfileFragment : Fragment(), ChatProfileMembersFragment.Router {
             ContactProfileFragment.create(contact, chat.id),
             NavAnim.SLIDE
         )
+    }
+
+    override fun dialogPositiveClicked(tag: String) {
+        viewModel.leaveChat()
     }
 
     inner class ViewPageAdapter : FragmentPagerAdapter(childFragmentManager) {

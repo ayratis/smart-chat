@@ -134,4 +134,8 @@ class Component constructor(
     val userAvatarChangedPublisher by lazy {
         UserAvatarChangedPublisher()
     }
+
+    val leaveChatPublisher by lazy {
+        LeaveChatPublisher()
+    }
 }
