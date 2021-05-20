@@ -15,6 +15,7 @@ import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Message
 import gb.smartchat.entity.MessageRead
 import gb.smartchat.entity.User
+import gb.smartchat.entity.request.MessageFavoriteRequest
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.ReadInfoRequest
 import gb.smartchat.entity.request.TypingRequest
@@ -415,6 +416,18 @@ class ChatViewModel(
         message.file?.url?.let { downloadHelper.cancelDownload(it) }
     }
 
+    private fun makeMessageFavorite(message: Message) {
+        httpApi
+            .postMessageFavorite(MessageFavoriteRequest(listOf(message.id)))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {},
+                {}
+            )
+            .also { compositeDisposable.add(it) }
+    }
+
     fun onTextChanged(text: String) {
         Log.d(TAG, "onTextChanged: $text")
         store.accept(ChatUDF.Action.ClientTextChanged(text))
@@ -489,5 +502,9 @@ class ChatViewModel(
 
     fun onMentionClick(user: User) {
         store.accept(ChatUDF.Action.ClientMentionClick(user))
+    }
+
+    fun onToFavoriteClick(message: Message) {
+        makeMessageFavorite(message)
     }
 }

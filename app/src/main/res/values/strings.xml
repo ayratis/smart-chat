@@ -63,4 +63,5 @@
     <string name="delete_member_error">Ошибка при исключении пользователя из чата</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
+    <string name="to_favorites">Отметить как важное</string>
 </resources>

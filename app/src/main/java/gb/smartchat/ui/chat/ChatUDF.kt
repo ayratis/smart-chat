@@ -150,8 +150,7 @@ object ChatUDF {
 
     class Store(
         private val userId: String,
-        readInfo: ReadInfo,
-        users: List<User>
+        private val chat: Chat
     ) : ObservableSource<State>, Consumer<Action>, Disposable {
 
         companion object {
@@ -159,7 +158,7 @@ object ChatUDF {
         }
 
         private val actions = PublishRelay.create<Action>()
-        private val state = BehaviorRelay.createDefault(State(users, readInfo))
+        private val state = BehaviorRelay.createDefault(State(chat.users, chat.getReadInfo(userId)))
         var sideEffectListener: (SideEffect) -> Unit = {}
 
         private val disposable: Disposable = actions.hide()
@@ -208,7 +207,7 @@ object ChatUDF {
                     val file = (state.attachmentState as? AttachmentState.UploadSuccess)?.file
                     val message = Message(
                         id = -1,
-                        chatId = 1,
+                        chatId = chat.id,
                         senderId = userId,
                         clientId = instant.toEpochMilli().toString(),
                         text = state.currentText.trim(),

@@ -18,7 +18,8 @@ class ChatAdapter(
     private val nextPageDownCallback: () -> Unit,
     private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
-    private val onMentionClickListener: (Mention) -> Unit
+    private val onMentionClickListener: (Mention) -> Unit,
+    private val onToFavoritesClickListener: (ChatItem.Msg) -> Unit,
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()),
     StickyHeaderHelper {
 
@@ -44,7 +45,8 @@ class ChatAdapter(
                 onQuoteListener,
                 onQuotedMsgClickListener,
                 onFileClickListener,
-                onMentionClickListener
+                onMentionClickListener,
+                onToFavoritesClickListener
             )
             3 -> SystemViewHolder.create(parent)
             4 -> OutgoingViewHolder.create(
@@ -54,7 +56,8 @@ class ChatAdapter(
                 onQuoteListener,
                 onQuotedMsgClickListener,
                 onFileClickListener,
-                onMentionClickListener
+                onMentionClickListener,
+                onToFavoritesClickListener
             )
             5 -> DraftViewHolder.create(
                 parent,

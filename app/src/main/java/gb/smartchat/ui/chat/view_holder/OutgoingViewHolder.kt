@@ -7,7 +7,8 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
 import android.util.Log
-import android.view.*
+import android.view.View
+import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -20,7 +21,6 @@ import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.*
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 
 class OutgoingViewHolder private constructor(
@@ -30,7 +30,8 @@ class OutgoingViewHolder private constructor(
     private val onQuoteListener: (ChatItem.Msg) -> Unit,
     private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
-    private val onMentionClickListener: (Mention) -> Unit
+    private val onMentionClickListener: (Mention) -> Unit,
+    private val onToFavoritesClickListener: (ChatItem.Msg) -> Unit,
 ) : RecyclerView.ViewHolder(itemView) {
 
     companion object {
@@ -44,6 +45,7 @@ class OutgoingViewHolder private constructor(
             onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
             onFileClickListener: (ChatItem.Msg) -> Unit,
             onMentionClickListener: (Mention) -> Unit,
+            onToFavoritesClickListener: (ChatItem.Msg) -> Unit
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
@@ -53,6 +55,7 @@ class OutgoingViewHolder private constructor(
                 onQuotedMsgClickListener,
                 onFileClickListener,
                 onMentionClickListener,
+                onToFavoritesClickListener
             )
     }
 
@@ -182,39 +185,46 @@ class OutgoingViewHolder private constructor(
             menu.inflate(R.menu.download)
         }
         menu.inflate(R.menu.edit)
+        menu.inflate(R.menu.to_favorites)
         menu.inflate(R.menu.delete)
+
         menu.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.action_quote -> {
                     Log.d(TAG, "onCreateContextMenu: quote")
                     onQuoteListener.invoke(chatItem)
-                    return@setOnMenuItemClickListener true
+                    true
                 }
                 R.id.action_copy -> {
                     Log.d(TAG, "onCreateContextMenu: copy")
                     val clip = ClipData.newPlainText(null, chatItem.message.text)
                     clipboard.setPrimaryClip(clip)
-                    return@setOnMenuItemClickListener true
+                    true
                 }
                 R.id.action_download -> {
                     Log.d(TAG, "onCreateContextMenu: download")
                     if (chatItem.message.file?.downloadStatus == DownloadStatus.Empty) {
                         onFileClickListener.invoke(chatItem)
                     }
-                    return@setOnMenuItemClickListener true
+                    true
                 }
                 R.id.action_edit -> {
                     Log.d(TAG, "onCreateContextMenu: edit")
                     onEditListener.invoke(chatItem)
-                    return@setOnMenuItemClickListener true
+                    true
                 }
                 R.id.action_delete -> {
                     Log.d(TAG, "onCreateContextMenu: delete")
                     onDeleteListener.invoke(chatItem)
-                    return@setOnMenuItemClickListener true
+                    true
                 }
+                R.id.action_to_favorites -> {
+                    Log.d(TAG, "onCreateContextMenu: to_favorites")
+                    onToFavoritesClickListener.invoke(chatItem)
+                    true
+                }
+                else -> false
             }
-            false
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             menu.setForceShowIcon(true)

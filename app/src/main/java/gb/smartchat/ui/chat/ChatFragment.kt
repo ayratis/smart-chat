@@ -73,11 +73,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatViewModel(
-                    store = ChatUDF.Store(
-                        component.userId,
-                        argChat.getReadInfo(component.userId),
-                        argChat.users
-                    ),
+                    store = ChatUDF.Store(component.userId, argChat),
                     userId = component.userId,
                     chat = argChat,
                     socketApi = component.socketApi,
@@ -136,6 +132,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
                 Toast
                     .makeText(requireContext(), "user_id: ${mention.userId}", Toast.LENGTH_SHORT)
                     .show()
+            },
+            onToFavoritesClickListener = { chatItem ->
+                viewModel.onToFavoriteClick(chatItem.message)
             }
         ).apply {
             setHasStableIds(true)
@@ -286,6 +285,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
     override fun onPause() {
         newsDisposables.clear()
         super.onPause()
+        hideSoftInput()
     }
 
     override fun onCameraPicture(uri: Uri) {
