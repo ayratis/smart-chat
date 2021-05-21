@@ -253,7 +253,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                         parentFragmentManager.navigateTo(
                             CreateChatFragment.create(
                                 storeInfo,
-                                CreateChatMode.CREATE_SINGLE,
+                                CreateChatMode.CREATE_GROUP,
                                 userProfile
                             ),
                             NavAnim.OPEN
