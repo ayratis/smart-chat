@@ -3,6 +3,7 @@ package gb.smartchat.data.http
 import gb.smartchat.entity.*
 import gb.smartchat.entity.request.AddRecipientsRequest
 import gb.smartchat.entity.request.CreateChatRequest
+import gb.smartchat.entity.request.MessageFavoriteRequest
 import gb.smartchat.entity.request.PinChatRequest
 import gb.smartchat.entity.response.*
 import io.reactivex.Single
@@ -128,4 +129,11 @@ interface HttpApi {
         @Body request: AddRecipientsRequest
     ): Single<BaseResponse<Any>>
 
+    @POST("chat/management/messages/favorite")
+    fun postMessageFavorite(
+        @Body request: MessageFavoriteRequest
+    ): Single<BaseResponse<Boolean>>
+
+    @GET("chat/management/get_favorite_chat")
+    fun getFavoriteChat(): Single<BaseResponse<FavoriteChatResponse>>
 }

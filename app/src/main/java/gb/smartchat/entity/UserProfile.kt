@@ -14,5 +14,7 @@ data class UserProfile(
     @SerializedName("description")
     val description: String?,
     @SerializedName("phone")
-    val phone: String?
+    val phone: String?,
+    @SerializedName("favorite_chat_id")
+    val favoriteChatId: Long?
 ) : Serializable

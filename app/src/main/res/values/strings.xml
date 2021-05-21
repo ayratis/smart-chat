@@ -43,6 +43,7 @@
     <string name="unpin_error">Произошла ошибка при откреплении чата</string>
     <string name="archive">В архив</string>
     <string name="archive_messages">Архив</string>
+    <string name="favorite_messages">Избранное</string>
     <string name="unarchive">Разархивировать</string>
     <string name="archive_error">Произошла ошибка при архивации чата</string>
     <string name="unarchive_error">Произошла ошибка при разархивации чата</string>
@@ -63,4 +64,5 @@
     <string name="delete_member_error">Ошибка при исключении пользователя из чата</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
+    <string name="to_favorites">Отметить как важное</string>
 </resources>
