@@ -134,4 +134,6 @@ interface HttpApi {
         @Body request: MessageFavoriteRequest
     ): Single<BaseResponse<Boolean>>
 
+    @GET("chat/management/get_favorite_chat")
+    fun getFavoriteChat(): Single<BaseResponse<FavoriteChatResponse>>
 }

@@ -18,6 +18,7 @@ import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListBinding
 import gb.smartchat.entity.Chat
 import gb.smartchat.ui._global.MessageDialogFragment
+import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.chat_list_search.ChatListSearchFragment
 import gb.smartchat.ui.create_chat.CreateChatFragment
@@ -32,6 +33,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
         private const val PROFILE_ERROR_TAG = "profile error tag"
         private const val PIN_ERROR_TAG = "pin error tag"
         private const val ARG_IS_ARCHIVE = "arg is archive"
+        private const val PROGRESS_TAG = "progress_tag"
 
         fun create(isArchive: Boolean) = ChatListFragment().apply {
             arguments = Bundle().apply {
@@ -93,6 +95,18 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
         }
     }
 
+    private val favoriteMessagesViewModel: FavoriteMessagesViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return FavoriteMessagesViewModel(
+                    component.httpApi,
+                    component.resourceManager
+                ) as T
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -142,6 +156,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 }
                 inflateMenu(R.menu.search)
                 inflateMenu(R.menu.archive_messages)
+                inflateMenu(R.menu.favorite_messages)
                 setOnMenuItemClickListener { menuItem ->
                     when (menuItem.itemId) {
                         R.id.search -> {
@@ -158,6 +173,11 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                                 create(true),
                                 NavAnim.SLIDE
                             )
+                            true
+                        }
+                        R.id.action_favorite_messages -> {
+                            dismissPopupMenus()
+                            favoriteMessagesViewModel.onFavoriteMessagesClick()
                             true
                         }
                         else -> false
@@ -241,6 +261,28 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                     }
                 }
                 .also { compositeDisposable.add(it) }
+
+            favoriteMessagesViewModel.fullScreenProgress
+                .subscribe { showProgressDialog(it) }
+                .also { compositeDisposable.add(it) }
+
+            favoriteMessagesViewModel.navToFavoriteChat
+                .subscribe { event ->
+                    event.getContentIfNotHandled()?.let {
+                        parentFragmentManager.navigateTo(ChatFragment.create(it), NavAnim.SLIDE)
+                    }
+                }
+                .also { compositeDisposable.add(it) }
+
+            favoriteMessagesViewModel.showMessageDialog
+                .subscribe { event ->
+                    event.getContentIfNotHandled()?.let {
+                        MessageDialogFragment
+                            .create(message = it)
+                            .show(childFragmentManager, null)
+                    }
+                }
+                .also { compositeDisposable.add(it) }
         }
 
         viewModel.viewState
@@ -282,6 +324,19 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
     override fun dialogPositiveClicked(tag: String) {
         if (tag == PROFILE_ERROR_TAG) {
             activity?.finish()
+        }
+    }
+
+    private fun showProgressDialog(progress: Boolean) {
+        if (!isAdded) return
+
+        val fragment = childFragmentManager.findFragmentByTag(PROGRESS_TAG)
+        if (fragment != null && !progress) {
+            (fragment as ProgressDialog).dismissAllowingStateLoss()
+            childFragmentManager.executePendingTransactions()
+        } else if (fragment == null && progress) {
+            ProgressDialog().show(childFragmentManager, PROGRESS_TAG)
+            childFragmentManager.executePendingTransactions()
         }
     }
 }
