@@ -7,8 +7,6 @@ import gb.smartchat.data.download.DownloadStatus
 import java.io.Serializable
 
 data class File(
-    @SerializedName("id")
-    val id: Long,
     @SerializedName("url")
     val url: String?,
     @SerializedName("size")
