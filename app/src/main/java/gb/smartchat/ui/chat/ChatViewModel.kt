@@ -468,6 +468,11 @@ class ChatViewModel(
     fun onChatItemBind(chatItem: ChatItem) {
         if (chatItem is ChatItem.Msg.Incoming) {
             store.accept(ChatUDF.Action.ReadMessage(chatItem.message))
+            return
+        }
+        if (chatItem is ChatItem.Msg.System) {
+            store.accept(ChatUDF.Action.ReadMessage(chatItem.message))
+            return
         }
     }
 
