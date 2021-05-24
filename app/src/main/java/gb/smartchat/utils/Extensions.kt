@@ -257,7 +257,7 @@ fun Message.toMessageCreateRequestBody(): MessageCreateRequest? {
             clientId = clientId,
             quotedMessageId = quotedMessage?.messageId,
             mentions = mentions,
-            fileId = file?.id
+            fileUrl = file?.url
         )
     } else null
 }

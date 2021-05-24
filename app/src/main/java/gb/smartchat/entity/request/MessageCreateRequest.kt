@@ -16,6 +16,6 @@ data class MessageCreateRequest(
     val quotedMessageId: Long?,
     @SerializedName("mentions")
     val mentions: List<Mention>?,
-    @SerializedName("file_id")
-    val fileId: Long?
+    @SerializedName("file_url")
+    val fileUrl: String?
 )

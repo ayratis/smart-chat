@@ -60,10 +60,10 @@ class ChatProfileFilesAdapter(
             newItem: ChatProfileFileItem
         ): Boolean {
             if (oldItem is ChatProfileFileItem.Media && newItem is ChatProfileFileItem.Media) {
-                return oldItem.file.id == newItem.file.id
+                return oldItem.file.url == newItem.file.url
             }
             if (oldItem is ChatProfileFileItem.Doc && newItem is ChatProfileFileItem.Doc) {
-                return oldItem.file.id == newItem.file.id
+                return oldItem.file.url == newItem.file.url
             }
             if (oldItem is ChatProfileFileItem.Error && newItem is ChatProfileFileItem.Error) {
                 return true
