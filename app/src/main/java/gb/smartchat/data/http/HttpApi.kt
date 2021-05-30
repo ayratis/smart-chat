@@ -62,7 +62,8 @@ interface HttpApi {
     fun getSearchChats(
         @Query("search_string") query: String, //min length 3
         @Query("page_count") pageCount: Int,
-        @Query("page_size") pageSize: Int
+        @Query("page_size") pageSize: Int,
+        @Query("with_contacts") withContacts: Boolean
     ): Single<BaseResponse<ChatSearchResponse>>
 
     @POST("chat/management/pin")

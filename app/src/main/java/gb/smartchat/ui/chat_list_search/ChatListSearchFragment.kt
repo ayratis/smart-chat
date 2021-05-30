@@ -37,7 +37,8 @@ class ChatListSearchFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatListSearchViewModel(
                     component.httpApi,
-                    ChatListSearchUDF.Store()
+                    ChatListSearchUDF.Store(),
+                    component.resourceManager
                 ) as T
             }
         }
@@ -47,6 +48,7 @@ class ChatListSearchFragment : Fragment() {
         SearchResultsAdapter(
             userId = component.userId,
             onChatClickListener = this::navToChat,
+            onContactClickListener = {},
             nextPageCallback = viewModel::loadMore
         )
     }
@@ -101,12 +103,13 @@ class ChatListSearchFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.viewState
-            .subscribe {
-                searchResultsAdapter.fullData =
-                    it.pagingState == ChatListSearchUDF.PagingState.FULL_DATA
-                searchResultsAdapter.submitList(it.chatList)
-            }
+
+        viewModel.fullData
+            .subscribe { searchResultsAdapter.fullData = it }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.items
+            .subscribe { searchResultsAdapter.submitList(it) }
             .also { compositeDisposable.add(it) }
     }
 

@@ -1,12 +1,14 @@
 package gb.smartchat.ui.chat_list_search
 
 import gb.smartchat.entity.Chat
+import gb.smartchat.entity.Contact
 import gb.smartchat.ui._global.BaseStore
 
 object ChatListSearchUDF {
 
     data class State(
-        val chatList: List<Chat> = emptyList(),
+        val chats: List<Chat> = emptyList(),
+        val contacts: List<Contact> = emptyList(),
         val pagingState: PagingState = PagingState.EMPTY,
         val query: String = "",
         val pageCount: Int = 0
@@ -24,7 +26,7 @@ object ChatListSearchUDF {
     sealed class Action {
         data class SubmitQuery(val text: String) : Action()
         object LoadMore : Action()
-        data class NewPage(val pageNumber: Int, val items: List<Chat>) : Action()
+        data class NewPage(val pageNumber: Int, val chats: List<Chat>, val contacts: List<Contact>) : Action()
         data class PageError(val error: Throwable) : Action()
     }
 
@@ -43,7 +45,8 @@ object ChatListSearchUDF {
             when (action) {
                 is Action.SubmitQuery -> {
                     if (action.text.isBlank()) return state.copy(
-                        chatList = emptyList(),
+                        chats = emptyList(),
+                        contacts = emptyList(),
                         pageCount = 0,
                         pagingState = PagingState.EMPTY,
                         query = ""
@@ -64,25 +67,28 @@ object ChatListSearchUDF {
                 is Action.NewPage -> {
                     return when (state.pagingState) {
                         PagingState.EMPTY_PROGRESS -> {
-                            if (action.items.isEmpty()) {
+                            if (action.chats.isEmpty() && action.contacts.isEmpty()) {
                                 state.copy(
-                                    chatList = emptyList(),
+                                    chats = emptyList(),
+                                    contacts = emptyList(),
                                     pagingState = PagingState.EMPTY
                                 )
                             } else {
                                 state.copy(
-                                    chatList = action.items,
+                                    chats = action.chats,
+                                    contacts = action.contacts,
                                     pagingState = PagingState.DATA,
                                     pageCount = 1
                                 )
                             }
                         }
                         PagingState.NEW_PAGE_PROGRESS -> {
-                            if (action.items.isEmpty()) {
+                            if (action.chats.isEmpty() && action.contacts.isEmpty()) {
                                 state.copy(pagingState = PagingState.FULL_DATA)
                             } else {
                                 state.copy(
-                                    chatList = state.chatList + action.items,
+                                    chats = state.chats + action.chats,
+                                    contacts = state.contacts + action.contacts,
                                     pagingState = PagingState.DATA,
                                     pageCount = state.pageCount + 1
                                 )
