@@ -82,6 +82,7 @@
                         tools:text="Тюлькин Заречка (Свит лайф)" />
 
                     <View
+                        android:id="@+id/divider1"
                         android:layout_marginTop="16dp"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
@@ -110,6 +111,7 @@
                     app:tabTextColor="@color/black" />
 
                 <View
+                    android:id="@+id/divider2"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_gravity="bottom"

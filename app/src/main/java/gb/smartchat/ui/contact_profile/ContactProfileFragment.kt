@@ -14,6 +14,7 @@ import gb.smartchat.ui.chat_profile.files.ChatProfileFilesFragment
 import gb.smartchat.ui.chat_profile.links.ChatProfileLinksFragment
 import gb.smartchat.utils.addSystemTopPadding
 import gb.smartchat.utils.registerOnBackPress
+import gb.smartchat.utils.visible
 
 class ContactProfileFragment : Fragment() {
 
@@ -21,10 +22,10 @@ class ContactProfileFragment : Fragment() {
         private const val ARG_CONTACT = "arg contact"
         private const val ARG_CHAT_ID = "arg chat id"
 
-        fun create(contact: Contact, chatId: Long) = ContactProfileFragment().apply {
+        fun create(contact: Contact, chatId: Long?) = ContactProfileFragment().apply {
             arguments = Bundle().apply {
                 putSerializable(ARG_CONTACT, contact)
-                putLong(ARG_CHAT_ID, chatId)
+                chatId?.let { putLong(ARG_CHAT_ID, it) }
             }
         }
     }
@@ -37,8 +38,8 @@ class ContactProfileFragment : Fragment() {
         requireArguments().getSerializable(ARG_CONTACT) as Contact
     }
 
-    private val chatId by lazy {
-        requireArguments().getLong(ARG_CHAT_ID)
+    private val chatId: Long by lazy {
+        requireArguments().getLong(ARG_CHAT_ID, 0)
     }
 
     override fun onCreateView(
@@ -81,14 +82,18 @@ class ContactProfileFragment : Fragment() {
         )
         binding.viewPager.adapter = ViewPageAdapter()
         binding.tabLayout.setupWithViewPager(binding.viewPager)
+
+        binding.divider1.visible(chatId > 0)
+        binding.tabLayout.visible(chatId > 0)
+        binding.divider2.visible(chatId > 0)
     }
 
     inner class ViewPageAdapter : FragmentPagerAdapter(childFragmentManager) {
         override fun getCount(): Int {
-            return 3
+            return if (chatId > 0) 3 else 0
         }
 
-        override fun getPageTitle(position: Int): CharSequence? {
+        override fun getPageTitle(position: Int): CharSequence {
             return when(position) {
                 0 -> getString(R.string.media)
                 1 -> getString(R.string.links)

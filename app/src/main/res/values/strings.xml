@@ -65,4 +65,6 @@
     <string name="yes">Да</string>
     <string name="no">Нет</string>
     <string name="to_favorites">Отметить как важное</string>
+    <string name="chats">Чаты</string>
+    <string name="contacts">Контакты</string>
 </resources>

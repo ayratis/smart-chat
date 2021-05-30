@@ -2,7 +2,10 @@ package gb.smartchat.ui.chat_list_search
 
 import androidx.lifecycle.ViewModel
 import com.jakewharton.rxrelay2.BehaviorRelay
+import gb.smartchat.R
 import gb.smartchat.data.http.HttpApi
+import gb.smartchat.data.resources.ResourceManager
+import gb.smartchat.entity.Contact
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -12,14 +15,31 @@ import java.util.concurrent.TimeUnit
 
 class ChatListSearchViewModel(
     private val httpApi: HttpApi,
-    private val store: ChatListSearchUDF.Store
+    private val store: ChatListSearchUDF.Store,
+    private val resourceManager: ResourceManager
 ) : ViewModel() {
 
     private val compositeDisposable = CompositeDisposable()
     private var searchDisposable: Disposable? = null
     private val query = BehaviorRelay.createDefault("")
 
-    val viewState: Observable<ChatListSearchUDF.State> = store.hide()
+    val fullData: Observable<Boolean> = store.hide()
+        .map { it.pagingState == ChatListSearchUDF.PagingState.FULL_DATA }
+        .distinctUntilChanged()
+
+    val items: Observable<List<SearchItem>> = store.hide()
+        .map { state ->
+            val items = mutableListOf<SearchItem>()
+            if (state.chats.isNotEmpty()) {
+                items += SearchItem.Header(resourceManager.getString(R.string.chats))
+            }
+            items += state.chats.map { SearchItem.Chat(it) }
+            if (state.contacts.isNotEmpty()) {
+                items += SearchItem.Header(resourceManager.getString(R.string.contacts))
+            }
+            items += state.contacts.map { SearchItem.Contact(it) }
+            items
+        }
 
     init {
         store.sideEffectListener = { sideEffect ->
@@ -43,12 +63,21 @@ class ChatListSearchViewModel(
     private fun search(query: String, pageCount: Int) {
         searchDisposable?.dispose()
         httpApi
-            .getSearchChats(query, pageCount, 20)
-            .map { it.result }
+            .getSearchChats(query, pageCount, 20, true)
+            .map {
+                val chats = it.result.chats
+                val contacts = mutableListOf<Contact>()
+                for (group in it.result.contacts) {
+                    contacts += group.contacts
+                }
+                chats to contacts
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
-                { store.accept(ChatListSearchUDF.Action.NewPage(pageCount, it.chats)) },
+                { (chats, contacts) ->
+                    store.accept(ChatListSearchUDF.Action.NewPage(pageCount, chats, contacts))
+                },
                 { store.accept(ChatListSearchUDF.Action.PageError(it)) }
             )
             .also {

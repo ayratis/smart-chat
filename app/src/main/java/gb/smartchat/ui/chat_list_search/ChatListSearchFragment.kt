@@ -15,7 +15,9 @@ import gb.smartchat.Component
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListSearchBinding
 import gb.smartchat.entity.Chat
+import gb.smartchat.entity.Contact
 import gb.smartchat.ui.chat.ChatFragment
+import gb.smartchat.ui.contact_profile.ContactProfileFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -37,7 +39,8 @@ class ChatListSearchFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatListSearchViewModel(
                     component.httpApi,
-                    ChatListSearchUDF.Store()
+                    ChatListSearchUDF.Store(),
+                    component.resourceManager
                 ) as T
             }
         }
@@ -46,7 +49,8 @@ class ChatListSearchFragment : Fragment() {
     private val searchResultsAdapter by lazy {
         SearchResultsAdapter(
             userId = component.userId,
-            onChatClickListener = this::navToChat,
+            onChatClickListener = this::navigateToChat,
+            onContactClickListener = this::navigateToContactProfile,
             nextPageCallback = viewModel::loadMore
         )
     }
@@ -101,12 +105,13 @@ class ChatListSearchFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.viewState
-            .subscribe {
-                searchResultsAdapter.fullData =
-                    it.pagingState == ChatListSearchUDF.PagingState.FULL_DATA
-                searchResultsAdapter.submitList(it.chatList)
-            }
+
+        viewModel.fullData
+            .subscribe { searchResultsAdapter.fullData = it }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.items
+            .subscribe { searchResultsAdapter.submitList(it) }
             .also { compositeDisposable.add(it) }
     }
 
@@ -116,9 +121,16 @@ class ChatListSearchFragment : Fragment() {
         super.onPause()
     }
 
-    private fun navToChat(chat: Chat) {
+    private fun navigateToChat(chat: Chat) {
         parentFragmentManager.navigateTo(
             ChatFragment.create(chat),
+            NavAnim.SLIDE
+        )
+    }
+
+    private fun navigateToContactProfile(contact: Contact) {
+        parentFragmentManager.navigateTo(
+            ContactProfileFragment.create(contact, chatId = null),
             NavAnim.SLIDE
         )
     }
