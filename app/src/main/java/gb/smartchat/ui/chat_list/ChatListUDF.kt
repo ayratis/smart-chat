@@ -52,6 +52,7 @@ object ChatListUDF {
         data class AddRecipients(val chatId: Long, val newRecipients: List<Contact>) : Action()
         data class DeleteRecipients(val chatId: Long, val deletedUserIds: List<String>) : Action()
         data class LeaveChat(val chat: Chat) : Action()
+        data class ExternalChatArchived(val chat: Chat) : Action()
     }
 
     sealed class SideEffect {
@@ -358,7 +359,37 @@ object ChatListUDF {
                     val editedChatList = state.chatList.toMutableList().apply {
                         removeAt(index)
                     }
-                    return state.copy(chatList = editedChatList)
+                    sideEffectListener.invoke(SideEffect.LoadPage(1))
+                    val newPagingState = when (state.pagingState) {
+                        PagingState.EMPTY,
+                        PagingState.EMPTY_ERROR,
+                        PagingState.EMPTY_PROGRESS -> PagingState.EMPTY_PROGRESS
+                        PagingState.DATA,
+                        PagingState.NEW_PAGE_PROGRESS,
+                        PagingState.FULL_DATA,
+                        PagingState.REFRESH -> PagingState.REFRESH
+                    }
+                    return state.copy(
+                        chatList = editedChatList,
+                        pagingState = newPagingState
+                    )
+                }
+                is Action.ExternalChatArchived -> {
+                    val chatList = state.chatList.filter { it.id != action.chat.id }
+                    sideEffectListener.invoke(SideEffect.LoadPage(1))
+                    val newPagingState = when (state.pagingState) {
+                        PagingState.EMPTY,
+                        PagingState.EMPTY_ERROR,
+                        PagingState.EMPTY_PROGRESS -> PagingState.EMPTY_PROGRESS
+                        PagingState.DATA,
+                        PagingState.NEW_PAGE_PROGRESS,
+                        PagingState.FULL_DATA,
+                        PagingState.REFRESH -> PagingState.REFRESH
+                    }
+                    return state.copy(
+                        chatList = chatList,
+                        pagingState = newPagingState
+                    )
                 }
             }
         }

@@ -138,4 +138,8 @@ class Component constructor(
     val leaveChatPublisher by lazy {
         LeaveChatPublisher()
     }
+
+    val chatArchivePublisher by lazy {
+        ChatArchivePublisher()
+    }
 }

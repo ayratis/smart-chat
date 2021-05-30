@@ -34,6 +34,7 @@ class ChatProfileFragment : Fragment(),
     companion object {
         private const val ARG_CHAT = "arg chat"
         private const val LEAVE_CHAT_DIALOG_TAG = "leave chat dialog tag"
+        private const val ARCHIVE_CHAT_DIALOG_TAG = "archive chat dialog tag"
 
         fun create(chat: Chat) = ChatProfileFragment().apply {
             arguments = Bundle().apply {
@@ -65,7 +66,8 @@ class ChatProfileFragment : Fragment(),
                     chat,
                     component.userId,
                     component.resourceManager,
-                    component.leaveChatPublisher
+                    component.leaveChatPublisher,
+                    component.chatArchivePublisher
                 ) as T
             }
         }
@@ -118,6 +120,16 @@ class ChatProfileFragment : Fragment(),
                 )
             )
         }
+        binding.btnArchive.setOnClickListener {
+            MessageDialogFragment
+                .create(
+                    message = getString(R.string.archive_chat_dialog_message),
+                    positive = getString(R.string.yes),
+                    negative = getString(R.string.no),
+                    tag = ARCHIVE_CHAT_DIALOG_TAG
+                )
+                .show(childFragmentManager, ARCHIVE_CHAT_DIALOG_TAG)
+        }
         binding.btnLeaveChat.setOnClickListener {
             MessageDialogFragment
                 .create(
@@ -162,7 +174,10 @@ class ChatProfileFragment : Fragment(),
     }
 
     override fun dialogPositiveClicked(tag: String) {
-        viewModel.leaveChat()
+        when (tag) {
+            LEAVE_CHAT_DIALOG_TAG -> viewModel.leaveChat()
+            ARCHIVE_CHAT_DIALOG_TAG -> viewModel.archiveChat()
+        }
     }
 
     inner class ViewPageAdapter : FragmentPagerAdapter(childFragmentManager) {
