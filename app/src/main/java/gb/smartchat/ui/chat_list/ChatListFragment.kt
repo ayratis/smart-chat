@@ -270,7 +270,10 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
             favoriteMessagesViewModel.navToFavoriteChat
                 .subscribe { event ->
                     event.getContentIfNotHandled()?.let {
-                        parentFragmentManager.navigateTo(ChatFragment.create(it), NavAnim.SLIDE)
+                        parentFragmentManager.navigateTo(
+                            ChatFragment.create(it, isFavoritesChat = true),
+                            NavAnim.SLIDE
+                        )
                     }
                 }
                 .also { compositeDisposable.add(it) }
