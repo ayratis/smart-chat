@@ -83,7 +83,7 @@ object ChatListSearchUDF {
                             }
                         }
                         PagingState.NEW_PAGE_PROGRESS -> {
-                            if (action.chats.isEmpty() && action.contacts.isEmpty()) {
+                            if (action.chats.size < 20) {
                                 state.copy(pagingState = PagingState.FULL_DATA)
                             } else {
                                 state.copy(
