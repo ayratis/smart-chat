@@ -102,7 +102,7 @@
                             app:drawableTopCompat="@drawable/ic_group_profile_add_member" />
 
                         <TextView
-                            android:id="@+id/btn_search"
+                            android:id="@+id/btn_archive"
                             style="@style/Body2"
                             android:layout_width="98dp"
                             android:layout_height="wrap_content"
@@ -110,9 +110,9 @@
                             android:background="?attr/actionBarItemBackground"
                             android:gravity="center_horizontal"
                             android:lines="2"
-                            android:text="@string/search"
+                            android:text="@string/archive"
                             android:textColor="@color/purple_heart"
-                            app:drawableTopCompat="@drawable/ic_group_profile_search" />
+                            app:drawableTopCompat="@drawable/ic_group_profile_archive_chat" />
 
                         <TextView
                             android:id="@+id/btn_leave_chat"

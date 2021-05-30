@@ -7,6 +7,8 @@ import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.request.AddRecipientsRequest
+import gb.smartchat.entity.request.PinChatRequest
+import gb.smartchat.publisher.ChatArchivePublisher
 import gb.smartchat.publisher.LeaveChatPublisher
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.toContact
@@ -20,7 +22,8 @@ class ChatProfileViewModel(
     private val chat: Chat,
     private val userId: String,
     private val resourceManager: ResourceManager,
-    private val leaveChatPublisher: LeaveChatPublisher
+    private val leaveChatPublisher: LeaveChatPublisher,
+    private val chatArchivePublisher: ChatArchivePublisher
 ) : ViewModel() {
 
     private val compositeDisposable = CompositeDisposable()
@@ -44,6 +47,24 @@ class ChatProfileViewModel(
                 },
                 {
                     val message = resourceManager.getString(R.string.leave_chat_error)
+                    showDialogCommand.accept(SingleEvent(message))
+                }
+            )
+            .also { compositeDisposable.add(it) }
+    }
+
+    fun archiveChat() {
+        httpApi
+            .postArchiveChat(PinChatRequest(chatId = chat.id))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {
+                    chatArchivePublisher.accept(chat)
+                    exitToRootScreenCommand.accept(SingleEvent(Unit))
+                },
+                {
+                    val message = resourceManager.getString(R.string.archive_chat_error)
                     showDialogCommand.accept(SingleEvent(message))
                 }
             )

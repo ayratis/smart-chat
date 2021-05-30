@@ -27,7 +27,8 @@ class ChatListViewModel(
     messageReadInternalPublisher: MessageReadInternalPublisher,
     chatUnreadMessageCountPublisher: ChatUnreadMessageCountPublisher,
     private val chatUnarchivePublisher: ChatUnarchivePublisher,
-    leaveChatPublisher: LeaveChatPublisher
+    leaveChatPublisher: LeaveChatPublisher,
+    chatArchivePublisher: ChatArchivePublisher
 ) : ViewModel() {
 
     companion object {
@@ -63,6 +64,9 @@ class ChatListViewModel(
         }
         leaveChatPublisher
             .subscribe { store.accept(ChatListUDF.Action.LeaveChat(it)) }
+            .also { compositeDisposable.add(it) }
+        chatArchivePublisher
+            .subscribe { store.accept(ChatListUDF.Action.ExternalChatArchived(it)) }
             .also { compositeDisposable.add(it) }
     }
 
