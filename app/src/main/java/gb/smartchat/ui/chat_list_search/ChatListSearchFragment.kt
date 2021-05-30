@@ -15,7 +15,9 @@ import gb.smartchat.Component
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListSearchBinding
 import gb.smartchat.entity.Chat
+import gb.smartchat.entity.Contact
 import gb.smartchat.ui.chat.ChatFragment
+import gb.smartchat.ui.contact_profile.ContactProfileFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -47,8 +49,8 @@ class ChatListSearchFragment : Fragment() {
     private val searchResultsAdapter by lazy {
         SearchResultsAdapter(
             userId = component.userId,
-            onChatClickListener = this::navToChat,
-            onContactClickListener = {},
+            onChatClickListener = this::navigateToChat,
+            onContactClickListener = this::navigateToContactProfile,
             nextPageCallback = viewModel::loadMore
         )
     }
@@ -119,9 +121,16 @@ class ChatListSearchFragment : Fragment() {
         super.onPause()
     }
 
-    private fun navToChat(chat: Chat) {
+    private fun navigateToChat(chat: Chat) {
         parentFragmentManager.navigateTo(
             ChatFragment.create(chat),
+            NavAnim.SLIDE
+        )
+    }
+
+    private fun navigateToContactProfile(contact: Contact) {
+        parentFragmentManager.navigateTo(
+            ContactProfileFragment.create(contact, chatId = null),
             NavAnim.SLIDE
         )
     }
