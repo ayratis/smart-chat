@@ -42,10 +42,12 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
         private const val TAG = "ChatFragment"
         private const val PROGRESS_TAG = "progress_tag"
         private const val ARG_CHAT = "arg_chat"
+        private const val ARG_IS_FAVORITES_CHAT = "arg_is_favorites_chat"
 
-        fun create(chat: Chat) = ChatFragment().apply {
+        fun create(chat: Chat, isFavoritesChat: Boolean = false) = ChatFragment().apply {
             arguments = Bundle().apply {
                 putSerializable(ARG_CHAT, chat)
+                putBoolean(ARG_IS_FAVORITES_CHAT, isFavoritesChat)
             }
         }
     }
@@ -58,6 +60,10 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
 
     private val argChat: Chat by lazy {
         requireArguments().getSerializable(ARG_CHAT) as Chat
+    }
+
+    private val isFavoritesChat: Boolean by lazy {
+        requireArguments().getBoolean(ARG_IS_FAVORITES_CHAT)
     }
 
     private val component by lazy {
@@ -185,16 +191,19 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
         binding.layoutInput.addOnLayoutChangeListener(onLayoutChangeListener)
         binding.appBarLayout.addSystemTopPadding()
         binding.layoutInput.addSystemBottomPadding()
-        Glide.with(binding.ivChatAvatar)
-            .load(argChat.avatar)
-            .placeholder(R.drawable.group_avatar_placeholder)
-            .circleCrop()
-            .into(binding.ivChatAvatar)
-        binding.ivChatAvatar.setOnClickListener {
-            parentFragmentManager.navigateTo(
-                ChatProfileFragment.create(argChat),
-                NavAnim.SLIDE
-            )
+
+        if (!isFavoritesChat) {
+            Glide.with(binding.ivChatAvatar)
+                .load(argChat.avatar)
+                .placeholder(R.drawable.group_avatar_placeholder)
+                .circleCrop()
+                .into(binding.ivChatAvatar)
+            binding.ivChatAvatar.setOnClickListener {
+                parentFragmentManager.navigateTo(
+                    ChatProfileFragment.create(argChat),
+                    NavAnim.SLIDE
+                )
+            }
         }
         binding.toolbar.apply {
             title = argChat.name
@@ -256,6 +265,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
             viewModel.emptyRetry()
         }
         renderViewModel()
+
+        binding.layoutInput.visible(!isFavoritesChat)
     }
 
     override fun onResume() {
