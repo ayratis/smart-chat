@@ -8,6 +8,7 @@ import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.DisplayMetrics
+import android.util.Patterns
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -257,6 +258,7 @@ fun Message.toMessageCreateRequestBody(): MessageCreateRequest? {
             clientId = clientId,
             quotedMessageId = quotedMessage?.messageId,
             mentions = mentions,
+            links = text.extractLinks(),
             fileUrl = file?.url
         )
     } else null
@@ -269,7 +271,8 @@ fun Message.toMessageEditRequestBody(): MessageEditRequest? {
             messageId = id,
             chatId = chatId,
             senderId = senderId,
-            mentions = mentions
+            mentions = mentions,
+            links = text.extractLinks()
         )
     } else null
 }
@@ -358,4 +361,14 @@ fun Fragment.hideSoftInput() {
         (context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
             ?.hideSoftInputFromWindow(it.windowToken, 0)
     }
+}
+
+fun String.extractLinks() : List<String> {
+    val links = mutableListOf<String>()
+    val matcher = Patterns.WEB_URL.matcher(this)
+    while (matcher.find()) {
+        val url = matcher.group()
+        links.add(url)
+    }
+    return links
 }

@@ -10,10 +10,7 @@ import androidx.fragment.app.Fragment
 import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.chat_list.ChatListFragment
-import gb.smartchat.utils.NavAnim
-import gb.smartchat.utils.configureSystemBars
-import gb.smartchat.utils.newScreenFromRoot
-import gb.smartchat.utils.toLogsString
+import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
 class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
@@ -59,18 +56,19 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
 
         if (savedInstanceState == null) {
 
+            //если перешли по пушу
+            if (argChatIdToOpen != 0L) {
+                supportFragmentManager.newRootChain(
+                    ChatListFragment.create(false),
+                    ChatFragment.create(chatId = argChatIdToOpen, chat = null),
+                )
+                return
+            }
+
             supportFragmentManager
                 .beginTransaction()
                 .replace(R.id.fragment_container, ChatListFragment.create(false))
                 .commitNow()
-
-            //если перешли по пушу
-            if (argChatIdToOpen != 0L) {
-                supportFragmentManager.newScreenFromRoot(
-                    ChatFragment.create(chatId = argChatIdToOpen, chat = null),
-                    NavAnim.SLIDE
-                )
-            }
         }
     }
 

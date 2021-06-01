@@ -13,5 +13,7 @@ data class MessageEditRequest (
     @SerializedName("sender_id")
     val senderId: String,
     @SerializedName("mentions")
-    val mentions: List<Mention>?
+    val mentions: List<Mention>?,
+    @SerializedName("links")
+    val links: List<String>?
 )
