@@ -207,7 +207,7 @@ class CreateChatFragment : Fragment() {
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let {
                     parentFragmentManager.replace(
-                        ChatFragment.create(it),
+                        ChatFragment.create(it.id, it),
                         NavAnim.SLIDE
                     )
                 }

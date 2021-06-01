@@ -271,7 +271,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 .subscribe { event ->
                     event.getContentIfNotHandled()?.let {
                         parentFragmentManager.navigateTo(
-                            ChatFragment.create(it, isFavoritesChat = true),
+                            ChatFragment.create(it.id, it, isFavoritesChat = true),
                             NavAnim.SLIDE
                         )
                     }
@@ -309,7 +309,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
 
     private fun navigateToChat(chat: Chat) {
         parentFragmentManager.navigateTo(
-            ChatFragment.create(chat),
+            ChatFragment.create(chat.id, chat),
             NavAnim.SLIDE
         )
     }

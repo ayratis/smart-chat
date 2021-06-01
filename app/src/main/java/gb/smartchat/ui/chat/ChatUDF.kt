@@ -104,6 +104,7 @@ object ChatUDF {
     }
 
     data class State(
+        val chat: Chat,
         val users: List<User>,
         val readInfo: ReadInfo,
         val messages: List<Message> = emptyList(),
@@ -158,7 +159,8 @@ object ChatUDF {
         }
 
         private val actions = PublishRelay.create<Action>()
-        private val state = BehaviorRelay.createDefault(State(chat.users, chat.getReadInfo(userId)))
+        private val state =
+            BehaviorRelay.createDefault(State(chat, chat.users, chat.getReadInfo(userId)))
         var sideEffectListener: (SideEffect) -> Unit = {}
 
         private val disposable: Disposable = actions.hide()

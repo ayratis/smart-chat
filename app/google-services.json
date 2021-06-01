@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "731862113007",
+    "project_id": "smart-chat-fb3ca",
+    "storage_bucket": "smart-chat-fb3ca.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:731862113007:android:f7f8c5d7a891b785e4991a",
+        "android_client_info": {
+          "package_name": "gb.smartchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "731862113007-77r4vv552vuhkpkdbbvaamr2ithve48e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNNW8F86Fz0Whb68VtefFW7fczji38e80"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "731862113007-77r4vv552vuhkpkdbbvaamr2ithve48e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

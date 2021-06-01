@@ -3,25 +3,44 @@ package gb.smartchat
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import gb.smartchat.entity.Message
+import gb.smartchat.ui.chat.ChatFragment
 import gb.smartchat.ui.chat_list.ChatListFragment
+import gb.smartchat.utils.NavAnim
 import gb.smartchat.utils.configureSystemBars
+import gb.smartchat.utils.newScreenFromRoot
+import gb.smartchat.utils.toLogsString
+import io.reactivex.disposables.CompositeDisposable
 
 class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
 
     companion object {
+        private const val TAG = "SmartChatActivity"
         private const val ARG_USER_ID = "arg user id"
+        private const val ARG_CHAT_ID_TO_OPEN = "arg chat id to open"
 
-        fun createLaunchIntent(context: Context, userId: String): Intent {
+        fun createLaunchIntent(context: Context, userId: String, chatId: Long = 0): Intent {
             return Intent(context, SmartChatActivity::class.java).apply {
                 putExtra(ARG_USER_ID, userId)
+                putExtra(ARG_CHAT_ID_TO_OPEN, chatId)
             }
         }
     }
 
+    private val compositeDisposable = CompositeDisposable()
+    private val currentFragment: Fragment?
+        get() = supportFragmentManager.findFragmentById(R.id.fragment_container)
+
     private val userId: String by lazy {
         intent.getStringExtra(ARG_USER_ID)!!
+    }
+
+    private val argChatIdToOpen: Long by lazy {
+        intent.getLongExtra(ARG_CHAT_ID_TO_OPEN, 0)
     }
 
     val component: Component by viewModels {
@@ -39,15 +58,69 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         super.onCreate(savedInstanceState)
 
         if (savedInstanceState == null) {
+
             supportFragmentManager
                 .beginTransaction()
                 .replace(R.id.fragment_container, ChatListFragment.create(false))
                 .commitNow()
+
+            //если перешли по пушу
+            if (argChatIdToOpen != 0L) {
+                supportFragmentManager.newScreenFromRoot(
+                    ChatFragment.create(chatId = argChatIdToOpen, chat = null),
+                    NavAnim.SLIDE
+                )
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        intent ?: return
+        Log.d(TAG, "onNewIntent: ${intent.toLogsString()}")
+
+        if (intent.action == ChatPushNotificationManager.ACTION_PUSH) {
+            val chatId: Long = intent.getLongExtra(ARG_CHAT_ID_TO_OPEN, 0L)
+            if (chatId == 0L) return
+            supportFragmentManager.newScreenFromRoot(
+                ChatFragment.create(chatId = chatId, chat = null),
+                NavAnim.SLIDE
+            )
         }
     }
 
     override fun onStart() {
         super.onStart()
-        component.socket.connect()
+        component.connect()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume")
+        component.sendNewMessagePush
+            .subscribe(this::proceedNewMessage)
+            .also { compositeDisposable.add(it) }
+    }
+
+    override fun onPause() {
+        compositeDisposable.clear()
+        super.onPause()
+    }
+
+    private fun proceedNewMessage(message: Message) {
+        val currentFragment = currentFragment
+
+        if (currentFragment is ChatListFragment) {
+            return
+        }
+
+        if (currentFragment is ChatFragment) {
+            if (!currentFragment.isSameChat(message)) {
+                ChatPushNotificationManager.proceedSocketMessage(this, message, userId)
+            }
+            return
+        }
+
+        ChatPushNotificationManager.proceedSocketMessage(this, message, userId)
     }
 }

@@ -123,7 +123,7 @@ class ChatListSearchFragment : Fragment() {
 
     private fun navigateToChat(chat: Chat) {
         parentFragmentManager.navigateTo(
-            ChatFragment.create(chat),
+            ChatFragment.create(chat.id, chat),
             NavAnim.SLIDE
         )
     }

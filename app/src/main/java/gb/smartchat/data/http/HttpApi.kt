@@ -137,4 +137,9 @@ interface HttpApi {
 
     @GET("chat/management/get_favorite_chat")
     fun getFavoriteChat(): Single<BaseResponse<FavoriteChatResponse>>
+
+    @GET("chat/management/get")
+    fun getChat(
+        @Query("chat_id") chatId: Long
+    ): Single<BaseResponse<ChatResponse>>
 }

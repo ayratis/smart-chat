@@ -187,7 +187,7 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
         viewModel.navToChat
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let {
-                    parentFragmentManager.newScreenFromRoot(ChatFragment.create(it), NavAnim.SLIDE)
+                    parentFragmentManager.newScreenFromRoot(ChatFragment.create(it.id, it), NavAnim.SLIDE)
                 }
             }
             .also { compositeDisposable.add(it) }

@@ -9,6 +9,7 @@ import com.jakewharton.rxrelay2.BehaviorRelay
 import gb.smartchat.data.content.ContentHelper
 import gb.smartchat.data.download.FileDownloadHelper
 import gb.smartchat.data.http.HttpApi
+import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
 import gb.smartchat.entity.Chat
@@ -34,26 +35,37 @@ import java.util.concurrent.TimeUnit
 
 
 class ChatViewModel(
-    private val store: ChatUDF.Store,
     private val userId: String,
-    private val chat: Chat,
+    chatId: Long,
+    argChat: Chat?,
     private val socketApi: SocketApi,
     private val httpApi: HttpApi,
     private val contentHelper: ContentHelper,
     private val downloadHelper: FileDownloadHelper,
+    private val resourceManager: ResourceManager,
     private val messageReadInternalPublisher: MessageReadInternalPublisher,
     private val unreadMessageCountPublisher: ChatUnreadMessageCountPublisher
 ) : ViewModel() {
 
     companion object {
         const val TAG = "ChatViewModel"
+        private const val FETCH_CHAT_ERROR_TAG = "fetch chat error tag"
     }
+
+    private lateinit var chat: Chat
+    private lateinit var store: ChatUDF.Store
 
     private val compositeDisposable = CompositeDisposable()
     private val typingTimersDisposableMap = HashMap<String, Disposable>()
     private val downloadStatusDisposableMap = LongSparseArray<Disposable>()
     private var uploadDisposable: Disposable? = null
-    val viewState: Observable<ChatUDF.State> = Observable.wrap(store)
+    private val fullScreenProgressBehavior = BehaviorRelay.create<Boolean>()
+    private val showMessageDialogCommand = BehaviorRelay.create<SingleEvent<Pair<String, String>>>()
+    private val chatBehavior = BehaviorRelay.create<Chat>()
+    private val viewStateBehavior = BehaviorRelay.create<ChatUDF.State>()
+    private val exitCommand = BehaviorRelay.create<SingleEvent<Unit>>()
+
+    val viewState: Observable<ChatUDF.State> = viewStateBehavior.hide()
     val chatItems: Observable<Pair<List<ChatItem>, ScrollOptions?>> = viewState
         .map { it.mapIntoChatItemsInfo() }
         .distinctUntilChanged()
@@ -66,9 +78,51 @@ class ChatViewModel(
 
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
     val openFile = BehaviorRelay.create<SingleEvent<Uri>>()
+    val fullScreenProgress: Observable<Boolean> = fullScreenProgressBehavior.hide()
+    val showMessageDialog: Observable<SingleEvent<Pair<String, String>>> = showMessageDialogCommand.hide()
+    val chatObservable: Observable<Chat> = chatBehavior.hide()
+    val exit: Observable<SingleEvent<Unit>> = exitCommand.hide()
 
     init {
+        if (argChat != null) {
+            chat = argChat
+            start()
+        } else {
+            fetchChat(chatId)
+        }
+    }
+
+    private fun fetchChat(chatId: Long) {
+        httpApi
+            .getChat(chatId)
+            .map { it.result.chat.first() }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe { fullScreenProgressBehavior.accept(true) }
+            .doFinally { fullScreenProgressBehavior.accept(false) }
+            .subscribe(
+                {
+                    Log.d(TAG, "fetchChat: $it")
+                    chat = it
+                    start()
+                },
+                {
+                    val message = it.humanMessage(resourceManager)
+                    showMessageDialogCommand.accept(SingleEvent(message to FETCH_CHAT_ERROR_TAG))
+                }
+            )
+            .also { compositeDisposable.add(it) }
+    }
+
+    private fun start() {
+        chatBehavior.accept(chat)
+        store = ChatUDF.Store(userId, chat)
         compositeDisposable.add(store)
+
+        Observable.wrap(store)
+            .subscribe { viewStateBehavior.accept(it) }
+            .also { compositeDisposable.add(it) }
+
         setupStateMachine()
         viewState
             .map { it.currentText }
@@ -511,5 +565,11 @@ class ChatViewModel(
 
     fun onToFavoriteClick(message: Message) {
         makeMessageFavorite(message)
+    }
+
+    fun errorMessagePositveClick(tag: String) {
+        if (tag == FETCH_CHAT_ERROR_TAG) {
+            exitCommand.accept(SingleEvent(Unit))
+        }
     }
 }

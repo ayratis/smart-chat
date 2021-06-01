@@ -46,6 +46,18 @@
 
         </activity>
 
+        <service
+            android:name=".FCMService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="smart-chat-channel" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="gb.smartchat.fileprovider"

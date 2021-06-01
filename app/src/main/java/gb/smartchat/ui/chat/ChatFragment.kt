@@ -26,8 +26,10 @@ import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.entity.Chat
+import gb.smartchat.entity.Message
 import gb.smartchat.ui._global.CenterSmoothScroller
 import gb.smartchat.ui._global.HeaderItemDecoration
+import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.ui.chat_profile.ChatProfileFragment
 import gb.smartchat.utils.*
@@ -36,20 +38,24 @@ import kotlin.math.max
 import kotlin.math.min
 
 
-class ChatFragment : Fragment(), AttachDialogFragment.Listener {
+class ChatFragment : Fragment(), AttachDialogFragment.Listener,
+    MessageDialogFragment.OnClickListener {
 
     companion object {
         private const val TAG = "ChatFragment"
         private const val PROGRESS_TAG = "progress_tag"
         private const val ARG_CHAT = "arg_chat"
+        private const val ARG_CHAT_ID = "arg_chat_id"
         private const val ARG_IS_FAVORITES_CHAT = "arg_is_favorites_chat"
 
-        fun create(chat: Chat, isFavoritesChat: Boolean = false) = ChatFragment().apply {
-            arguments = Bundle().apply {
-                putSerializable(ARG_CHAT, chat)
-                putBoolean(ARG_IS_FAVORITES_CHAT, isFavoritesChat)
+        fun create(chatId: Long, chat: Chat?, isFavoritesChat: Boolean = false) =
+            ChatFragment().apply {
+                arguments = Bundle().apply {
+                    putLong(ARG_CHAT_ID, chatId)
+                    chat?.let { putSerializable(ARG_CHAT, chat) }
+                    putBoolean(ARG_IS_FAVORITES_CHAT, isFavoritesChat)
+                }
             }
-        }
     }
 
     private var _binding: FragmentChatBinding? = null
@@ -58,8 +64,12 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
     private val renderDisposables = CompositeDisposable()
     private val newsDisposables = CompositeDisposable()
 
-    private val argChat: Chat by lazy {
-        requireArguments().getSerializable(ARG_CHAT) as Chat
+    private val argChatId: Long by lazy {
+        requireArguments().getLong(ARG_CHAT_ID)
+    }
+
+    private val argChat: Chat? by lazy {
+        requireArguments().getSerializable(ARG_CHAT) as? Chat
     }
 
     private val isFavoritesChat: Boolean by lazy {
@@ -79,13 +89,14 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatViewModel(
-                    store = ChatUDF.Store(component.userId, argChat),
                     userId = component.userId,
-                    chat = argChat,
+                    chatId = argChatId,
+                    argChat = argChat,
                     socketApi = component.socketApi,
                     httpApi = component.httpApi,
                     contentHelper = contentHelper,
                     downloadHelper = component.fileDownloadHelper,
+                    resourceManager = component.resourceManager,
                     messageReadInternalPublisher = component.messageReadInternalPublisher,
                     unreadMessageCountPublisher = component.chatUnreadMessageCountPublisher
                 ) as T
@@ -192,25 +203,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
         binding.appBarLayout.addSystemTopPadding()
         binding.layoutInput.addSystemBottomPadding()
 
-        if (!isFavoritesChat) {
-            Glide.with(binding.ivChatAvatar)
-                .load(argChat.avatar)
-                .placeholder(R.drawable.group_avatar_placeholder)
-                .circleCrop()
-                .into(binding.ivChatAvatar)
-            binding.ivChatAvatar.setOnClickListener {
-                parentFragmentManager.navigateTo(
-                    ChatProfileFragment.create(argChat),
-                    NavAnim.SLIDE
-                )
-            }
-        }
-        binding.toolbar.apply {
-            title = argChat.name
-            subtitle = argChat.agentName
-            setNavigationOnClickListener {
-                parentFragmentManager.popBackStack()
-            }
+        binding.toolbar.setNavigationOnClickListener {
+            parentFragmentManager.popBackStack()
         }
         binding.rvChat.apply {
             layoutManager = LinearLayoutManager(binding.rvChat.context).apply {
@@ -291,6 +285,24 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
                 }
             }
             .also { newsDisposables.add(it) }
+
+        viewModel.exit
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let {
+                    parentFragmentManager.popBackStack()
+                }
+            }
+            .also { newsDisposables.add(it) }
+
+        viewModel.showMessageDialog
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let { (message, tag) ->
+                    MessageDialogFragment
+                        .create(message = message, tag = tag)
+                        .show(childFragmentManager, tag)
+                }
+            }
+            .also { newsDisposables.add(it) }
     }
 
     override fun onPause() {
@@ -325,6 +337,46 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
     }
 
     private fun renderViewModel() {
+
+        viewModel.fullScreenProgress
+            .subscribe(this::showProgressDialog)
+            .also { renderDisposables.add(it) }
+
+        viewModel.chatObservable
+            .subscribe { chat ->
+                if (!isFavoritesChat) {
+                    Glide.with(binding.ivChatAvatar)
+                        .load(chat.avatar)
+                        .placeholder(R.drawable.group_avatar_placeholder)
+                        .circleCrop()
+                        .into(binding.ivChatAvatar)
+                    binding.ivChatAvatar.setOnClickListener {
+                        parentFragmentManager.navigateTo(
+                            ChatProfileFragment.create(chat),
+                            NavAnim.SLIDE
+                        )
+                    }
+                }
+                binding.toolbar.title = chat.name
+            }
+            .also { newsDisposables.add(it) }
+
+        viewModel.viewState
+            .map { it.chat to it.isOnline }
+            .distinctUntilChanged()
+            .subscribe { (chat, isOnline) ->
+                binding.toolbar.apply {
+                    if (isOnline) {
+                        setSubtitleTextColor(context.color(R.color.razzmatazz))
+                        subtitle = chat.agentName
+                    } else {
+                        setSubtitleTextColor(context.color(R.color.santas_gray))
+                        subtitle = getString(R.string.waiting_for_network)
+                    }
+                }
+            }
+            .also { renderDisposables.add(it) }
+
         viewModel.chatItems
             .subscribe { (chatItems, scrollOptions) ->
                 Log.d(TAG, "chatItemsSize: ${chatItems.size}, scrollOptions: $scrollOptions")
@@ -446,21 +498,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
                 chatAdapter.fullDataDown = fullDataDown
             }
             .also { renderDisposables.add(it) }
-        viewModel.viewState
-            .map { it.isOnline }
-            .distinctUntilChanged()
-            .subscribe { isOnline ->
-                binding.toolbar.apply {
-                    if (isOnline) {
-                        setSubtitleTextColor(context.color(R.color.razzmatazz))
-                        subtitle = argChat.agentName
-                    } else {
-                        setSubtitleTextColor(context.color(R.color.santas_gray))
-                        subtitle = getString(R.string.waiting_for_network)
-                    }
-                }
-            }
-            .also { renderDisposables.add(it) }
+
         viewModel.viewState
             .map { it.readInfo.unreadCount }
             .distinctUntilChanged()
@@ -548,5 +586,13 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener {
         Log.d(TAG, "instantScrollToPosition: beforePos: $beforePos")
         linearLayoutManager.scrollToPosition(beforePos)
         linearLayoutManager.startSmoothScroll(scroller)
+    }
+
+    fun isSameChat(message: Message): Boolean {
+        return message.chatId == argChatId
+    }
+
+    override fun dialogPositiveClicked(tag: String) {
+        viewModel.errorMessagePositveClick(tag)
     }
 }
