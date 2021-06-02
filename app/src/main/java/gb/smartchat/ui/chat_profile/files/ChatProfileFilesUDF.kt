@@ -1,5 +1,7 @@
 package gb.smartchat.ui.chat_profile.files
 
+import android.net.Uri
+import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.entity.File
 import gb.smartchat.ui._global.BaseStore
 
@@ -25,11 +27,19 @@ object ChatProfileFilesUDF {
         object LoadMore : Action()
         data class NewPage(val pageNumber: Int, val items: List<File>) : Action()
         data class PageError(val error: Throwable) : Action()
+        data class FileClick(val file: File) : Action()
+        data class UpdateFileDownloadStatus(
+            val file: File,
+            val newDownloadStatus: DownloadStatus
+        ) : Action()
     }
 
     sealed class SideEffect {
         data class LoadPage(val pageCount: Int) : SideEffect()
         data class ErrorEvent(val error: Throwable) : SideEffect()
+        data class DownloadFile(val file: File) : SideEffect()
+        data class CancelDownloadFile(val file: File) : SideEffect()
+        data class OpenFile(val contentUri: Uri) : SideEffect()
     }
 
     class Store : BaseStore<State, Action, SideEffect>(State()) {
@@ -94,6 +104,34 @@ object ChatProfileFilesUDF {
                         }
                         else -> state
                     }
+                }
+                is Action.FileClick -> {
+                    return when (val status = action.file.downloadStatus) {
+                        is DownloadStatus.Empty -> {
+                            sideEffectListener(SideEffect.DownloadFile(action.file))
+                            state
+                        }
+                        is DownloadStatus.Downloading -> {
+                            sideEffectListener(SideEffect.CancelDownloadFile(action.file))
+                            state
+                        }
+                        is DownloadStatus.Success -> {
+                            sideEffectListener(SideEffect.OpenFile(status.contentUri))
+                            state
+                        }
+                    }
+                }
+                is Action.UpdateFileDownloadStatus -> {
+                    val file = action.file.copy(downloadStatus = action.newDownloadStatus)
+                    val index = state.list.indexOfFirst { it.url == file.url }
+                    val list = state.list.toMutableList()
+                    if (index >= 0) {
+                        list[index] = file
+                    }
+                    if (action.newDownloadStatus is DownloadStatus.Success) { //автоматическое открытие файла
+                        sideEffectListener(SideEffect.OpenFile(action.newDownloadStatus.contentUri))
+                    }
+                    return state.copy(list = list)
                 }
             }
         }

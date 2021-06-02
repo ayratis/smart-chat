@@ -25,11 +25,11 @@ class ChatListProfileViewModel(
 
     private val showProfileErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
     private val navToCreateChatCommand =
-        BehaviorRelay.create<SingleEvent<Pair<StoreInfo, UserProfile>>>()
+        BehaviorRelay.create<SingleEvent<Pair<StoreInfo?, UserProfile>>>()
 
     val viewState: Observable<ChatListProfileUDF.State> = store.hide()
     val showProfileErrorDialog: Observable<SingleEvent<String>> = showProfileErrorCommand.hide()
-    val navToCreateChat: Observable<SingleEvent<Pair<StoreInfo, UserProfile>>> =
+    val navToCreateChat: Observable<SingleEvent<Pair<StoreInfo?, UserProfile>>> =
         navToCreateChatCommand.hide()
 
     init {

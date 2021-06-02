@@ -11,6 +11,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatMsgOutgoingBinding
+import gb.smartchat.entity.File
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.dp
 import gb.smartchat.utils.inflate
@@ -20,11 +21,12 @@ import java.util.*
 
 class DraftViewHolder private constructor(
     itemView: View,
-    private val onDeleteListener: (ChatItem.Msg) -> Unit,
-    private val onEditListener: (ChatItem.Msg) -> Unit,
-    private val onQuoteListener: (ChatItem.Msg) -> Unit,
-    private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
-    private val onFileClickListener: (ChatItem.Msg) -> Unit
+    private val onDeleteListener: ((ChatItem.Msg) -> Unit)?,
+    private val onEditListener: ((ChatItem.Msg) -> Unit)?,
+    private val onQuoteListener: ((ChatItem.Msg) -> Unit)?,
+    private val onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
+    private val onFileClickListener: (ChatItem.Msg) -> Unit,
+    private val onPhotoClickListener: (File) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -32,11 +34,12 @@ class DraftViewHolder private constructor(
 
         fun create(
             parent: ViewGroup,
-            onDeleteListener: (ChatItem.Msg) -> Unit,
-            onEditListener: (ChatItem.Msg) -> Unit,
-            onQuoteListener: (ChatItem.Msg) -> Unit,
-            onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
-            onFileClickListener: (ChatItem.Msg) -> Unit
+            onDeleteListener: ((ChatItem.Msg) -> Unit)?,
+            onEditListener: ((ChatItem.Msg) -> Unit)?,
+            onQuoteListener: ((ChatItem.Msg) -> Unit)?,
+            onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
+            onFileClickListener: (ChatItem.Msg) -> Unit,
+            onPhotoClickListener: (File) -> Unit
         ) =
             DraftViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
@@ -44,7 +47,8 @@ class DraftViewHolder private constructor(
                 onEditListener,
                 onQuoteListener,
                 onQuotedMsgClickListener,
-                onFileClickListener
+                onFileClickListener,
+                onPhotoClickListener
             )
     }
 
@@ -55,10 +59,13 @@ class DraftViewHolder private constructor(
     init {
         binding.root.setOnCreateContextMenuListener(this)
         binding.viewQuotedMessage.setOnClickListener {
-            onQuotedMsgClickListener.invoke(chatItem)
+            onQuotedMsgClickListener?.invoke(chatItem)
         }
         binding.viewDocAttachment.setOnClickListener {
             onFileClickListener.invoke(chatItem)
+        }
+        binding.ivAttachmentPhoto.setOnClickListener {
+            chatItem.message.file?.let(onPhotoClickListener::invoke)
         }
     }
 
@@ -85,7 +92,7 @@ class DraftViewHolder private constructor(
                 binding.viewDocAttachment.visible(true)
                 binding.tvDocName.text = chatItem.message.file.name
                 binding.tvDocSize.text = chatItem.message.file.size?.let { "${it / 1000} KB" }
-                when(chatItem.message.file.downloadStatus) {
+                when (chatItem.message.file.downloadStatus) {
                     is DownloadStatus.Empty -> {
                         binding.progressBarFile.visible(false)
                         binding.ivDocIcon.setImageResource(R.drawable.ic_download_40)
@@ -125,24 +132,28 @@ class DraftViewHolder private constructor(
         menuInfo: ContextMenu.ContextMenuInfo?
     ) {
         val inflater = MenuInflater(itemView.context)
-        inflater.inflate(R.menu.delete, menu)
-        inflater.inflate(R.menu.quote, menu)
+        if (onDeleteListener != null) {
+            inflater.inflate(R.menu.delete, menu)
+        }
+        if (onQuoteListener != null) {
+            inflater.inflate(R.menu.quote, menu)
+        }
         menu?.forEach {
             it.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.action_delete -> {
                         Log.d(TAG, "onCreateContextMenu: delete")
-                        onDeleteListener.invoke(chatItem)
+                        onDeleteListener?.invoke(chatItem)
                         return@setOnMenuItemClickListener true
                     }
                     R.id.action_edit -> {
                         Log.d(TAG, "onCreateContextMenu: edit")
-                        onEditListener.invoke(chatItem)
+                        onEditListener?.invoke(chatItem)
                         return@setOnMenuItemClickListener true
                     }
                     R.id.action_quote -> {
                         Log.d(TAG, "onCreateContextMenu: quote")
-                        onQuoteListener.invoke(chatItem)
+                        onQuoteListener?.invoke(chatItem)
                         return@setOnMenuItemClickListener true
                     }
                 }

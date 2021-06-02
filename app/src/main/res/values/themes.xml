@@ -1,22 +1,23 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+
     <style name="Theme.SmartChat" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_heart</item>
         <item name="colorPrimaryVariant">@color/purple_heart</item>
         <item name="colorOnPrimary">@color/white</item>
-        <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/purple_heart</item>
         <item name="colorSecondaryVariant">@color/purple_heart</item>
         <item name="colorOnSecondary">@color/white</item>
-        <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <item name="appBarLayoutStyle">@style/AppBarStyle</item>
-        <!-- Customize your theme here. -->
+        <item name="actionOverflowButtonStyle">@style/actionOverflowButtonStyle</item>
     </style>
 
     <style name="AppBarStyle" parent="Widget.Design.AppBarLayout">
         <item name="android:background">@color/white</item>
+    </style>
+
+    <style name="actionOverflowButtonStyle" parent="@style/Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:tint">@color/purple_heart</item>
     </style>
 
 </resources>

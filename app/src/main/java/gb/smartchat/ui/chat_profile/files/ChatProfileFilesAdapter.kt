@@ -10,6 +10,7 @@ import gb.smartchat.ui._global.view_holder.ProgressViewHolder
 
 class ChatProfileFilesAdapter(
     private val onFileClickListener: (File) -> Unit,
+    private val onMediaClickListener: (File) -> Unit,
     private val onErrorActionClickListener: (tag: String) -> Unit,
     private val loadMoreCallback: () -> Unit
 ) : ListAdapter<ChatProfileFileItem, RecyclerView.ViewHolder>(DiffUtilItemCallback()) {
@@ -25,7 +26,7 @@ class ChatProfileFilesAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            1 -> ChatProfileMediaViewHolder.create(parent, onFileClickListener)
+            1 -> ChatProfileMediaViewHolder.create(parent, onMediaClickListener)
             2 -> ErrorViewHolder.create(parent, onErrorActionClickListener)
             3 -> ProgressViewHolder.create(parent)
             4 -> ChatProfileDocViewHolder.create(parent, onFileClickListener)

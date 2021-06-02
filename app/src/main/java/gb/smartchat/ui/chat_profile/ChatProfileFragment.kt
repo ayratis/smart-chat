@@ -15,7 +15,6 @@ import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatProfileBinding
 import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Contact
-import gb.smartchat.entity.StoreInfo
 import gb.smartchat.entity.User
 import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui.chat_profile.files.ChatProfileFilesFragment
@@ -114,7 +113,7 @@ class ChatProfileFragment : Fragment(),
         binding.btnAddMembers.setOnClickListener {
             parentFragmentManager.navigateTo(
                 CreateChatFragment.create(
-                    storeInfo = StoreInfo.fake(),
+                    storeInfo = null, //todo
                     mode = CreateChatMode.ADD_MEMBERS,
                     chat = chat
                 )

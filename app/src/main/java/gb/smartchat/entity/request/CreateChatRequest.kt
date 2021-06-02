@@ -12,13 +12,13 @@ data class CreateChatRequest(
     val contacts: List<Contact>,
 
     @SerializedName("store_id")
-    val storeId: String,
+    val storeId: String?,
     @SerializedName("store_name")
-    val storeName: String,
+    val storeName: String?,
 //    @SerializedName("partner_code")
 //    val partnerCode: Int,
     @SerializedName("partner_name")
-    val partnerName: String,
+    val partnerName: String?,
     @SerializedName("agent_code")
-    val agentCode: Int,
+    val agentCode: Int?,
 )

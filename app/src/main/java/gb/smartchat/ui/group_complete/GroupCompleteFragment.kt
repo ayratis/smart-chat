@@ -39,13 +39,13 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
         private const val ARG_SELECTED_CONTACTS = "arg selected contacts"
 
         fun create(
-            storeInfo: StoreInfo,
+            storeInfo: StoreInfo?,
             userProfile: UserProfile,
             selectedContacts: List<Contact>
         ) =
             GroupCompleteFragment().apply {
                 arguments = Bundle().apply {
-                    putSerializable(ARG_STORE_INFO, storeInfo)
+                    storeInfo?.let { putSerializable(ARG_STORE_INFO, storeInfo) }
                     putSerializable(ARG_USER_PROFILE, userProfile)
                     putSerializable(ARG_SELECTED_CONTACTS, ArrayList(selectedContacts))
                 }
@@ -56,8 +56,8 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
     private val binding: FragmentGroupCompleteBinding
         get() = _binding!!
     private val compositeDisposable = CompositeDisposable()
-    private val storeInfo by lazy {
-        requireArguments().getSerializable(ARG_STORE_INFO) as StoreInfo
+    private val storeInfo: StoreInfo? by lazy {
+        requireArguments().getSerializable(ARG_STORE_INFO) as? StoreInfo
     }
     private val userProfile by lazy {
         requireArguments().getSerializable(ARG_USER_PROFILE) as UserProfile
@@ -187,7 +187,7 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
         viewModel.navToChat
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let {
-                    parentFragmentManager.newScreenFromRoot(ChatFragment.create(it), NavAnim.SLIDE)
+                    parentFragmentManager.newScreenFromRoot(ChatFragment.create(it.id, it), NavAnim.SLIDE)
                 }
             }
             .also { compositeDisposable.add(it) }

@@ -17,6 +17,7 @@ import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatListBinding
 import gb.smartchat.entity.Chat
+import gb.smartchat.entity.UserProfile
 import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.ui.chat.ChatFragment
@@ -44,6 +45,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
 
     private var _binding: FragmentChatListBinding? = null
     private val binding: FragmentChatListBinding get() = _binding!!
+    private var userProfile: UserProfile? = null
     private val compositeDisposable = CompositeDisposable()
     private val argIsArchive by lazy {
         requireArguments().getBoolean(ARG_IS_ARCHIVE)
@@ -158,6 +160,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 inflateMenu(R.menu.search)
                 inflateMenu(R.menu.archive_messages)
                 inflateMenu(R.menu.favorite_messages)
+                inflateMenu(R.menu.user_profile)
                 setOnMenuItemClickListener { menuItem ->
                     when (menuItem.itemId) {
                         R.id.search -> {
@@ -181,9 +184,17 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                             favoriteMessagesViewModel.onFavoriteMessagesClick()
                             true
                         }
+                        R.id.action_user_profile -> {
+                            dismissPopupMenus()
+                            userProfile?.let(this@ChatListFragment::navigateToUserProfile)
+                            true
+                        }
                         else -> false
                     }
                 }
+            }
+            binding.profileContent.setOnClickListener {
+                userProfile?.let(this::navigateToUserProfile)
             }
             binding.btnCreateChat.apply {
                 visible(true)
@@ -210,15 +221,18 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 .subscribe { profileState ->
                     when (profileState) {
                         is ChatListProfileUDF.State.Error -> {
+                            userProfile = null
                             binding.toolbar.title = null
                             binding.profileContent.visible(false)
                         }
                         is ChatListProfileUDF.State.Empty,
                         is ChatListProfileUDF.State.Loading -> {
+                            userProfile = null
                             binding.toolbar.title = getString(R.string.refreshing)
                             binding.profileContent.visible(false)
                         }
                         is ChatListProfileUDF.State.Success -> {
+                            userProfile = profileState.userProfile
                             binding.toolbar.title = null
                             binding.profileContent.visible(true)
                             Glide.with(binding.ivProfileAvatar)
@@ -227,12 +241,6 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                                 .circleCrop()
                                 .into(binding.ivProfileAvatar)
                             binding.tvProfileName.text = profileState.userProfile.name
-                            binding.profileContent.setOnClickListener {
-                                parentFragmentManager.navigateTo(
-                                    UserProfileFragment.create(profileState.userProfile),
-                                    NavAnim.SLIDE
-                                )
-                            }
                         }
                     }
                 }
@@ -271,7 +279,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 .subscribe { event ->
                     event.getContentIfNotHandled()?.let {
                         parentFragmentManager.navigateTo(
-                            ChatFragment.create(it, isFavoritesChat = true),
+                            ChatFragment.create(it.id, it, isFavoritesChat = true),
                             NavAnim.SLIDE
                         )
                     }
@@ -309,7 +317,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
 
     private fun navigateToChat(chat: Chat) {
         parentFragmentManager.navigateTo(
-            ChatFragment.create(chat),
+            ChatFragment.create(chat.id, chat),
             NavAnim.SLIDE
         )
     }
@@ -342,5 +350,12 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
             ProgressDialog().show(childFragmentManager, PROGRESS_TAG)
             childFragmentManager.executePendingTransactions()
         }
+    }
+
+    private fun navigateToUserProfile(userProfile: UserProfile) {
+        parentFragmentManager.navigateTo(
+            UserProfileFragment.create(userProfile),
+            NavAnim.SLIDE
+        )
     }
 }

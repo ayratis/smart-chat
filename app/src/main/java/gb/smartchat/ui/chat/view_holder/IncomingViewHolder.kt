@@ -16,6 +16,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatMsgIncomingBinding
+import gb.smartchat.entity.File
 import gb.smartchat.entity.Mention
 import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
@@ -24,11 +25,12 @@ import java.time.format.DateTimeFormatter
 
 class IncomingViewHolder private constructor(
     itemView: View,
-    private val onQuoteListener: (ChatItem.Msg) -> Unit,
-    private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
+    private val onQuoteListener: ((ChatItem.Msg) -> Unit)?,
+    private val onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
-    private val onMentionClickListener: (Mention) -> Unit,
-    private val onToFavoritesClickListener: (ChatItem.Msg) -> Unit,
+    private val onMentionClickListener: ((Mention) -> Unit)?,
+    private val onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
+    private val onPhotoClickListener: (File) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
 
     companion object {
@@ -36,11 +38,12 @@ class IncomingViewHolder private constructor(
 
         fun create(
             parent: ViewGroup,
-            onQuoteListener: (ChatItem.Msg) -> Unit,
-            onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
+            onQuoteListener: ((ChatItem.Msg) -> Unit)?,
+            onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
             onFileClickListener: (ChatItem.Msg) -> Unit,
-            onMentionClickListener: (Mention) -> Unit,
-            onToFavoritesClickListener: (ChatItem.Msg) -> Unit
+            onMentionClickListener: ((Mention) -> Unit)?,
+            onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
+            onPhotoClickListener: (File) -> Unit
         ) =
             IncomingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_incoming),
@@ -48,7 +51,8 @@ class IncomingViewHolder private constructor(
                 onQuotedMsgClickListener,
                 onFileClickListener,
                 onMentionClickListener,
-                onToFavoritesClickListener
+                onToFavoritesClickListener,
+                onPhotoClickListener
             )
     }
 
@@ -61,7 +65,7 @@ class IncomingViewHolder private constructor(
 
     init {
         binding.viewQuotedMessage.setOnClickListener {
-            onQuotedMsgClickListener.invoke(chatItem)
+            onQuotedMsgClickListener?.invoke(chatItem)
         }
         binding.viewDocAttachment.setOnClickListener {
             onFileClickListener.invoke(chatItem)
@@ -72,6 +76,9 @@ class IncomingViewHolder private constructor(
         binding.content.setOnLongClickListener {
             showMenu()
             true
+        }
+        binding.ivAttachmentPhoto.setOnClickListener {
+            chatItem.message.file?.let(onPhotoClickListener::invoke)
         }
     }
 
@@ -142,7 +149,7 @@ class IncomingViewHolder private constructor(
                                     isUnderlineText = false,
                                     linkColor = itemView.context.color(R.color.purple_heart)
                                 ) {
-                                    onMentionClickListener.invoke(mention)
+                                    onMentionClickListener?.invoke(mention)
                                 },
                                 offset,
                                 offset + mentionString.length,
@@ -152,9 +159,7 @@ class IncomingViewHolder private constructor(
                     }
                 }
 
-            movementMethod =
-                if (chatItem.message.mentions.isNullOrEmpty()) null
-                else LinkMovementMethod.getInstance()
+            movementMethod = LinkMovementMethod.getInstance()
 
             visible(!chatItem.message.text.isNullOrBlank())
         }
@@ -169,19 +174,23 @@ class IncomingViewHolder private constructor(
         if (chatItem.message.type == Message.Type.DELETED) return
 
         val menu = android.widget.PopupMenu(itemView.context, binding.content)
-        menu.inflate(R.menu.quote)
+        onQuoteListener?.let {
+            menu.inflate(R.menu.quote)
+        }
         if (!chatItem.message.text.isNullOrBlank()) {
             menu.inflate(R.menu.copy)
         }
         if (chatItem.message.file?.downloadStatus == DownloadStatus.Empty) {
             menu.inflate(R.menu.download)
         }
-        menu.inflate(R.menu.to_favorites)
+        onToFavoritesClickListener?.let {
+            menu.inflate(R.menu.to_favorites)
+        }
         menu.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.action_quote -> {
                     Log.d(TAG, "onCreateContextMenu: quote")
-                    onQuoteListener.invoke(chatItem)
+                    onQuoteListener?.invoke(chatItem)
                     true
                 }
                 R.id.action_copy -> {
@@ -199,7 +208,7 @@ class IncomingViewHolder private constructor(
                 }
                 R.id.action_to_favorites -> {
                     Log.d(TAG, "onCreateContextMenu: to_favorites")
-                    onToFavoritesClickListener.invoke(chatItem)
+                    onToFavoritesClickListener?.invoke(chatItem)
                     true
                 }
                 else -> false

@@ -1,11 +1,16 @@
 package gb.smartchat.ui.chat_profile.files
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.jakewharton.rxrelay2.BehaviorRelay
 import gb.smartchat.R
+import gb.smartchat.data.download.DownloadStatus
+import gb.smartchat.data.download.FileDownloadHelper
 import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.entity.File
+import gb.smartchat.utils.SingleEvent
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -18,6 +23,7 @@ class ChatProfileFilesViewModel(
     private val httpApi: HttpApi,
     private val resourceManager: ResourceManager,
     private val store: ChatProfileFilesUDF.Store,
+    private val downloadHelper: FileDownloadHelper
 ) : ViewModel() {
 
     companion object {
@@ -26,6 +32,8 @@ class ChatProfileFilesViewModel(
     }
 
     private var fetchDisposable: Disposable? = null
+    private val downloadStatusDisposableMap = HashMap<String, Disposable>()
+    private val openFileCommand = BehaviorRelay.create<SingleEvent<Uri>>()
 
     val listItems: Observable<List<ChatProfileFileItem>> = store.hide().map { state ->
         when (state.pagingState) {
@@ -50,6 +58,8 @@ class ChatProfileFilesViewModel(
         }
     }
 
+    val openFile: Observable<SingleEvent<Uri>> = openFileCommand.hide()
+
     init {
         store.sideEffectListener = { sideEffect ->
             when (sideEffect) {
@@ -58,6 +68,15 @@ class ChatProfileFilesViewModel(
                 }
                 is ChatProfileFilesUDF.SideEffect.LoadPage -> {
                     fetchFiles(sideEffect.pageCount)
+                }
+                is ChatProfileFilesUDF.SideEffect.CancelDownloadFile -> {
+                    cancelDownloadMessageFile(sideEffect.file)
+                }
+                is ChatProfileFilesUDF.SideEffect.DownloadFile -> {
+                    downloadFile(sideEffect.file)
+                }
+                is ChatProfileFilesUDF.SideEffect.OpenFile -> {
+                    openFileCommand.accept(SingleEvent(sideEffect.contentUri))
                 }
             }
         }
@@ -74,7 +93,7 @@ class ChatProfileFilesViewModel(
                 pageCount = pageCount,
                 pageSize = 20
             )
-            .map { it.result }
+            .map { it.result.composeWithDownloadStatus() }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -83,8 +102,42 @@ class ChatProfileFilesViewModel(
             )
     }
 
-    fun onFileClick(file: File) {
+    private fun downloadFile(file: File) {
+        file.url ?: return
+        val d = downloadStatusDisposableMap[file.url]
+        if (d?.isDisposed == false) {
+            d.dispose()
+        }
+        downloadHelper.download(file.url)
+            .subscribe { downloadStatus ->
+                store.accept(
+                    ChatProfileFilesUDF.Action.UpdateFileDownloadStatus(
+                        file,
+                        downloadStatus
+                    )
+                )
+            }.also {
+                downloadStatusDisposableMap[file.url] = it
+            }
+    }
 
+    private fun cancelDownloadMessageFile(file: File) {
+        file.url?.let { downloadHelper.cancelDownload(it) }
+    }
+
+    private fun List<File>.composeWithDownloadStatus(): List<File> {
+        return this.map { file ->
+            if (file.url != null) {
+                val downloadStatus = downloadHelper.getDownloadStatus(file.url)
+                file.copy(downloadStatus = downloadStatus)
+            } else {
+                file.copy(downloadStatus = DownloadStatus.Empty)
+            }
+        }
+    }
+
+    fun onFileClick(file: File) {
+        store.accept(ChatProfileFilesUDF.Action.FileClick(file))
     }
 
     fun onErrorActionClick(tag: String) {
@@ -101,5 +154,11 @@ class ChatProfileFilesViewModel(
 
     override fun onCleared() {
         fetchDisposable?.dispose()
+
+        downloadStatusDisposableMap.values.forEach { d ->
+            if (!d.isDisposed) {
+                d.dispose()
+            }
+        }
     }
 }

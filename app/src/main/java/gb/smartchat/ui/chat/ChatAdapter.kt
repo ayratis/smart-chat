@@ -4,6 +4,7 @@ import android.util.Log
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import gb.smartchat.entity.File
 import gb.smartchat.entity.Mention
 import gb.smartchat.ui._global.StickyHeaderHelper
 import gb.smartchat.ui.chat.view_holder.*
@@ -11,15 +12,16 @@ import java.time.ZoneId
 
 class ChatAdapter(
     private val onItemBindListener: (ChatItem) -> Unit,
-    private val onDeleteListener: (ChatItem.Msg) -> Unit,
-    private val onEditListener: (ChatItem.Msg) -> Unit,
-    private val onQuoteListener: (ChatItem.Msg) -> Unit,
+    private val onDeleteListener: ((ChatItem.Msg) -> Unit)?,
+    private val onEditListener: ((ChatItem.Msg) -> Unit)?,
+    private val onQuoteListener: ((ChatItem.Msg) -> Unit)?,
     private val nextPageUpCallback: () -> Unit,
     private val nextPageDownCallback: () -> Unit,
-    private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
+    private val onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
-    private val onMentionClickListener: (Mention) -> Unit,
-    private val onToFavoritesClickListener: (ChatItem.Msg) -> Unit,
+    private val onMentionClickListener: ((Mention) -> Unit)?,
+    private val onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
+    private val onPhotoClickListener: (File) -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()),
     StickyHeaderHelper {
 
@@ -46,7 +48,8 @@ class ChatAdapter(
                 onQuotedMsgClickListener,
                 onFileClickListener,
                 onMentionClickListener,
-                onToFavoritesClickListener
+                onToFavoritesClickListener,
+                onPhotoClickListener
             )
             3 -> SystemViewHolder.create(parent)
             4 -> OutgoingViewHolder.create(
@@ -57,7 +60,8 @@ class ChatAdapter(
                 onQuotedMsgClickListener,
                 onFileClickListener,
                 onMentionClickListener,
-                onToFavoritesClickListener
+                onToFavoritesClickListener,
+                onPhotoClickListener
             )
             5 -> DraftViewHolder.create(
                 parent,
@@ -65,7 +69,8 @@ class ChatAdapter(
                 onEditListener,
                 onQuoteListener,
                 onQuotedMsgClickListener,
-                onFileClickListener
+                onFileClickListener,
+                onPhotoClickListener
             )
             6 -> TypingViewHolder.create(parent)
             else -> throw RuntimeException("unknown view type")

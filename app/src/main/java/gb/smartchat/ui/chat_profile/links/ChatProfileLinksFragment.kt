@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatProfilePageBinding
 import gb.smartchat.utils.addSystemBottomPadding
+import gb.smartchat.utils.launchCustomTab
 import io.reactivex.disposables.CompositeDisposable
 
 class ChatProfileLinksFragment : Fragment() {
@@ -64,7 +65,7 @@ class ChatProfileLinksFragment : Fragment() {
 
     private val listAdapter by lazy {
         ChatProfileLinksAdapter(
-            onLinkClickListener = viewModel::onLinkClick,
+            onLinkClickListener = this::openLink,
             onErrorActionClickListener = viewModel::onErrorActionClick,
             loadMoreCallback = viewModel::loadMore
         )
@@ -104,5 +105,9 @@ class ChatProfileLinksFragment : Fragment() {
     override fun onPause() {
         compositeDisposable.clear()
         super.onPause()
+    }
+
+    private fun openLink(link: String) {
+        context?.launchCustomTab(link)
     }
 }

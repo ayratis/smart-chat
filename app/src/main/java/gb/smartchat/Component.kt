@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.data.content.ContentHelper
 import gb.smartchat.data.content.ContentHelperImpl
 import gb.smartchat.data.download.FileDownloadHelper
@@ -15,7 +16,12 @@ import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.resources.ResourceManagerImpl
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketApiImpl
+import gb.smartchat.data.socket.SocketEvent
+import gb.smartchat.entity.Message
 import gb.smartchat.publisher.*
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.socket.client.IO
 import io.socket.client.Manager
 import io.socket.client.Socket
@@ -141,5 +147,33 @@ class Component constructor(
 
     val chatArchivePublisher by lazy {
         ChatArchivePublisher()
+    }
+
+    private var newMessagesDisposable: Disposable? = null
+    private val sendNewMessagePushCommand = PublishRelay.create<Message>()
+
+    val sendNewMessagePush: Observable<Message> = sendNewMessagePushCommand.hide()
+
+
+    private fun observeNewMessages() {
+        newMessagesDisposable?.dispose()
+        newMessagesDisposable = socketApi
+            .observeEvents()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { socketEvent ->
+                if (socketEvent is SocketEvent.MessageNew) {
+                    sendNewMessagePushCommand.accept(socketEvent.message)
+                }
+            }
+    }
+
+    override fun onCleared() {
+        newMessagesDisposable?.dispose()
+        socket.disconnect()
+    }
+
+    fun connect() {
+        socket.connect()
+        observeNewMessages()
     }
 }

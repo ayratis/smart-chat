@@ -41,11 +41,11 @@ interface HttpApi {
     @GET("chat/contacts/list")
     @Headers("smart-user-id: 0eeb970e-9c3f-11e2-b7e9-e41f13e6ace6") //todo remove (it's test)
     fun getContactList(
-        @Query("store_id") storeId: String, //GUID
-        @Query("store_name") storeName: String,
-        @Query("partner_code") partnerCode: Int,
-        @Query("partner_name") partnerName: String,
-        @Query("agent_code") agentCode: Int
+        @Query("store_id") storeId: String?, //GUID
+        @Query("store_name") storeName: String?,
+        @Query("partner_code") partnerCode: Int?,
+        @Query("partner_name") partnerName: String?,
+        @Query("agent_code") agentCode: Int?
     ): Single<BaseResponse<ContactListResponse>>
 
     @POST("chat/management/create")
@@ -137,4 +137,9 @@ interface HttpApi {
 
     @GET("chat/management/get_favorite_chat")
     fun getFavoriteChat(): Single<BaseResponse<FavoriteChatResponse>>
+
+    @GET("chat/management/get")
+    fun getChat(
+        @Query("chat_id") chatId: Long
+    ): Single<BaseResponse<ChatResponse>>
 }

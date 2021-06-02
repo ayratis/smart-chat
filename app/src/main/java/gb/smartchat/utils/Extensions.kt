@@ -1,20 +1,26 @@
 package gb.smartchat.utils
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Build
 import android.util.DisplayMetrics
+import android.util.Patterns
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.annotation.*
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.browser.customtabs.CustomTabsSession
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
@@ -257,6 +263,7 @@ fun Message.toMessageCreateRequestBody(): MessageCreateRequest? {
             clientId = clientId,
             quotedMessageId = quotedMessage?.messageId,
             mentions = mentions,
+            links = text.extractLinks(),
             fileUrl = file?.url
         )
     } else null
@@ -269,7 +276,8 @@ fun Message.toMessageEditRequestBody(): MessageEditRequest? {
             messageId = id,
             chatId = chatId,
             senderId = senderId,
-            mentions = mentions
+            mentions = mentions,
+            links = text.extractLinks()
         )
     } else null
 }
@@ -357,5 +365,39 @@ fun Fragment.hideSoftInput() {
     view?.let {
         (context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
             ?.hideSoftInputFromWindow(it.windowToken, 0)
+    }
+}
+
+fun String.extractLinks() : List<String> {
+    val links = mutableListOf<String>()
+    val matcher = Patterns.WEB_URL.matcher(this)
+    while (matcher.find()) {
+        val url = matcher.group()
+        links.add(url)
+    }
+    return links
+}
+
+fun Context.launchCustomTab(url: String, customTabsSession: CustomTabsSession? = null) {
+    val builder = customTabsSession?.let { CustomTabsIntent.Builder(it) }
+        ?: CustomTabsIntent.Builder()
+    val intent = builder.build()
+    intent.launchUrl(this, Uri.parse(url))
+}
+
+fun Context.openFile(uri: Uri) {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        data = uri
+        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    }
+    try {
+        startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        e.printStackTrace()
+        Toast.makeText(
+            this,
+            getString(R.string.file_open_error),
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }
