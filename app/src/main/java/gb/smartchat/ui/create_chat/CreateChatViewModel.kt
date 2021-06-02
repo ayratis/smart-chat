@@ -10,20 +10,20 @@ import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
 import gb.smartchat.entity.UserProfile
 import gb.smartchat.entity.request.AddRecipientsRequest
+import gb.smartchat.entity.request.CreateChatRequest
 import gb.smartchat.publisher.AddRecipientsPublisher
 import gb.smartchat.publisher.ChatCreatedPublisher
 import gb.smartchat.publisher.ContactDeletePublisher
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.humanMessage
 import gb.smartchat.utils.toContact
-import gb.smartchat.utils.toCreateChatRequest
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 
 class CreateChatViewModel(
-    private val storeInfo: StoreInfo,
+    private val storeInfo: StoreInfo?,
     private val userProfile: UserProfile?,
     private val chatId: Long?,
     private val mode: CreateChatMode,
@@ -45,7 +45,7 @@ class CreateChatViewModel(
     private val navToChatCommand = BehaviorRelay.create<SingleEvent<Chat>>()
     private val showDialogCommand = BehaviorRelay.create<SingleEvent<String>>()
     private val navToGroupCompleteCommand =
-        BehaviorRelay.create<SingleEvent<Pair<StoreInfo, List<Contact>>>>()
+        BehaviorRelay.create<SingleEvent<Pair<StoreInfo?, List<Contact>>>>()
     private val exitCommand = BehaviorRelay.create<SingleEvent<Unit>>()
 
     val items: Observable<List<ContactItem>> = state
@@ -68,7 +68,7 @@ class CreateChatViewModel(
     }
     val navToChat: Observable<SingleEvent<Chat>> = navToChatCommand.hide()
     val showDialog: Observable<SingleEvent<String>> = showDialogCommand.hide()
-    val navToGroupComplete: Observable<SingleEvent<Pair<StoreInfo, List<Contact>>>> =
+    val navToGroupComplete: Observable<SingleEvent<Pair<StoreInfo?, List<Contact>>>> =
         navToGroupCompleteCommand.hide()
     val exit: Observable<SingleEvent<Unit>> = exitCommand.hide()
 
@@ -112,11 +112,11 @@ class CreateChatViewModel(
     private fun fetchContacts() {
         httpApi
             .getContactList(
-                storeInfo.storeId,
-                storeInfo.storeName,
-                storeInfo.partnerCode,
-                storeInfo.partnerName,
-                storeInfo.agentCode
+                storeInfo?.storeId,
+                storeInfo?.storeName,
+                storeInfo?.partnerCode,
+                storeInfo?.partnerName,
+                storeInfo?.agentCode
             )
             .map { it.result.groups ?: emptyList() }
             .subscribeOn(Schedulers.io())
@@ -130,8 +130,17 @@ class CreateChatViewModel(
 
     private fun createChat(contact: Contact) {
         val myContact = userProfile!!.toContact()
+        val requestBody = CreateChatRequest(
+            chatName = "",
+            fileUrl = null,
+            contacts = listOf(contact, myContact),
+            storeId = storeInfo?.storeId,
+            storeName = storeInfo?.storeName,
+            partnerName = storeInfo?.partnerName,
+            agentCode = storeInfo?.agentCode,
+        )
         httpApi
-            .postCreateChat(storeInfo.toCreateChatRequest("", null, listOf(contact, myContact))) //todo
+            .postCreateChat(requestBody)
             .map { it.result.chat }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())

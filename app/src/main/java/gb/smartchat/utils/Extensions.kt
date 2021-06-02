@@ -6,6 +6,7 @@ import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Build
 import android.util.DisplayMetrics
 import android.util.Patterns
@@ -16,6 +17,8 @@ import android.view.ViewGroup
 import android.view.Window
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.*
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.browser.customtabs.CustomTabsSession
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
@@ -371,4 +374,11 @@ fun String.extractLinks() : List<String> {
         links.add(url)
     }
     return links
+}
+
+fun Context.launchCustomTab(url: String, customTabsSession: CustomTabsSession? = null) {
+    val builder = customTabsSession?.let { CustomTabsIntent.Builder(it) }
+        ?: CustomTabsIntent.Builder()
+    val intent = builder.build()
+    intent.launchUrl(this, Uri.parse(url))
 }

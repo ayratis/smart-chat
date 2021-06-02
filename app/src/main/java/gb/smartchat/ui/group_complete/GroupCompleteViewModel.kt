@@ -11,12 +11,12 @@ import gb.smartchat.entity.Chat
 import gb.smartchat.entity.Contact
 import gb.smartchat.entity.StoreInfo
 import gb.smartchat.entity.UserProfile
+import gb.smartchat.entity.request.CreateChatRequest
 import gb.smartchat.publisher.ChatCreatedPublisher
 import gb.smartchat.publisher.ContactDeletePublisher
 import gb.smartchat.utils.SingleEvent
 import gb.smartchat.utils.humanMessage
 import gb.smartchat.utils.toContact
-import gb.smartchat.utils.toCreateChatRequest
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -25,7 +25,7 @@ import io.reactivex.schedulers.Schedulers
 import okhttp3.MultipartBody
 
 class GroupCompleteViewModel(
-    private val storeInfo: StoreInfo,
+    private val storeInfo: StoreInfo?,
     private val userProfile: UserProfile,
     private val store: GroupCompleteUDF.Store,
     private val httpApi: HttpApi,
@@ -78,10 +78,14 @@ class GroupCompleteViewModel(
     }
 
     private fun createGroup(chatName: String, avatarUrl: String?, contacts: List<Contact>) {
-        val requestBody = storeInfo.toCreateChatRequest(
+        val requestBody = CreateChatRequest(
             chatName = chatName,
-            avatarUrl = avatarUrl,
-            contacts = contacts + userProfile.toContact()
+            fileUrl = avatarUrl,
+            contacts = contacts + userProfile.toContact(),
+            storeId = storeInfo?.storeId,
+            storeName = storeInfo?.storeName,
+            partnerName = storeInfo?.partnerName,
+            agentCode = storeInfo?.agentCode,
         )
         httpApi
             .postCreateChat(requestBody)

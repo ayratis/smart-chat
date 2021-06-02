@@ -161,9 +161,7 @@ class OutgoingViewHolder private constructor(
                         }
                     }
                 }
-            movementMethod =
-                if (chatItem.message.mentions.isNullOrEmpty()) null
-                else LinkMovementMethod.getInstance()
+            movementMethod = LinkMovementMethod.getInstance()
             visible(!chatItem.message.text.isNullOrBlank())
         }
         binding.tvTime.text = sdf.format(chatItem.message.timeCreated)
