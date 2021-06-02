@@ -25,13 +25,13 @@ import java.time.format.DateTimeFormatter
 
 class OutgoingViewHolder private constructor(
     itemView: View,
-    private val onDeleteListener: (ChatItem.Msg) -> Unit,
-    private val onEditListener: (ChatItem.Msg) -> Unit,
-    private val onQuoteListener: (ChatItem.Msg) -> Unit,
-    private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
+    private val onDeleteListener: ((ChatItem.Msg) -> Unit)?,
+    private val onEditListener: ((ChatItem.Msg) -> Unit)?,
+    private val onQuoteListener: ((ChatItem.Msg) -> Unit)?,
+    private val onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
-    private val onMentionClickListener: (Mention) -> Unit,
-    private val onToFavoritesClickListener: (ChatItem.Msg) -> Unit,
+    private val onMentionClickListener: ((Mention) -> Unit)?,
+    private val onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
 ) : RecyclerView.ViewHolder(itemView) {
 
     companion object {
@@ -39,13 +39,13 @@ class OutgoingViewHolder private constructor(
 
         fun create(
             parent: ViewGroup,
-            onDeleteListener: (ChatItem.Msg) -> Unit,
-            onEditListener: (ChatItem.Msg) -> Unit,
-            onQuoteListener: (ChatItem.Msg) -> Unit,
-            onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
+            onDeleteListener: ((ChatItem.Msg) -> Unit)?,
+            onEditListener: ((ChatItem.Msg) -> Unit)?,
+            onQuoteListener: ((ChatItem.Msg) -> Unit)?,
+            onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
             onFileClickListener: (ChatItem.Msg) -> Unit,
-            onMentionClickListener: (Mention) -> Unit,
-            onToFavoritesClickListener: (ChatItem.Msg) -> Unit
+            onMentionClickListener: ((Mention) -> Unit)?,
+            onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
@@ -68,7 +68,7 @@ class OutgoingViewHolder private constructor(
 
     init {
         binding.viewQuotedMessage.setOnClickListener {
-            onQuotedMsgClickListener.invoke(chatItem)
+            onQuotedMsgClickListener?.invoke(chatItem)
         }
         binding.viewDocAttachment.setOnClickListener {
             onFileClickListener.invoke(chatItem)
@@ -152,7 +152,7 @@ class OutgoingViewHolder private constructor(
                                     isUnderlineText = false,
                                     linkColor = itemView.context.color(R.color.purple_heart)
                                 ) {
-                                    onMentionClickListener.invoke(mention)
+                                    onMentionClickListener?.invoke(mention)
                                 },
                                 offset,
                                 offset + mentionString.length,
@@ -175,22 +175,30 @@ class OutgoingViewHolder private constructor(
         if (chatItem.message.type == Message.Type.DELETED) return
 
         val menu = android.widget.PopupMenu(itemView.context, binding.content)
-        menu.inflate(R.menu.quote)
+        if (onQuoteListener != null) {
+            menu.inflate(R.menu.quote)
+        }
         if (!chatItem.message.text.isNullOrBlank()) {
             menu.inflate(R.menu.copy)
         }
         if (chatItem.message.file?.downloadStatus == DownloadStatus.Empty) {
             menu.inflate(R.menu.download)
         }
-        menu.inflate(R.menu.edit)
-        menu.inflate(R.menu.to_favorites)
-        menu.inflate(R.menu.delete)
+        if (onEditListener != null) {
+            menu.inflate(R.menu.edit)
+        }
+        if (onToFavoritesClickListener != null) {
+            menu.inflate(R.menu.to_favorites)
+        }
+        if (onDeleteListener != null) {
+            menu.inflate(R.menu.delete)
+        }
 
         menu.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.action_quote -> {
                     Log.d(TAG, "onCreateContextMenu: quote")
-                    onQuoteListener.invoke(chatItem)
+                    onQuoteListener?.invoke(chatItem)
                     true
                 }
                 R.id.action_copy -> {
@@ -208,17 +216,17 @@ class OutgoingViewHolder private constructor(
                 }
                 R.id.action_edit -> {
                     Log.d(TAG, "onCreateContextMenu: edit")
-                    onEditListener.invoke(chatItem)
+                    onEditListener?.invoke(chatItem)
                     true
                 }
                 R.id.action_delete -> {
                     Log.d(TAG, "onCreateContextMenu: delete")
-                    onDeleteListener.invoke(chatItem)
+                    onDeleteListener?.invoke(chatItem)
                     true
                 }
                 R.id.action_to_favorites -> {
                     Log.d(TAG, "onCreateContextMenu: to_favorites")
-                    onToFavoritesClickListener.invoke(chatItem)
+                    onToFavoritesClickListener?.invoke(chatItem)
                     true
                 }
                 else -> false

@@ -32,6 +32,7 @@ import gb.smartchat.ui._global.HeaderItemDecoration
 import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.ui.chat_profile.ChatProfileFragment
+import gb.smartchat.ui.contact_profile.ContactProfileFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 import kotlin.math.max
@@ -108,54 +109,78 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
         get() = binding.rvChat.layoutManager as LinearLayoutManager
 
     private val chatAdapter by lazy {
-        ChatAdapter(
-            onItemBindListener = { chatItem ->
-                viewModel.onChatItemBind(chatItem)
-            },
-            onDeleteListener = { chatItem ->
-                viewModel.onDeleteMessage(chatItem.message)
-            },
-            onEditListener = { chatItem ->
-                viewModel.onEditMessageRequest(chatItem.message)
-            },
-            onQuoteListener = { chatItem ->
-                viewModel.onQuoteMessage(chatItem.message)
-            },
-            nextPageUpCallback = {
-                Log.d(
-                    TAG,
-                    "nextPageUpCallback: isSmoothScrolling: ${linearLayoutManager.isSmoothScrolling}"
-                )
-                if (!linearLayoutManager.isSmoothScrolling) {
-                    viewModel.loadNextPage(false)
-                }
-            },
-            nextPageDownCallback = {
-                Log.d(
-                    TAG,
-                    "nextPageDownCallback: isSmoothScrolling: ${linearLayoutManager.isSmoothScrolling}"
-                )
-                if (!linearLayoutManager.isSmoothScrolling) {
-                    viewModel.loadNextPage(true)
-                }
-            },
-            onQuotedMsgClickListener = { chatItem ->
-                viewModel.onQuotedMessageClick(chatItem)
-            },
-            onFileClickListener = { chatItem ->
-                viewModel.onFileClick(chatItem)
-            },
-            onMentionClickListener = { mention ->
-                Toast
-                    .makeText(requireContext(), "user_id: ${mention.userId}", Toast.LENGTH_SHORT)
-                    .show()
-            },
-            onToFavoritesClickListener = { chatItem ->
-                viewModel.onToFavoriteClick(chatItem.message)
+        if (isFavoritesChat) {
+            ChatAdapter(
+                onItemBindListener = viewModel::onChatItemBind,
+                onDeleteListener = null,
+                onEditListener = null,
+                onQuoteListener = null,
+                nextPageUpCallback = {
+                    Log.d(
+                        TAG,
+                        "nextPageUpCallback: isSmoothScrolling: ${linearLayoutManager.isSmoothScrolling}"
+                    )
+                    if (!linearLayoutManager.isSmoothScrolling) {
+                        viewModel.loadNextPage(false)
+                    }
+                },
+                nextPageDownCallback = {
+                    Log.d(
+                        TAG,
+                        "nextPageDownCallback: isSmoothScrolling: ${linearLayoutManager.isSmoothScrolling}"
+                    )
+                    if (!linearLayoutManager.isSmoothScrolling) {
+                        viewModel.loadNextPage(true)
+                    }
+                },
+                onQuotedMsgClickListener = null,
+                onFileClickListener = viewModel::onFileClick,
+                onMentionClickListener = null,
+                onToFavoritesClickListener = null
+            ).apply {
+                setHasStableIds(true)
             }
-        ).apply {
-            setHasStableIds(true)
+        } else {
+            ChatAdapter(
+                onItemBindListener = viewModel::onChatItemBind,
+                onDeleteListener = { chatItem ->
+                    viewModel.onDeleteMessage(chatItem.message)
+                },
+                onEditListener = { chatItem ->
+                    viewModel.onEditMessageRequest(chatItem.message)
+                },
+                onQuoteListener = { chatItem ->
+                    viewModel.onQuoteMessage(chatItem.message)
+                },
+                nextPageUpCallback = {
+                    Log.d(
+                        TAG,
+                        "nextPageUpCallback: isSmoothScrolling: ${linearLayoutManager.isSmoothScrolling}"
+                    )
+                    if (!linearLayoutManager.isSmoothScrolling) {
+                        viewModel.loadNextPage(false)
+                    }
+                },
+                nextPageDownCallback = {
+                    Log.d(
+                        TAG,
+                        "nextPageDownCallback: isSmoothScrolling: ${linearLayoutManager.isSmoothScrolling}"
+                    )
+                    if (!linearLayoutManager.isSmoothScrolling) {
+                        viewModel.loadNextPage(true)
+                    }
+                },
+                onQuotedMsgClickListener = viewModel::onQuotedMessageClick,
+                onFileClickListener = viewModel::onFileClick,
+                onMentionClickListener = viewModel::onMentionClick,
+                onToFavoritesClickListener = { chatItem ->
+                    viewModel.onToFavoriteClick(chatItem.message)
+                }
+            ).apply {
+                setHasStableIds(true)
+            }
         }
+
     }
 
     private val mentionAdapter by lazy {
@@ -300,6 +325,17 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                     MessageDialogFragment
                         .create(message = message, tag = tag)
                         .show(childFragmentManager, tag)
+                }
+            }
+            .also { newsDisposables.add(it) }
+
+        viewModel.navToContactProfile
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let { (contact, chatId) ->
+                    parentFragmentManager.navigateTo(
+                        ContactProfileFragment.create(contact, chatId),
+                        NavAnim.SLIDE
+                    )
                 }
             }
             .also { newsDisposables.add(it) }

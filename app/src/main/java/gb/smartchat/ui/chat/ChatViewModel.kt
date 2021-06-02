@@ -12,10 +12,7 @@ import gb.smartchat.data.http.HttpApi
 import gb.smartchat.data.resources.ResourceManager
 import gb.smartchat.data.socket.SocketApi
 import gb.smartchat.data.socket.SocketEvent
-import gb.smartchat.entity.Chat
-import gb.smartchat.entity.Message
-import gb.smartchat.entity.MessageRead
-import gb.smartchat.entity.User
+import gb.smartchat.entity.*
 import gb.smartchat.entity.request.MessageFavoriteRequest
 import gb.smartchat.entity.request.MessageReadRequest
 import gb.smartchat.entity.request.ReadInfoRequest
@@ -64,6 +61,8 @@ class ChatViewModel(
     private val chatBehavior = BehaviorRelay.create<Chat>()
     private val viewStateBehavior = BehaviorRelay.create<ChatUDF.State>()
     private val exitCommand = BehaviorRelay.create<SingleEvent<Unit>>()
+    private val navToContactProfileCommand =
+        BehaviorRelay.create<SingleEvent<Pair<Contact, Long>>>()
 
     val viewState: Observable<ChatUDF.State> = viewStateBehavior.hide()
     val chatItems: Observable<Pair<List<ChatItem>, ScrollOptions?>> = viewState
@@ -79,9 +78,12 @@ class ChatViewModel(
     val setInputText = BehaviorRelay.create<SingleEvent<String>>()
     val openFile = BehaviorRelay.create<SingleEvent<Uri>>()
     val fullScreenProgress: Observable<Boolean> = fullScreenProgressBehavior.hide()
-    val showMessageDialog: Observable<SingleEvent<Pair<String, String>>> = showMessageDialogCommand.hide()
+    val showMessageDialog: Observable<SingleEvent<Pair<String, String>>> =
+        showMessageDialogCommand.hide()
     val chatObservable: Observable<Chat> = chatBehavior.hide()
     val exit: Observable<SingleEvent<Unit>> = exitCommand.hide()
+    val navToContactProfile: Observable<SingleEvent<Pair<Contact, Long>>> =
+        navToContactProfileCommand.hide()
 
     init {
         if (argChat != null) {
@@ -570,6 +572,14 @@ class ChatViewModel(
     fun errorMessagePositveClick(tag: String) {
         if (tag == FETCH_CHAT_ERROR_TAG) {
             exitCommand.accept(SingleEvent(Unit))
+        }
+    }
+
+    fun onMentionClick(mention: Mention) {
+        chat.users.find { it.id == mention.userId }?.let { user ->
+            navToContactProfileCommand.accept(
+                SingleEvent(user.toContact() to chat.id)
+            )
         }
     }
 }

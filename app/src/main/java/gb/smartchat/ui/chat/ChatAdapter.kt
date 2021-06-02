@@ -11,15 +11,15 @@ import java.time.ZoneId
 
 class ChatAdapter(
     private val onItemBindListener: (ChatItem) -> Unit,
-    private val onDeleteListener: (ChatItem.Msg) -> Unit,
-    private val onEditListener: (ChatItem.Msg) -> Unit,
-    private val onQuoteListener: (ChatItem.Msg) -> Unit,
+    private val onDeleteListener: ((ChatItem.Msg) -> Unit)?,
+    private val onEditListener: ((ChatItem.Msg) -> Unit)?,
+    private val onQuoteListener: ((ChatItem.Msg) -> Unit)?,
     private val nextPageUpCallback: () -> Unit,
     private val nextPageDownCallback: () -> Unit,
-    private val onQuotedMsgClickListener: (ChatItem.Msg) -> Unit,
+    private val onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
-    private val onMentionClickListener: (Mention) -> Unit,
-    private val onToFavoritesClickListener: (ChatItem.Msg) -> Unit,
+    private val onMentionClickListener: ((Mention) -> Unit)?,
+    private val onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()),
     StickyHeaderHelper {
 
