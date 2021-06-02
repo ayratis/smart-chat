@@ -1,5 +1,6 @@
 package gb.smartchat.utils
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
@@ -16,6 +17,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.annotation.*
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.browser.customtabs.CustomTabsSession
@@ -381,4 +383,21 @@ fun Context.launchCustomTab(url: String, customTabsSession: CustomTabsSession? =
         ?: CustomTabsIntent.Builder()
     val intent = builder.build()
     intent.launchUrl(this, Uri.parse(url))
+}
+
+fun Context.openFile(uri: Uri) {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        data = uri
+        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    }
+    try {
+        startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        e.printStackTrace()
+        Toast.makeText(
+            this,
+            getString(R.string.file_open_error),
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 }

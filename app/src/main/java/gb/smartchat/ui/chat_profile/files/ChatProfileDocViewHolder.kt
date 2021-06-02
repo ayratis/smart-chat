@@ -3,8 +3,11 @@ package gb.smartchat.ui.chat_profile.files
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import gb.smartchat.R
+import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatProfileDocBinding
 import gb.smartchat.entity.File
+import gb.smartchat.utils.visible
 
 class ChatProfileDocViewHolder private constructor(
     private val binding: ItemChatProfileDocBinding,
@@ -32,5 +35,20 @@ class ChatProfileDocViewHolder private constructor(
         binding.tvName.text = file.name
         val size = "${(file.size ?: 0) / 1000} KB"
         binding.tvSizeAndDate.text = size
+
+        when (file.downloadStatus) {
+            is DownloadStatus.Empty -> {
+                binding.progressBarFile.visible(false)
+                binding.ivIcon.setImageResource(R.drawable.ic_download_40)
+            }
+            is DownloadStatus.Downloading -> {
+                binding.progressBarFile.visible(true)
+                binding.ivIcon.setImageResource(R.drawable.ic_doc_40)
+            }
+            is DownloadStatus.Success -> {
+                binding.progressBarFile.visible(false)
+                binding.ivIcon.setImageResource(R.drawable.ic_doc_40)
+            }
+        }
     }
 }

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatProfilePageBinding
 import gb.smartchat.utils.addSystemBottomPadding
+import gb.smartchat.utils.openFile
 import io.reactivex.disposables.CompositeDisposable
 
 class ChatProfileFilesFragment : Fragment() {
@@ -64,6 +65,7 @@ class ChatProfileFilesFragment : Fragment() {
                     component.httpApi,
                     component.resourceManager,
                     ChatProfileFilesUDF.Store(),
+                    component.fileDownloadHelper
                 ) as T
             }
         }
@@ -111,6 +113,14 @@ class ChatProfileFilesFragment : Fragment() {
         super.onResume()
         viewModel.listItems
             .subscribe { listAdapter.submitList(it) }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.openFile
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let { uri ->
+                    requireContext().openFile(uri)
+                }
+            }
             .also { compositeDisposable.add(it) }
     }
 

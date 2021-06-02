@@ -73,6 +73,7 @@
                 android:background="@drawable/bg_doc_progress"
                 android:contentDescription="@null"
                 android:padding="4dp"
+                tools:visibility="visible"
                 android:theme="@style/ProgressDialogTheme"
                 android:visibility="gone" />
 

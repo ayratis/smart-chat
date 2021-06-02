@@ -1,14 +1,11 @@
 package gb.smartchat.ui.chat
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.core.view.updatePadding
 import androidx.core.widget.doAfterTextChanged
@@ -293,20 +290,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
         viewModel.openFile
             .subscribe { singleEvent ->
                 singleEvent.getContentIfNotHandled()?.let { uri ->
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = uri
-                        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    }
-                    try {
-                        startActivity(intent)
-                    } catch (e: ActivityNotFoundException) {
-                        e.printStackTrace()
-                        Toast.makeText(
-                            requireContext(),
-                            getString(R.string.file_open_error),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                    requireContext().openFile(uri)
                 }
             }
             .also { newsDisposables.add(it) }
