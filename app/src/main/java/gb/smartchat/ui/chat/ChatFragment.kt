@@ -23,6 +23,7 @@ import gb.smartchat.R
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.entity.Chat
+import gb.smartchat.entity.File
 import gb.smartchat.entity.Message
 import gb.smartchat.ui._global.CenterSmoothScroller
 import gb.smartchat.ui._global.HeaderItemDecoration
@@ -30,6 +31,7 @@ import gb.smartchat.ui._global.MessageDialogFragment
 import gb.smartchat.ui._global.ProgressDialog
 import gb.smartchat.ui.chat_profile.ChatProfileFragment
 import gb.smartchat.ui.contact_profile.ContactProfileFragment
+import gb.smartchat.ui.image_viewer.ImageViewerDialogFragment
 import gb.smartchat.utils.*
 import io.reactivex.disposables.CompositeDisposable
 import kotlin.math.max
@@ -133,7 +135,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                 onQuotedMsgClickListener = null,
                 onFileClickListener = viewModel::onFileClick,
                 onMentionClickListener = null,
-                onToFavoritesClickListener = null
+                onToFavoritesClickListener = null,
+                onPhotoClickListener = this::openMedia
             ).apply {
                 setHasStableIds(true)
             }
@@ -172,7 +175,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                 onMentionClickListener = viewModel::onMentionClick,
                 onToFavoritesClickListener = { chatItem ->
                     viewModel.onToFavoriteClick(chatItem.message)
-                }
+                },
+                onPhotoClickListener = this::openMedia
             ).apply {
                 setHasStableIds(true)
             }
@@ -614,5 +618,10 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
 
     override fun dialogPositiveClicked(tag: String) {
         viewModel.errorMessagePositveClick(tag)
+    }
+
+    private fun openMedia(file: File) {
+        file.url ?: return
+        ImageViewerDialogFragment.create(file.url).show(childFragmentManager, null)
     }
 }

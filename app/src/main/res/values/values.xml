@@ -6,6 +6,11 @@
         <item name="colorAccent">@color/white</item>
     </style>
 
+    <style name="AppTheme.FullScreenDialog" parent="Theme.MaterialComponents.Dialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+
     <style name="Caption1">
         <item name="android:textSize">12sp</item>
         <item name="fontFamily">@font/gerbera_regular</item>

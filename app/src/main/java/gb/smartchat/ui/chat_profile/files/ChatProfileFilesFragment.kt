@@ -11,6 +11,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import gb.smartchat.SmartChatActivity
 import gb.smartchat.databinding.FragmentChatProfilePageBinding
+import gb.smartchat.entity.File
+import gb.smartchat.ui.image_viewer.ImageViewerDialogFragment
 import gb.smartchat.utils.addSystemBottomPadding
 import gb.smartchat.utils.openFile
 import io.reactivex.disposables.CompositeDisposable
@@ -74,6 +76,7 @@ class ChatProfileFilesFragment : Fragment() {
     private val listAdapter by lazy {
         ChatProfileFilesAdapter(
             onFileClickListener = viewModel::onFileClick,
+            onMediaClickListener = this::openMedia,
             onErrorActionClickListener = viewModel::onErrorActionClick,
             loadMoreCallback = viewModel::loadMore
         )
@@ -127,5 +130,10 @@ class ChatProfileFilesFragment : Fragment() {
     override fun onPause() {
         compositeDisposable.clear()
         super.onPause()
+    }
+
+    private fun openMedia(file: File) {
+        file.url ?: return
+        ImageViewerDialogFragment.create(file.url).show(childFragmentManager, null)
     }
 }

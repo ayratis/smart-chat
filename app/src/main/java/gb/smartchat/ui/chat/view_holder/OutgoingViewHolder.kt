@@ -16,6 +16,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatMsgOutgoingBinding
+import gb.smartchat.entity.File
 import gb.smartchat.entity.Mention
 import gb.smartchat.entity.Message
 import gb.smartchat.ui.chat.ChatItem
@@ -32,6 +33,7 @@ class OutgoingViewHolder private constructor(
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
     private val onMentionClickListener: ((Mention) -> Unit)?,
     private val onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
+    private val onPhotoClickListener: (File) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
 
     companion object {
@@ -45,7 +47,8 @@ class OutgoingViewHolder private constructor(
             onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
             onFileClickListener: (ChatItem.Msg) -> Unit,
             onMentionClickListener: ((Mention) -> Unit)?,
-            onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?
+            onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
+            onPhotoClickListener: (File) -> Unit
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
@@ -55,7 +58,8 @@ class OutgoingViewHolder private constructor(
                 onQuotedMsgClickListener,
                 onFileClickListener,
                 onMentionClickListener,
-                onToFavoritesClickListener
+                onToFavoritesClickListener,
+                onPhotoClickListener
             )
     }
 
@@ -80,7 +84,9 @@ class OutgoingViewHolder private constructor(
             showMenu()
             true
         }
-
+        binding.ivAttachmentPhoto.setOnClickListener {
+            chatItem.message.file?.let(onPhotoClickListener::invoke)
+        }
     }
 
     fun bind(chatItem: ChatItem.Msg.Outgoing) {

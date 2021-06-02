@@ -11,6 +11,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
 import gb.smartchat.data.download.DownloadStatus
 import gb.smartchat.databinding.ItemChatMsgOutgoingBinding
+import gb.smartchat.entity.File
 import gb.smartchat.ui.chat.ChatItem
 import gb.smartchat.utils.dp
 import gb.smartchat.utils.inflate
@@ -24,7 +25,8 @@ class DraftViewHolder private constructor(
     private val onEditListener: ((ChatItem.Msg) -> Unit)?,
     private val onQuoteListener: ((ChatItem.Msg) -> Unit)?,
     private val onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
-    private val onFileClickListener: (ChatItem.Msg) -> Unit
+    private val onFileClickListener: (ChatItem.Msg) -> Unit,
+    private val onPhotoClickListener: (File) -> Unit
 ) : RecyclerView.ViewHolder(itemView), View.OnCreateContextMenuListener {
 
     companion object {
@@ -36,7 +38,8 @@ class DraftViewHolder private constructor(
             onEditListener: ((ChatItem.Msg) -> Unit)?,
             onQuoteListener: ((ChatItem.Msg) -> Unit)?,
             onQuotedMsgClickListener: ((ChatItem.Msg) -> Unit)?,
-            onFileClickListener: (ChatItem.Msg) -> Unit
+            onFileClickListener: (ChatItem.Msg) -> Unit,
+            onPhotoClickListener: (File) -> Unit
         ) =
             DraftViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
@@ -44,7 +47,8 @@ class DraftViewHolder private constructor(
                 onEditListener,
                 onQuoteListener,
                 onQuotedMsgClickListener,
-                onFileClickListener
+                onFileClickListener,
+                onPhotoClickListener
             )
     }
 
@@ -59,6 +63,9 @@ class DraftViewHolder private constructor(
         }
         binding.viewDocAttachment.setOnClickListener {
             onFileClickListener.invoke(chatItem)
+        }
+        binding.ivAttachmentPhoto.setOnClickListener {
+            chatItem.message.file?.let(onPhotoClickListener::invoke)
         }
     }
 
