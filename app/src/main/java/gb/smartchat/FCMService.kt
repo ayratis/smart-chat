@@ -19,7 +19,7 @@ class FCMService : FirebaseMessagingService() {
         Log.d(TAG, "onMessageReceived: data: ${remoteMessage.data}")
         ChatPushNotificationManager.proceedRemoteMessage(
             context = this,
-            remoteMessage = remoteMessage,
+            dataMap = remoteMessage.data,
             smartUserId = "0eeb970e-9c3f-11e2-b7e9-e41f13e6ace6" //todo
         )
     }

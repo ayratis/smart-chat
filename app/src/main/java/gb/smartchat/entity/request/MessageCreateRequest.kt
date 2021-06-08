@@ -19,5 +19,9 @@ data class MessageCreateRequest(
     @SerializedName("links")
     val links: List<String>?,
     @SerializedName("file_url")
-    val fileUrl: String?
+    val fileUrl: String?,
+    @SerializedName("chat_name")
+    val chatName: String?,
+    @SerializedName("sender_name")
+    val senderName: String?
 )

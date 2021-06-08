@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
-import com.google.firebase.messaging.RemoteMessage
 import gb.smartchat.entity.Message
 
 object ChatPushNotificationManager {
@@ -21,15 +20,14 @@ object ChatPushNotificationManager {
 
     fun proceedRemoteMessage(
         context: Context,
-        remoteMessage: RemoteMessage,
+        dataMap: Map<String, String>,
         @DrawableRes iconRes: Int = 0,
         smartUserId: String
     ): Boolean {
-        if (remoteMessage.data["is_chat_push_message"] != "true") return false
-        val senderId = remoteMessage.data["sender_id"] ?: return false
-        val chatId = remoteMessage.data["chat_id"] ?: return false
-        val title = remoteMessage.data["title"] ?: return false
-        val message = remoteMessage.data["message"] ?: return false
+        if (dataMap["is_chat_push_message"] != "true") return false
+        val chatId = dataMap["chat_id"] ?: return false
+        val title = dataMap["title"] ?: return false
+        val message = dataMap["message"] ?: return false
 
         val chatIdLong = try {
             chatId.toLong()
@@ -51,8 +49,13 @@ object ChatPushNotificationManager {
 
     fun proceedSocketMessage(context: Context, message: Message, smartUserId: String) {
         message.chatId ?: return
-        val title = message.chatId.toString()
-        val text = message.text ?: ""
+        val title = message.chatName ?: ""
+        val text = with(StringBuilder()) {
+            message.senderName?.let(this::append)
+            if (length > 0) append(": ")
+            message.text?.let(this::append)
+            toString()
+        }
 
         sendPush(
             context,

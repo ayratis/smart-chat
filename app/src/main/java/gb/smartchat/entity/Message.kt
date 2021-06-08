@@ -15,6 +15,10 @@ data class Message(
     val senderId: String?,
     @SerializedName("client_id")
     val clientId: String?,
+    @SerializedName("chat_name")
+    val chatName: String?,
+    @SerializedName("sender_name")
+    val senderName: String?,
     @SerializedName("text")
     val text: String?,
     @SerializedName("type_")
