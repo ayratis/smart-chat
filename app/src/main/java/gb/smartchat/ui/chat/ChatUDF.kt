@@ -218,7 +218,9 @@ object ChatUDF {
                         timeCreated = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()),
                         timeUpdated = null,
                         file = file,
-                        mentions = state.currentText.getMentions(state.users)
+                        mentions = state.currentText.getMentions(state.users),
+                        chatName = chat.name,
+                        senderName = state.users.find { it.id == userId }?.name
                     )
                     sideEffectListener.invoke(SideEffect.SendMessage(message))
                     sideEffectListener(SideEffect.SetInputText(""))

@@ -264,7 +264,9 @@ fun Message.toMessageCreateRequestBody(): MessageCreateRequest? {
             quotedMessageId = quotedMessage?.messageId,
             mentions = mentions,
             links = text.extractLinks(),
-            fileUrl = file?.url
+            fileUrl = file?.url,
+            chatName = chatName,
+            senderName = senderName
         )
     } else null
 }
