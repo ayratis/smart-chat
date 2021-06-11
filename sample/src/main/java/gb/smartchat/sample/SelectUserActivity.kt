@@ -3,6 +3,7 @@ package gb.smartchat.sample
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import gb.smartchat.library.SmartChatActivity
 
 class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
 
@@ -17,7 +18,7 @@ class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
     }
 
     private fun openChatList(userId: String) {
-//        val intent = SmartChatActivity.createLaunchIntent(this, userId)
-//        startActivity(intent)
+        val intent = SmartChatActivity.createLaunchIntent(this, userId)
+        startActivity(intent)
     }
 }

@@ -14,15 +14,7 @@
         </intent>
     </queries>
 
-    <application
-        android:name=".library.App"
-        android:allowBackup="false"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:usesCleartextTraffic="true"
-        tools:ignore="AllowBackup,UnusedAttribute">
+    <application>
 
         <activity
             android:name=".library.SmartChatActivity"

@@ -1,1 +1,14 @@
-/build
+# Build files and folders
+.gradle/
+build/
+keys/
+
+# Properties
+local.properties
+
+# Idea
+.idea/
+**/*.iml
+
+# Mac OS
+.DS_Store
