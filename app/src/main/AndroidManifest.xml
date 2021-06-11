@@ -15,7 +15,7 @@
     </queries>
 
     <application
-        android:name=".App"
+        android:name=".library.App"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -25,7 +25,7 @@
         tools:ignore="AllowBackup,UnusedAttribute">
 
         <activity
-            android:name=".SmartChatActivity"
+            android:name=".library.SmartChatActivity"
             android:theme="@style/Theme.SmartChat"
             android:windowSoftInputMode="adjustResize">
 
