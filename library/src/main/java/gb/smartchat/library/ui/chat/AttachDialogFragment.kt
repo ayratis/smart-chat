@@ -151,7 +151,7 @@ class AttachDialogFragment : DialogFragment() {
         )
         val cameraPictureUri: Uri = FileProvider.getUriForFile(
             requireContext(),
-            "${requireContext().packageName}.fileprovider",
+            "gb.smartchat.fileprovider",
             file
         )
         this.cameraPictureUri = cameraPictureUri
