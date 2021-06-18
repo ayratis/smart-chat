@@ -1,12 +1,12 @@
-package gb.smartchat.library.ui.chat_profile.files
+package gb.smartchat.library.ui._global.view_holder.chat_profile
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemChatProfileDocBinding
 import gb.smartchat.library.data.download.DownloadStatus
 import gb.smartchat.library.entity.File
+import gb.smartchat.library.ui._global.viewbinding.ItemChatProfileDocBinding
 import gb.smartchat.library.utils.visible
 
 class ChatProfileDocViewHolder private constructor(

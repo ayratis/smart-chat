@@ -1,10 +1,10 @@
-package gb.smartchat.library.ui.chat.view_holder
+package gb.smartchat.library.ui._global.view_holder.chat
 
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemChatDateHeaderBinding
+import gb.smartchat.library.ui._global.viewbinding.ItemChatDateHeaderBinding
 import gb.smartchat.library.ui.chat.ChatItem
 import gb.smartchat.library.utils.inflate
 import java.time.format.DateTimeFormatter

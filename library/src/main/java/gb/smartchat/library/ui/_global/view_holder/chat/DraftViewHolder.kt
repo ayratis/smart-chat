@@ -1,4 +1,4 @@
-package gb.smartchat.library.ui.chat.view_holder
+package gb.smartchat.library.ui._global.view_holder.chat
 
 import android.util.Log
 import android.view.*
@@ -9,9 +9,9 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemChatMsgOutgoingBinding
 import gb.smartchat.library.data.download.DownloadStatus
 import gb.smartchat.library.entity.File
+import gb.smartchat.library.ui._global.viewbinding.ItemChatMsgOutgoingBinding
 import gb.smartchat.library.ui.chat.ChatItem
 import gb.smartchat.library.utils.dp
 import gb.smartchat.library.utils.inflate

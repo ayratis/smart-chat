@@ -9,9 +9,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
-import gb.smartchat.databinding.FragmentChatProfilePageBinding
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.File
+import gb.smartchat.library.ui._global.viewbinding.FragmentChatProfilePageBinding
 import gb.smartchat.library.ui.image_viewer.ImageViewerDialogFragment
 import gb.smartchat.library.utils.addSystemBottomPadding
 import gb.smartchat.library.utils.openFile

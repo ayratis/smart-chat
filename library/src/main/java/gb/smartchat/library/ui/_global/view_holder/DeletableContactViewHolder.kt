@@ -1,12 +1,12 @@
-package gb.smartchat.library.ui.group_complete
+package gb.smartchat.library.ui._global.view_holder
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemContactBinding
 import gb.smartchat.library.entity.Contact
+import gb.smartchat.library.ui._global.viewbinding.ItemContactBinding
 
 class DeletableContactViewHolder private constructor(
     private val binding: ItemContactBinding,

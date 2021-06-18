@@ -16,7 +16,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.FragmentGroupCompleteBinding
 import gb.smartchat.library.Component
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Contact
@@ -24,6 +23,7 @@ import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.ProgressDialog
+import gb.smartchat.library.ui._global.viewbinding.FragmentGroupCompleteBinding
 import gb.smartchat.library.ui.chat.AttachDialogFragment
 import gb.smartchat.library.ui.chat.ChatFragment
 import gb.smartchat.library.utils.*

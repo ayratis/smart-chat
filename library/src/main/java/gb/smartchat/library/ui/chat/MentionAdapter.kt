@@ -4,7 +4,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.library.entity.User
-import gb.smartchat.library.ui.chat.view_holder.MentionViewHolder
+import gb.smartchat.library.ui._global.view_holder.chat.MentionViewHolder
 
 class MentionAdapter(
     private val clickListener: (User) -> Unit

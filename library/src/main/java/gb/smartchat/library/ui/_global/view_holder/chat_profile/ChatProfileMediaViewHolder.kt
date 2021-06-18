@@ -1,11 +1,11 @@
-package gb.smartchat.library.ui.chat_profile.files
+package gb.smartchat.library.ui._global.view_holder.chat_profile
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import gb.smartchat.databinding.ItemChatProfileMediaBinding
 import gb.smartchat.library.entity.File
+import gb.smartchat.library.ui._global.viewbinding.ItemChatProfileMediaBinding
 
 class ChatProfileMediaViewHolder private constructor(
     private val binding: ItemChatProfileMediaBinding,

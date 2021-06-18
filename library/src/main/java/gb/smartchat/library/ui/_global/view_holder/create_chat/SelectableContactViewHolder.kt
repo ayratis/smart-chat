@@ -1,12 +1,12 @@
-package gb.smartchat.library.ui.create_chat.view_holder
+package gb.smartchat.library.ui._global.view_holder.create_chat
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemContactBinding
 import gb.smartchat.library.entity.Contact
+import gb.smartchat.library.ui._global.viewbinding.ItemContactBinding
 
 class SelectableContactViewHolder private constructor(
     private val binding: ItemContactBinding,

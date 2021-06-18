@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.library.ui._global.view_holder.ErrorViewHolder
 import gb.smartchat.library.ui._global.view_holder.ProgressViewHolder
+import gb.smartchat.library.ui._global.view_holder.chat_profile.ChatProfileLinkViewHolder
 
 class ChatProfileLinksAdapter(
     private val onLinkClickListener: (String) -> Unit,

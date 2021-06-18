@@ -1,10 +1,10 @@
-package gb.smartchat.library.ui.create_chat.view_holder
+package gb.smartchat.library.ui._global.view_holder.create_chat
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemContactBinding
+import gb.smartchat.library.ui._global.viewbinding.ItemContactBinding
 
 class CreateGroupButtonViewHolder private constructor(
     binding: ItemContactBinding,

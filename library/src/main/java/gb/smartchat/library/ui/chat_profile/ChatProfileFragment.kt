@@ -11,12 +11,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.FragmentChatProfileBinding
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.Contact
 import gb.smartchat.library.entity.User
 import gb.smartchat.library.ui._global.MessageDialogFragment
+import gb.smartchat.library.ui._global.viewbinding.FragmentChatProfileBinding
 import gb.smartchat.library.ui.chat_profile.files.ChatProfileFilesFragment
 import gb.smartchat.library.ui.chat_profile.links.ChatProfileLinksFragment
 import gb.smartchat.library.ui.chat_profile.members.ChatProfileMembersFragment

@@ -12,10 +12,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.FragmentUserProfileBinding
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.ui._global.MessageDialogFragment
+import gb.smartchat.library.ui._global.viewbinding.FragmentUserProfileBinding
 import gb.smartchat.library.ui.chat.AttachDialogFragment
 import gb.smartchat.library.utils.addSystemTopPadding
 import gb.smartchat.library.utils.registerOnBackPress
