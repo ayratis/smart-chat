@@ -7,8 +7,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemChatBinding
 import gb.smartchat.library.entity.Chat
+import gb.smartchat.library.ui._global.viewbinding.ItemChatBinding
 import gb.smartchat.library.utils.drawable
 import gb.smartchat.library.utils.visible
 import java.time.format.DateTimeFormatter

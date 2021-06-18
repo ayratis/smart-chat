@@ -9,10 +9,10 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import gb.smartchat.databinding.FragmentChatProfilePageBinding
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Contact
 import gb.smartchat.library.ui._global.MessageDialogFragment
+import gb.smartchat.library.ui._global.viewbinding.FragmentChatProfilePageBinding
 import gb.smartchat.library.utils.addSystemBottomPadding
 import io.reactivex.disposables.CompositeDisposable
 

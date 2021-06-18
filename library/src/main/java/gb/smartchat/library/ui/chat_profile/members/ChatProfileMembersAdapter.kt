@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.library.entity.Contact
 import gb.smartchat.library.ui._global.view_holder.ErrorViewHolder
 import gb.smartchat.library.ui._global.view_holder.ProgressViewHolder
+import gb.smartchat.library.ui._global.view_holder.chat_profile.ChatProfileMemberViewHolder
 
 class ChatProfileMembersAdapter(
     private val onContactClickListener: (Contact) -> Unit,

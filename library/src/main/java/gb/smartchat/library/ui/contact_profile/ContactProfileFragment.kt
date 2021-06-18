@@ -8,8 +8,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentPagerAdapter
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.FragmentContactProfileBinding
 import gb.smartchat.library.entity.Contact
+import gb.smartchat.library.ui._global.viewbinding.FragmentContactProfileBinding
 import gb.smartchat.library.ui.chat_profile.files.ChatProfileFilesFragment
 import gb.smartchat.library.ui.chat_profile.links.ChatProfileLinksFragment
 import gb.smartchat.library.utils.addSystemTopPadding

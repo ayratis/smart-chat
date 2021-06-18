@@ -20,7 +20,6 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import gb.smartchat.R
-import gb.smartchat.databinding.FragmentChatBinding
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.File
@@ -29,6 +28,7 @@ import gb.smartchat.library.ui._global.CenterSmoothScroller
 import gb.smartchat.library.ui._global.HeaderItemDecoration
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.ProgressDialog
+import gb.smartchat.library.ui._global.viewbinding.FragmentChatBinding
 import gb.smartchat.library.ui.chat_profile.ChatProfileFragment
 import gb.smartchat.library.ui.contact_profile.ContactProfileFragment
 import gb.smartchat.library.ui.image_viewer.ImageViewerDialogFragment

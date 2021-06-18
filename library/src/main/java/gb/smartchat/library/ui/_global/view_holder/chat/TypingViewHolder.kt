@@ -1,11 +1,11 @@
-package gb.smartchat.library.ui.chat.view_holder
+package gb.smartchat.library.ui._global.view_holder.chat
 
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemChatTypingBinding
 import gb.smartchat.library.entity.User
+import gb.smartchat.library.ui._global.viewbinding.ItemChatTypingBinding
 import gb.smartchat.library.utils.inflate
 
 class TypingViewHolder private constructor(itemView: View) : RecyclerView.ViewHolder(itemView) {

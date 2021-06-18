@@ -1,4 +1,4 @@
-package gb.smartchat.library.ui.chat.view_holder
+package gb.smartchat.library.ui._global.view_holder.chat
 
 import android.view.View
 import android.view.ViewGroup
@@ -7,8 +7,8 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemMentionBinding
 import gb.smartchat.library.entity.User
+import gb.smartchat.library.ui._global.viewbinding.ItemMentionBinding
 import gb.smartchat.library.utils.dp
 import gb.smartchat.library.utils.inflate
 import gb.smartchat.library.utils.visible
