@@ -81,7 +81,6 @@ class CreateChatFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return CreateChatViewModel(
                     storeInfo,
-                    userProfile,
                     chat?.id,
                     mode,
                     component.httpApi,
@@ -130,7 +129,6 @@ class CreateChatFragment : Fragment() {
         binding.appBarLayout.addSystemTopPadding()
         binding.toolbar.apply {
             title = when (mode) {
-                CreateChatMode.CREATE_SINGLE -> getString(R.string.create_chat)
                 CreateChatMode.CREATE_GROUP -> getString(R.string.create_chat)
                 CreateChatMode.ADD_MEMBERS -> getString(R.string.add)
             }
@@ -161,9 +159,6 @@ class CreateChatFragment : Fragment() {
         }
         binding.btnCreateChat.apply {
             when (mode) {
-                CreateChatMode.CREATE_SINGLE -> {
-                    visible(false)
-                }
                 CreateChatMode.CREATE_GROUP -> {
                     visible(true)
                     setImageDrawable(context.drawable(R.drawable.ic_arrow_forward_white_24))
@@ -193,15 +188,12 @@ class CreateChatFragment : Fragment() {
             .subscribe { contactsAdapter.submitList(it) }
             .also { compositeDisposable.add(it) }
 
-        if (mode != CreateChatMode.CREATE_SINGLE) {
-            viewModel.selectedCount
-                .subscribe { (selectedCount, totalCount) ->
-                    binding.toolbar.subtitle = "$selectedCount / $totalCount"
-                    binding.btnCreateChat.isEnabled = selectedCount > 0
-                }
-                .also { compositeDisposable.add(it) }
-
-        }
+        viewModel.selectedCount
+            .subscribe { (selectedCount, totalCount) ->
+                binding.toolbar.subtitle = "$selectedCount / $totalCount"
+                binding.btnCreateChat.isEnabled = selectedCount > 0
+            }
+            .also { compositeDisposable.add(it) }
 
         viewModel.navToChat
             .subscribe { event ->
