@@ -18,6 +18,8 @@ import gb.smartchat.library.data.socket.SocketApi
 import gb.smartchat.library.data.socket.SocketApiImpl
 import gb.smartchat.library.data.socket.SocketEvent
 import gb.smartchat.library.entity.Message
+import gb.smartchat.library.entity.StoreInfo
+import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.publisher.*
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -38,18 +40,22 @@ class Component constructor(
     private val application: Application,
     private val baseUrl: String,
     val userId: String,
+    val storeInfoList: List<StoreInfo>,
 ) : ViewModel() {
 
     class Factory(
         private val application: Application,
         private val baseUrl: String,
         private val userId: String,
+        private val storeInfoList: List<StoreInfo>
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return Component(application, baseUrl, userId) as T
+            return Component(application, baseUrl, userId, storeInfoList) as T
         }
     }
+
+    var userProfile: UserProfile? = null
 
     val resourceManager: ResourceManager by lazy {
         ResourceManagerImpl(application.resources)

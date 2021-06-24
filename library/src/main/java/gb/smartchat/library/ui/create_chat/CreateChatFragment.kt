@@ -17,7 +17,6 @@ import gb.smartchat.R
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.StoreInfo
-import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.ProgressDialog
 import gb.smartchat.library.ui._global.viewbinding.FragmentCreateChatBinding
@@ -32,31 +31,25 @@ class CreateChatFragment : Fragment() {
         private const val TAG = "CreateChatFragment"
         private const val PROGRESS_TAG = "progress tag"
         private const val ARG_STORE_INFO = "arg store info"
-        private const val ARG_USER_PROFILE = "arg user profile"
         private const val ARG_MODE = "arg mode"
         private const val ARG_CHAT = "arg chat"
 
         fun create(
-            storeInfo: StoreInfo?,
+            storeInfo: StoreInfo,
             mode: CreateChatMode,
-            userProfile: UserProfile? = null,
             chat: Chat? = null
         ) =
             CreateChatFragment().apply {
                 arguments = Bundle().apply {
-                    storeInfo?.let { putSerializable(ARG_STORE_INFO, storeInfo) }
-                    userProfile?.let { putSerializable(ARG_USER_PROFILE, it) }
+                    putSerializable(ARG_STORE_INFO, storeInfo)
                     putSerializable(ARG_MODE, mode)
                     chat?.let { putSerializable(ARG_CHAT, it) }
                 }
             }
     }
 
-    private val storeInfo: StoreInfo? by lazy {
-        requireArguments().getSerializable(ARG_STORE_INFO) as? StoreInfo
-    }
-    private val userProfile: UserProfile? by lazy {
-        requireArguments().getSerializable(ARG_USER_PROFILE) as? UserProfile
+    private val storeInfo: StoreInfo by lazy {
+        requireArguments().getSerializable(ARG_STORE_INFO) as StoreInfo
     }
     private val mode by lazy {
         requireArguments().getSerializable(ARG_MODE) as CreateChatMode
@@ -81,9 +74,7 @@ class CreateChatFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return CreateChatViewModel(
                     storeInfo,
-                    userProfile,
                     chat?.id,
-                    mode,
                     component.httpApi,
                     CreateChatUDF.Store(mode),
                     component.resourceManager,
@@ -97,12 +88,6 @@ class CreateChatFragment : Fragment() {
 
     private val contactsAdapter by lazy {
         ContactsAdapter(
-            createGroupClickListener = {
-                parentFragmentManager.navigateTo(
-                    create(storeInfo, CreateChatMode.CREATE_GROUP, userProfile!!),
-                    NavAnim.SLIDE
-                )
-            },
             contactClickListener = viewModel::onContactClick,
             errorActionClickListener = viewModel::onErrorActionClick
         )
@@ -130,7 +115,6 @@ class CreateChatFragment : Fragment() {
         binding.appBarLayout.addSystemTopPadding()
         binding.toolbar.apply {
             title = when (mode) {
-                CreateChatMode.CREATE_SINGLE -> getString(R.string.create_chat)
                 CreateChatMode.CREATE_GROUP -> getString(R.string.create_chat)
                 CreateChatMode.ADD_MEMBERS -> getString(R.string.add)
             }
@@ -161,9 +145,6 @@ class CreateChatFragment : Fragment() {
         }
         binding.btnCreateChat.apply {
             when (mode) {
-                CreateChatMode.CREATE_SINGLE -> {
-                    visible(false)
-                }
                 CreateChatMode.CREATE_GROUP -> {
                     visible(true)
                     setImageDrawable(context.drawable(R.drawable.ic_arrow_forward_white_24))
@@ -193,15 +174,12 @@ class CreateChatFragment : Fragment() {
             .subscribe { contactsAdapter.submitList(it) }
             .also { compositeDisposable.add(it) }
 
-        if (mode != CreateChatMode.CREATE_SINGLE) {
-            viewModel.selectedCount
-                .subscribe { (selectedCount, totalCount) ->
-                    binding.toolbar.subtitle = "$selectedCount / $totalCount"
-                    binding.btnCreateChat.isEnabled = selectedCount > 0
-                }
-                .also { compositeDisposable.add(it) }
-
-        }
+        viewModel.selectedCount
+            .subscribe { (selectedCount, totalCount) ->
+                binding.toolbar.subtitle = "$selectedCount / $totalCount"
+                binding.btnCreateChat.isEnabled = selectedCount > 0
+            }
+            .also { compositeDisposable.add(it) }
 
         viewModel.navToChat
             .subscribe { event ->
@@ -234,7 +212,6 @@ class CreateChatFragment : Fragment() {
                     parentFragmentManager.navigateTo(
                         GroupCompleteFragment.create(
                             storeInfo = storeInfo,
-                            userProfile = userProfile!!,
                             selectedContacts = selectedContacts
                         ),
                         NavAnim.SLIDE

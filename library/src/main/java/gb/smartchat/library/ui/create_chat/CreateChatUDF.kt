@@ -47,12 +47,11 @@ object CreateChatUDF {
 
     sealed class SideEffect {
         object LoadContacts : SideEffect()
-        data class CreateChat(val contact: Contact) : SideEffect()
         data class ShowErrorMessage(val error: Throwable) : SideEffect()
         data class NavigateToChat(val chat: Chat) : SideEffect()
         data class NavigateToGroupComplete(val selectedContacts: List<Contact>) : SideEffect()
         data class AddMembersToChat(val selectedContacts: List<Contact>) : SideEffect()
-        object Exit: SideEffect()
+        object Exit : SideEffect()
     }
 
     class Store(
@@ -125,22 +124,13 @@ object CreateChatUDF {
                     return state
                 }
                 is Action.OnContactClick -> {
-                    return when (mode) {
-                        CreateChatMode.CREATE_SINGLE -> {
-                            sideEffectListener.invoke(SideEffect.CreateChat(action.contact))
-                            state.copy(blockingProgress = true)
+                    val selectedContacts =
+                        if (state.selectedContacts.contains(action.contact)) {
+                            state.selectedContacts.filter { it.id != action.contact.id }
+                        } else {
+                            state.selectedContacts + action.contact
                         }
-                        CreateChatMode.CREATE_GROUP,
-                        CreateChatMode.ADD_MEMBERS -> {
-                            val selectedContacts =
-                                if (state.selectedContacts.contains(action.contact)) {
-                                    state.selectedContacts.filter { it.id != action.contact.id }
-                                } else {
-                                    state.selectedContacts + action.contact
-                                }
-                            state.copy(selectedContacts = selectedContacts)
-                        }
-                    }
+                    return state.copy(selectedContacts = selectedContacts)
                 }
                 is Action.CreateChatError -> {
                     sideEffectListener.invoke(SideEffect.ShowErrorMessage(action.error))
@@ -152,9 +142,6 @@ object CreateChatUDF {
                 }
                 is Action.DoneClick -> {
                     when (mode) {
-                        CreateChatMode.CREATE_SINGLE -> {
-                            return state
-                        }
                         CreateChatMode.CREATE_GROUP -> {
                             if (state.selectedContacts.isNotEmpty()) {
                                 sideEffectListener.invoke(

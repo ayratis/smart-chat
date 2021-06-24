@@ -105,8 +105,8 @@ class ChatViewHolder(
             visible(chat.unreadMessagesCount ?: 0 > 0)
         }
         binding.tvAgentName.apply {
-            text = chat.agentName
-            visible(!chat.agentName.isNullOrBlank())
+            text = chat.partnerName
+            visible(!chat.partnerName.isNullOrBlank())
         }
         binding.ivPin.visible(chat.isPinned == true)
     }

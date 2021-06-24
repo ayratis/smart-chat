@@ -9,18 +9,15 @@ import gb.smartchat.library.ui._global.view_holder.ContactViewHolder
 import gb.smartchat.library.ui._global.view_holder.ErrorViewHolder
 import gb.smartchat.library.ui._global.view_holder.ProgressViewHolder
 import gb.smartchat.library.ui._global.view_holder.create_chat.ContactGroupViewHolder
-import gb.smartchat.library.ui._global.view_holder.create_chat.CreateGroupButtonViewHolder
 import gb.smartchat.library.ui._global.view_holder.create_chat.SelectableContactViewHolder
 
 class ContactsAdapter(
-    private val createGroupClickListener: () -> Unit,
     private val contactClickListener: (Contact) -> Unit,
     private val errorActionClickListener: (tag: String) -> Unit
 ) : ListAdapter<ContactItem, RecyclerView.ViewHolder>(DiffUtilItemCallback()) {
 
     override fun getItemViewType(position: Int): Int {
         return when (getItem(position)) {
-            is ContactItem.CreateGroupButton -> 1
             is ContactItem.Contact -> 2
             is ContactItem.Group -> 3
             is ContactItem.Error -> 4
@@ -31,7 +28,6 @@ class ContactsAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            1 -> CreateGroupButtonViewHolder.create(parent, createGroupClickListener)
             2 -> ContactViewHolder.create(parent, contactClickListener)
             3 -> ContactGroupViewHolder.create(parent)
             4 -> ErrorViewHolder.create(parent, errorActionClickListener)
@@ -43,8 +39,6 @@ class ContactsAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = getItem(position)) {
-            is ContactItem.CreateGroupButton -> {
-            }
             is ContactItem.Contact -> (holder as ContactViewHolder).bind(item.contact)
             is ContactItem.Group -> (holder as ContactGroupViewHolder).bind(item.group)
             is ContactItem.Error -> (holder as ErrorViewHolder).bind(
@@ -61,9 +55,6 @@ class ContactsAdapter(
 
     class DiffUtilItemCallback : DiffUtil.ItemCallback<ContactItem>() {
         override fun areItemsTheSame(oldItem: ContactItem, newItem: ContactItem): Boolean {
-            if (oldItem is ContactItem.CreateGroupButton && newItem is ContactItem.CreateGroupButton) {
-                return true
-            }
             if (oldItem is ContactItem.Contact && newItem is ContactItem.Contact) {
                 return oldItem.contact.id == newItem.contact.id
             }
@@ -83,9 +74,6 @@ class ContactsAdapter(
         }
 
         override fun areContentsTheSame(oldItem: ContactItem, newItem: ContactItem): Boolean {
-            if (oldItem is ContactItem.CreateGroupButton && newItem is ContactItem.CreateGroupButton) {
-                return true
-            }
             if (oldItem is ContactItem.Contact && newItem is ContactItem.Contact) {
                 return oldItem.contact == newItem.contact
             }

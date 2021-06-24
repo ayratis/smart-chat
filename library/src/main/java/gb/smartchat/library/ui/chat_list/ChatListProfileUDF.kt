@@ -1,6 +1,5 @@
 package gb.smartchat.library.ui.chat_list
 
-import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.ui._global.BaseStore
 
@@ -24,10 +23,7 @@ object ChatListProfileUDF {
     sealed class SideEffect {
         object LoadUserProfile : SideEffect()
         data class ShowProfileLoadError(val error: Throwable) : SideEffect()
-        data class NavToCreateChat(
-            val storeInfo: StoreInfo?,
-            val userProfile: UserProfile
-        ) : SideEffect()
+        object NavToCreateChat : SideEffect()
     }
 
     class Store : BaseStore<State, Action, SideEffect>(State.Empty) {
@@ -59,12 +55,7 @@ object ChatListProfileUDF {
                 }
                 Action.CreateChat -> {
                     if (state is State.Success) {
-                        sideEffectListener.invoke(
-                            SideEffect.NavToCreateChat(
-                                null, //todo
-                                state.userProfile
-                            )
-                        )
+                        sideEffectListener.invoke(SideEffect.NavToCreateChat)
                     }
                     return state
                 }

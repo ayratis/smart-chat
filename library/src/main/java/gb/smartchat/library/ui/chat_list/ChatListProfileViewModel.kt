@@ -5,8 +5,6 @@ import com.jakewharton.rxrelay2.BehaviorRelay
 import gb.smartchat.R
 import gb.smartchat.library.data.http.HttpApi
 import gb.smartchat.library.data.resources.ResourceManager
-import gb.smartchat.library.entity.StoreInfo
-import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.publisher.UserAvatarChangedPublisher
 import gb.smartchat.library.utils.SingleEvent
 import io.reactivex.Observable
@@ -24,13 +22,11 @@ class ChatListProfileViewModel(
     private val compositeDisposable = CompositeDisposable()
 
     private val showProfileErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
-    private val navToCreateChatCommand =
-        BehaviorRelay.create<SingleEvent<Pair<StoreInfo?, UserProfile>>>()
+    private val navToCreateChatCommand = BehaviorRelay.create<SingleEvent<Unit>>()
 
     val viewState: Observable<ChatListProfileUDF.State> = store.hide()
     val showProfileErrorDialog: Observable<SingleEvent<String>> = showProfileErrorCommand.hide()
-    val navToCreateChat: Observable<SingleEvent<Pair<StoreInfo?, UserProfile>>> =
-        navToCreateChatCommand.hide()
+    val navToCreateChat: Observable<SingleEvent<Unit>> = navToCreateChatCommand.hide()
 
     init {
         store.sideEffectListener = { sideEffect ->
@@ -39,9 +35,7 @@ class ChatListProfileViewModel(
                     fetchUserProfile()
                 }
                 is ChatListProfileUDF.SideEffect.NavToCreateChat -> {
-                    navToCreateChatCommand.accept(
-                        SingleEvent(sideEffect.storeInfo to sideEffect.userProfile)
-                    )
+                    navToCreateChatCommand.accept(SingleEvent(Unit))
                 }
                 is ChatListProfileUDF.SideEffect.ShowProfileLoadError -> {
                     val message = resourceManager.getString(R.string.profile_error)

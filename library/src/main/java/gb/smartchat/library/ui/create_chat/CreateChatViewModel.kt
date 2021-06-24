@@ -8,25 +8,20 @@ import gb.smartchat.library.data.resources.ResourceManager
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.Contact
 import gb.smartchat.library.entity.StoreInfo
-import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.entity.request.AddRecipientsRequest
-import gb.smartchat.library.entity.request.CreateChatRequest
 import gb.smartchat.library.publisher.AddRecipientsPublisher
 import gb.smartchat.library.publisher.ChatCreatedPublisher
 import gb.smartchat.library.publisher.ContactDeletePublisher
 import gb.smartchat.library.utils.SingleEvent
 import gb.smartchat.library.utils.humanMessage
-import gb.smartchat.library.utils.toContact
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 
 class CreateChatViewModel(
-    private val storeInfo: StoreInfo?,
-    private val userProfile: UserProfile?,
+    private val storeInfo: StoreInfo,
     private val chatId: Long?,
-    private val mode: CreateChatMode,
     private val httpApi: HttpApi,
     private val store: CreateChatUDF.Store,
     private val resourceManager: ResourceManager,
@@ -45,7 +40,7 @@ class CreateChatViewModel(
     private val navToChatCommand = BehaviorRelay.create<SingleEvent<Chat>>()
     private val showDialogCommand = BehaviorRelay.create<SingleEvent<String>>()
     private val navToGroupCompleteCommand =
-        BehaviorRelay.create<SingleEvent<Pair<StoreInfo?, List<Contact>>>>()
+        BehaviorRelay.create<SingleEvent<Pair<StoreInfo, List<Contact>>>>()
     private val exitCommand = BehaviorRelay.create<SingleEvent<Unit>>()
 
     val items: Observable<List<ContactItem>> = state
@@ -68,7 +63,7 @@ class CreateChatViewModel(
     }
     val navToChat: Observable<SingleEvent<Chat>> = navToChatCommand.hide()
     val showDialog: Observable<SingleEvent<String>> = showDialogCommand.hide()
-    val navToGroupComplete: Observable<SingleEvent<Pair<StoreInfo?, List<Contact>>>> =
+    val navToGroupComplete: Observable<SingleEvent<Pair<StoreInfo, List<Contact>>>> =
         navToGroupCompleteCommand.hide()
     val exit: Observable<SingleEvent<Unit>> = exitCommand.hide()
 
@@ -77,9 +72,6 @@ class CreateChatViewModel(
             when (sideEffect) {
                 CreateChatUDF.SideEffect.LoadContacts -> {
                     fetchContacts()
-                }
-                is CreateChatUDF.SideEffect.CreateChat -> {
-                    createChat(sideEffect.contact)
                 }
                 is CreateChatUDF.SideEffect.NavigateToChat -> {
                     chatCreatedPublisher.accept(sideEffect.chat)
@@ -128,29 +120,6 @@ class CreateChatViewModel(
             .also { compositeDisposable.add(it) }
     }
 
-    private fun createChat(contact: Contact) {
-        val myContact = userProfile!!.toContact()
-        val requestBody = CreateChatRequest(
-            chatName = "",
-            fileUrl = null,
-            contacts = listOf(contact, myContact),
-            storeId = storeInfo?.storeId,
-            storeName = storeInfo?.storeName,
-            partnerName = storeInfo?.partnerName,
-            agentCode = storeInfo?.agentCode,
-        )
-        httpApi
-            .postCreateChat(requestBody)
-            .map { it.result.chat }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { store.accept(CreateChatUDF.Action.CreateChatSuccess(it)) },
-                { store.accept(CreateChatUDF.Action.CreateChatError(it)) }
-            )
-            .also { compositeDisposable.add(it) }
-    }
-
     private fun addMembersToChat(contacts: List<Contact>) {
         httpApi
             .postAddRecipients(
@@ -173,19 +142,11 @@ class CreateChatViewModel(
 
     private fun CreateChatUDF.State.mapIntoContactItems(): List<ContactItem> {
         val list = mutableListOf<ContactItem>()
-        if (mode == CreateChatMode.CREATE_SINGLE) {
-            list += ContactItem.CreateGroupButton
-        }
         when (this.contactsResponseState) {
             is CreateChatUDF.ContactsResponseState.Data -> {
                 for (group in this.groupsToShow) {
-                    if (mode == CreateChatMode.CREATE_SINGLE) {
-                        list += ContactItem.Group(group)
-                        list += group.contacts.map { ContactItem.Contact(it) }
-                    } else {
-                        list += group.contacts.map {
-                            ContactItem.SelectableContact(it, selectedContacts.contains(it))
-                        }
+                    list += group.contacts.map {
+                        ContactItem.SelectableContact(it, selectedContacts.contains(it))
                     }
                 }
             }

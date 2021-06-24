@@ -12,10 +12,7 @@ data class Chat(
     val name: String?,
     @SerializedName("avatar")
     val avatar: String?,
-    @SerializedName("store_name")
-    val storeName: String?,
-    @SerializedName("agent_name")
-    val agentName: String?,
+
     @SerializedName("last_message")
     val lastMessage: Message?,
     @SerializedName("unread_messages_count")
@@ -25,7 +22,19 @@ data class Chat(
     @SerializedName("is_pinned")
     val isPinned: Boolean?,
     @SerializedName("recipients")
-    val users: List<User>
+    val users: List<User>,
+    @SerializedName("store_id")
+    val storeId: String?,
+    @SerializedName("store_name")
+    val storeName: String?,
+    @SerializedName("partner_code")
+    val partnerCode: Int?,
+    @SerializedName("partner_name")
+    val partnerName: String?,
+    @SerializedName("agent_code")
+    val agentCode: Int?,
+    @SerializedName("partner_avatar")
+    val partnerAvatar: String?
 ) : Serializable, Comparable<Chat> {
 
     fun getReadInfo(userId: String): ReadInfo {
@@ -43,6 +52,16 @@ data class Chat(
         val user = users.find { it.id == userId } ?: return false
         return (user.lastMentionMessageId ?: 0) > (user.lastReadMessageId ?: 0)
     }
+
+    val storeInfo: StoreInfo get() =
+        StoreInfo(
+            storeId,
+            storeName,
+            partnerCode,
+            partnerName,
+            agentCode,
+            partnerAvatar
+        )
 
     override fun compareTo(other: Chat): Int {
         val pinned1 = isPinned ?: false

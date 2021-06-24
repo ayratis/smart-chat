@@ -107,13 +107,13 @@ class ChatProfileFragment : Fragment(),
             .into(binding.ivPhoto)
         binding.tvGroupName.text = chat.name
         binding.tvMemberCount.text = getString(R.string.d_members, chat.users.size)
-        binding.tvAgentName.text = chat.agentName
+        binding.tvAgentName.text = chat.partnerName
         binding.viewPager.adapter = ViewPageAdapter()
         binding.tabLayout.setupWithViewPager(binding.viewPager)
         binding.btnAddMembers.setOnClickListener {
             parentFragmentManager.navigateTo(
                 CreateChatFragment.create(
-                    storeInfo = null, //todo
+                    storeInfo = chat.storeInfo,
                     mode = CreateChatMode.ADD_MEMBERS,
                     chat = chat
                 )
@@ -184,7 +184,7 @@ class ChatProfileFragment : Fragment(),
             return 4
         }
 
-        override fun getPageTitle(position: Int): CharSequence? {
+        override fun getPageTitle(position: Int): CharSequence {
             return when (position) {
                 0 -> getString(R.string.members)
                 1 -> getString(R.string.media)

@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import gb.smartchat.R
 import gb.smartchat.library.entity.Message
+import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.ui.chat.ChatFragment
 import gb.smartchat.library.ui.chat_list.ChatListFragment
 import gb.smartchat.library.utils.*
@@ -20,10 +21,17 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         private const val TAG = "SmartChatActivity"
         private const val ARG_USER_ID = "arg user id"
         private const val ARG_CHAT_ID_TO_OPEN = "arg chat id to open"
+        private const val ARG_STORE_INFO_LIST = "arg store info list"
 
-        fun createLaunchIntent(context: Context, userId: String, chatId: Long = 0): Intent {
+        fun createLaunchIntent(
+            context: Context,
+            userId: String,
+            storeInfoList: List<StoreInfo>,
+            chatId: Long = 0
+        ): Intent {
             return Intent(context, SmartChatActivity::class.java).apply {
                 putExtra(ARG_USER_ID, userId)
+                putExtra(ARG_STORE_INFO_LIST, ArrayList(storeInfoList))
                 putExtra(ARG_CHAT_ID_TO_OPEN, chatId)
             }
         }
@@ -37,6 +45,12 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         intent.getStringExtra(ARG_USER_ID)!!
     }
 
+    private val storeInfoList: List<StoreInfo> by lazy {
+        val serializable = intent.getSerializableExtra(ARG_STORE_INFO_LIST)
+        @Suppress("UNCHECKED_CAST")
+        (serializable as ArrayList<StoreInfo>).toList()
+    }
+
     private val argChatIdToOpen: Long by lazy {
         intent.getLongExtra(ARG_CHAT_ID_TO_OPEN, 0)
     }
@@ -45,7 +59,8 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         Component.Factory(
             application = application,
             userId = userId,
-            baseUrl = "http://91.201.41.157:8001/"
+            baseUrl = "http://91.201.41.157:8001/",
+            storeInfoList = storeInfoList
         )
     }
 
@@ -115,11 +130,16 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
 
         if (currentFragment is ChatFragment) {
             if (!currentFragment.isSameChat(message)) {
-                ChatPushNotificationManager.proceedSocketMessage(this, message, userId)
+                ChatPushNotificationManager.proceedSocketMessage(
+                    this,
+                    userId,
+                    storeInfoList,
+                    message
+                )
             }
             return
         }
 
-        ChatPushNotificationManager.proceedSocketMessage(this, message, userId)
+        ChatPushNotificationManager.proceedSocketMessage(this, userId, storeInfoList, message)
     }
 }

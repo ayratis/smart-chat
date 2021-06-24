@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import gb.smartchat.library.entity.Message
+import gb.smartchat.library.entity.StoreInfo
 
 object ChatPushNotificationManager {
 
@@ -20,9 +21,10 @@ object ChatPushNotificationManager {
 
     fun proceedRemoteMessage(
         context: Context,
+        smartUserId: String,
+        storeInfoList: List<StoreInfo>,
         dataMap: Map<String, String>,
         @DrawableRes iconRes: Int = 0,
-        smartUserId: String
     ): Boolean {
         if (dataMap["is_chat_push_message"] != "true") return false
         val chatId = dataMap["chat_id"] ?: return false
@@ -37,17 +39,23 @@ object ChatPushNotificationManager {
 
         sendPush(
             context,
+            smartUserId,
+            storeInfoList,
             chatIdLong,
             title,
             message,
-            smartUserId,
             iconRes,
         )
 
         return true
     }
 
-    fun proceedSocketMessage(context: Context, message: Message, smartUserId: String) {
+    fun proceedSocketMessage(
+        context: Context,
+        smartUserId: String,
+        storeInfoList: List<StoreInfo>,
+        message: Message
+    ) {
         message.chatId ?: return
         val title = message.chatName ?: ""
         val text = with(StringBuilder()) {
@@ -59,25 +67,32 @@ object ChatPushNotificationManager {
 
         sendPush(
             context,
+            smartUserId,
+            storeInfoList,
             message.chatId,
             title,
             text,
-            smartUserId,
             iconRes = 0,
         )
     }
 
     private fun sendPush(
         context: Context,
+        smartUserId: String,
+        storeInfoList: List<StoreInfo>,
         chatId: Long,
         title: String,
         message: String,
-        smartUserId: String,
         @DrawableRes iconRes: Int = 0,
     ) {
         createNotificationChannel(context)
 
-        val intent = SmartChatActivity.createLaunchIntent(context, smartUserId, chatId).apply {
+        val intent = SmartChatActivity.createLaunchIntent(
+            context,
+            smartUserId,
+            storeInfoList,
+            chatId
+        ).apply {
             action = ACTION_PUSH
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
