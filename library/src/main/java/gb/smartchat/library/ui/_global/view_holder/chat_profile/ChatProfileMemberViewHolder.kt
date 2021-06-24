@@ -1,4 +1,4 @@
-package gb.smartchat.library.ui.chat_profile.members
+package gb.smartchat.library.ui._global.view_holder.chat_profile
 
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import gb.smartchat.R
-import gb.smartchat.databinding.ItemChatProfileMemberBinding
 import gb.smartchat.library.entity.Contact
+import gb.smartchat.library.ui._global.viewbinding.ItemChatProfileMemberBinding
 import gb.smartchat.library.utils.color
 import gb.smartchat.library.utils.visible
 

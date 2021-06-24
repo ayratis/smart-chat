@@ -4,6 +4,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import gb.smartchat.library.entity.Contact
+import gb.smartchat.library.ui._global.view_holder.DeletableContactViewHolder
 
 class ContactsAdapter(
     private val onDeleteContactListener: (Contact) -> Unit

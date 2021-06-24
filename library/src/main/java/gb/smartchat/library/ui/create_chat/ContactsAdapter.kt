@@ -8,8 +8,9 @@ import gb.smartchat.library.entity.Contact
 import gb.smartchat.library.ui._global.view_holder.ContactViewHolder
 import gb.smartchat.library.ui._global.view_holder.ErrorViewHolder
 import gb.smartchat.library.ui._global.view_holder.ProgressViewHolder
-import gb.smartchat.library.ui.create_chat.view_holder.ContactGroupViewHolder
-import gb.smartchat.library.ui.create_chat.view_holder.SelectableContactViewHolder
+import gb.smartchat.library.ui._global.view_holder.create_chat.ContactGroupViewHolder
+import gb.smartchat.library.ui._global.view_holder.create_chat.CreateGroupButtonViewHolder
+import gb.smartchat.library.ui._global.view_holder.create_chat.SelectableContactViewHolder
 
 class ContactsAdapter(
     private val contactClickListener: (Contact) -> Unit,

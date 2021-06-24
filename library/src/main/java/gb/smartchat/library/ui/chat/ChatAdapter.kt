@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import gb.smartchat.library.entity.File
 import gb.smartchat.library.entity.Mention
 import gb.smartchat.library.ui._global.StickyHeaderHelper
-import gb.smartchat.library.ui.chat.view_holder.*
+import gb.smartchat.library.ui._global.view_holder.chat.*
 import java.time.ZoneId
 
 class ChatAdapter(

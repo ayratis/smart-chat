@@ -14,12 +14,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.R
-import gb.smartchat.databinding.FragmentCreateChatBinding
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.ProgressDialog
+import gb.smartchat.library.ui._global.viewbinding.FragmentCreateChatBinding
 import gb.smartchat.library.ui.chat.ChatFragment
 import gb.smartchat.library.ui.group_complete.GroupCompleteFragment
 import gb.smartchat.library.utils.*

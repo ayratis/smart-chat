@@ -3,7 +3,7 @@ package gb.smartchat.library.ui._global.view_holder
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import gb.smartchat.databinding.ItemErrorBinding
+import gb.smartchat.library.ui._global.viewbinding.ItemErrorBinding
 import gb.smartchat.library.utils.visible
 
 class ErrorViewHolder private constructor(
