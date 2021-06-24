@@ -391,7 +391,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                 binding.toolbar.apply {
                     if (isOnline) {
                         setSubtitleTextColor(context.color(R.color.razzmatazz))
-                        subtitle = chat.agentName
+                        subtitle = chat.partnerName
                     } else {
                         setSubtitleTextColor(context.color(R.color.santas_gray))
                         subtitle = getString(R.string.waiting_for_network)

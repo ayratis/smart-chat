@@ -21,6 +21,8 @@ import gb.smartchat.library.ui._global.ProgressDialog
 import gb.smartchat.library.ui._global.viewbinding.FragmentChatListBinding
 import gb.smartchat.library.ui.chat.ChatFragment
 import gb.smartchat.library.ui.chat_list_search.ChatListSearchFragment
+import gb.smartchat.library.ui.create_chat.CreateChatFragment
+import gb.smartchat.library.ui.create_chat.CreateChatMode
 import gb.smartchat.library.ui.select_store_info.SelectStoreInfoFragment
 import gb.smartchat.library.ui.user_profile.UserProfileFragment
 import gb.smartchat.library.utils.*
@@ -255,11 +257,25 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
 
             profileViewModel.navToCreateChat
                 .subscribe { event ->
-                    event.getContentIfNotHandled()?.let { storeInfo ->
-                        parentFragmentManager.navigateTo(
-                            SelectStoreInfoFragment(),
-                            NavAnim.OPEN
-                        )
+                    event.getContentIfNotHandled()?.let {
+                        val storeInfoList = component.storeInfoList
+                        when {
+                            storeInfoList.size == 1 -> {
+                                parentFragmentManager.navigateTo(
+                                    CreateChatFragment.create(
+                                        storeInfoList.first(),
+                                        CreateChatMode.CREATE_GROUP
+                                    ),
+                                    NavAnim.OPEN
+                                )
+                            }
+                            storeInfoList.size > 1 -> {
+                                parentFragmentManager.navigateTo(
+                                    SelectStoreInfoFragment(),
+                                    NavAnim.OPEN
+                                )
+                            }
+                        }
                     }
                 }
                 .also { compositeDisposable.add(it) }

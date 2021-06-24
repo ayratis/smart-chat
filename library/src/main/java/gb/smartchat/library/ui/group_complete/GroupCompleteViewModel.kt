@@ -25,7 +25,7 @@ import io.reactivex.schedulers.Schedulers
 import okhttp3.MultipartBody
 
 class GroupCompleteViewModel(
-    private val storeInfo: StoreInfo?,
+    private val storeInfo: StoreInfo,
     private val userProfile: UserProfile,
     private val store: GroupCompleteUDF.Store,
     private val httpApi: HttpApi,

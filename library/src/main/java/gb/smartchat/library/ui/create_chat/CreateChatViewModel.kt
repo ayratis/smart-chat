@@ -20,7 +20,7 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 
 class CreateChatViewModel(
-    private val storeInfo: StoreInfo?,
+    private val storeInfo: StoreInfo,
     private val chatId: Long?,
     private val httpApi: HttpApi,
     private val store: CreateChatUDF.Store,
@@ -40,7 +40,7 @@ class CreateChatViewModel(
     private val navToChatCommand = BehaviorRelay.create<SingleEvent<Chat>>()
     private val showDialogCommand = BehaviorRelay.create<SingleEvent<String>>()
     private val navToGroupCompleteCommand =
-        BehaviorRelay.create<SingleEvent<Pair<StoreInfo?, List<Contact>>>>()
+        BehaviorRelay.create<SingleEvent<Pair<StoreInfo, List<Contact>>>>()
     private val exitCommand = BehaviorRelay.create<SingleEvent<Unit>>()
 
     val items: Observable<List<ContactItem>> = state
@@ -63,7 +63,7 @@ class CreateChatViewModel(
     }
     val navToChat: Observable<SingleEvent<Chat>> = navToChatCommand.hide()
     val showDialog: Observable<SingleEvent<String>> = showDialogCommand.hide()
-    val navToGroupComplete: Observable<SingleEvent<Pair<StoreInfo?, List<Contact>>>> =
+    val navToGroupComplete: Observable<SingleEvent<Pair<StoreInfo, List<Contact>>>> =
         navToGroupCompleteCommand.hide()
     val exit: Observable<SingleEvent<Unit>> = exitCommand.hide()
 
