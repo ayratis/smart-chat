@@ -18,7 +18,7 @@ class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
     }
 
     private fun openChatList(userId: String) {
-        val intent = SmartChatActivity.createLaunchIntent(this, userId)
+        val intent = SmartChatActivity.createLaunchIntent(this, userId, emptyList())
         startActivity(intent)
     }
 }
