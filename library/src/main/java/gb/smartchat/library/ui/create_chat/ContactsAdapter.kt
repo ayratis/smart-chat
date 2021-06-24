@@ -9,7 +9,6 @@ import gb.smartchat.library.ui._global.view_holder.ContactViewHolder
 import gb.smartchat.library.ui._global.view_holder.ErrorViewHolder
 import gb.smartchat.library.ui._global.view_holder.ProgressViewHolder
 import gb.smartchat.library.ui._global.view_holder.create_chat.ContactGroupViewHolder
-import gb.smartchat.library.ui._global.view_holder.create_chat.CreateGroupButtonViewHolder
 import gb.smartchat.library.ui._global.view_holder.create_chat.SelectableContactViewHolder
 
 class ContactsAdapter(

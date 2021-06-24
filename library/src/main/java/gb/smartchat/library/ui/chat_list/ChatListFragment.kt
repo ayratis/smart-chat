@@ -21,8 +21,7 @@ import gb.smartchat.library.ui._global.ProgressDialog
 import gb.smartchat.library.ui._global.viewbinding.FragmentChatListBinding
 import gb.smartchat.library.ui.chat.ChatFragment
 import gb.smartchat.library.ui.chat_list_search.ChatListSearchFragment
-import gb.smartchat.library.ui.create_chat.CreateChatFragment
-import gb.smartchat.library.ui.create_chat.CreateChatMode
+import gb.smartchat.library.ui.select_store_info.SelectStoreInfoFragment
 import gb.smartchat.library.ui.user_profile.UserProfileFragment
 import gb.smartchat.library.utils.*
 import io.reactivex.disposables.CompositeDisposable
@@ -258,10 +257,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 .subscribe { event ->
                     event.getContentIfNotHandled()?.let { storeInfo ->
                         parentFragmentManager.navigateTo(
-                            CreateChatFragment.create(
-                                storeInfo,
-                                CreateChatMode.CREATE_GROUP
-                            ),
+                            SelectStoreInfoFragment(),
                             NavAnim.OPEN
                         )
                     }
