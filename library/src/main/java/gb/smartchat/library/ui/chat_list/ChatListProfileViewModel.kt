@@ -6,7 +6,6 @@ import gb.smartchat.R
 import gb.smartchat.library.data.http.HttpApi
 import gb.smartchat.library.data.resources.ResourceManager
 import gb.smartchat.library.entity.StoreInfo
-import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.publisher.UserAvatarChangedPublisher
 import gb.smartchat.library.utils.SingleEvent
 import io.reactivex.Observable
@@ -25,11 +24,11 @@ class ChatListProfileViewModel(
 
     private val showProfileErrorCommand = BehaviorRelay.create<SingleEvent<String>>()
     private val navToCreateChatCommand =
-        BehaviorRelay.create<SingleEvent<Pair<StoreInfo?, UserProfile>>>()
+        BehaviorRelay.create<SingleEvent<StoreInfo?>>()
 
     val viewState: Observable<ChatListProfileUDF.State> = store.hide()
     val showProfileErrorDialog: Observable<SingleEvent<String>> = showProfileErrorCommand.hide()
-    val navToCreateChat: Observable<SingleEvent<Pair<StoreInfo?, UserProfile>>> =
+    val navToCreateChat: Observable<SingleEvent<StoreInfo?>> =
         navToCreateChatCommand.hide()
 
     init {
@@ -40,7 +39,7 @@ class ChatListProfileViewModel(
                 }
                 is ChatListProfileUDF.SideEffect.NavToCreateChat -> {
                     navToCreateChatCommand.accept(
-                        SingleEvent(sideEffect.storeInfo to sideEffect.userProfile)
+                        SingleEvent(sideEffect.storeInfo)
                     )
                 }
                 is ChatListProfileUDF.SideEffect.ShowProfileLoadError -> {

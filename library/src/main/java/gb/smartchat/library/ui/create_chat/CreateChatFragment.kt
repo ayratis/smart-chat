@@ -18,7 +18,6 @@ import gb.smartchat.databinding.FragmentCreateChatBinding
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.StoreInfo
-import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.ProgressDialog
 import gb.smartchat.library.ui.chat.ChatFragment
@@ -32,20 +31,17 @@ class CreateChatFragment : Fragment() {
         private const val TAG = "CreateChatFragment"
         private const val PROGRESS_TAG = "progress tag"
         private const val ARG_STORE_INFO = "arg store info"
-        private const val ARG_USER_PROFILE = "arg user profile"
         private const val ARG_MODE = "arg mode"
         private const val ARG_CHAT = "arg chat"
 
         fun create(
             storeInfo: StoreInfo?,
             mode: CreateChatMode,
-            userProfile: UserProfile? = null,
             chat: Chat? = null
         ) =
             CreateChatFragment().apply {
                 arguments = Bundle().apply {
                     storeInfo?.let { putSerializable(ARG_STORE_INFO, storeInfo) }
-                    userProfile?.let { putSerializable(ARG_USER_PROFILE, it) }
                     putSerializable(ARG_MODE, mode)
                     chat?.let { putSerializable(ARG_CHAT, it) }
                 }
@@ -54,9 +50,6 @@ class CreateChatFragment : Fragment() {
 
     private val storeInfo: StoreInfo? by lazy {
         requireArguments().getSerializable(ARG_STORE_INFO) as? StoreInfo
-    }
-    private val userProfile: UserProfile? by lazy {
-        requireArguments().getSerializable(ARG_USER_PROFILE) as? UserProfile
     }
     private val mode by lazy {
         requireArguments().getSerializable(ARG_MODE) as CreateChatMode
@@ -82,7 +75,6 @@ class CreateChatFragment : Fragment() {
                 return CreateChatViewModel(
                     storeInfo,
                     chat?.id,
-                    mode,
                     component.httpApi,
                     CreateChatUDF.Store(mode),
                     component.resourceManager,
@@ -96,12 +88,6 @@ class CreateChatFragment : Fragment() {
 
     private val contactsAdapter by lazy {
         ContactsAdapter(
-            createGroupClickListener = {
-                parentFragmentManager.navigateTo(
-                    create(storeInfo, CreateChatMode.CREATE_GROUP, userProfile!!),
-                    NavAnim.SLIDE
-                )
-            },
             contactClickListener = viewModel::onContactClick,
             errorActionClickListener = viewModel::onErrorActionClick
         )
@@ -226,7 +212,6 @@ class CreateChatFragment : Fragment() {
                     parentFragmentManager.navigateTo(
                         GroupCompleteFragment.create(
                             storeInfo = storeInfo,
-                            userProfile = userProfile!!,
                             selectedContacts = selectedContacts
                         ),
                         NavAnim.SLIDE

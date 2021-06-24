@@ -21,7 +21,6 @@ import gb.smartchat.library.Component
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Contact
 import gb.smartchat.library.entity.StoreInfo
-import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.ProgressDialog
 import gb.smartchat.library.ui.chat.AttachDialogFragment
@@ -35,18 +34,15 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
         private const val TAG = "GroupCompleteFragment"
         private const val PROGRESS_TAG = "progress tag"
         private const val ARG_STORE_INFO = "arg store info"
-        private const val ARG_USER_PROFILE = "arg user profile"
         private const val ARG_SELECTED_CONTACTS = "arg selected contacts"
 
         fun create(
             storeInfo: StoreInfo?,
-            userProfile: UserProfile,
             selectedContacts: List<Contact>
         ) =
             GroupCompleteFragment().apply {
                 arguments = Bundle().apply {
                     storeInfo?.let { putSerializable(ARG_STORE_INFO, storeInfo) }
-                    putSerializable(ARG_USER_PROFILE, userProfile)
                     putSerializable(ARG_SELECTED_CONTACTS, ArrayList(selectedContacts))
                 }
             }
@@ -58,9 +54,6 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
     private val compositeDisposable = CompositeDisposable()
     private val storeInfo: StoreInfo? by lazy {
         requireArguments().getSerializable(ARG_STORE_INFO) as? StoreInfo
-    }
-    private val userProfile by lazy {
-        requireArguments().getSerializable(ARG_USER_PROFILE) as UserProfile
     }
     private val selectedContacts: List<Contact> by lazy {
         @Suppress("UNCHECKED_CAST")
@@ -75,7 +68,7 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return GroupCompleteViewModel(
                     storeInfo,
-                    userProfile,
+                    component.userProfile!!,
                     GroupCompleteUDF.Store(selectedContacts),
                     component.httpApi,
                     component.resourceManager,

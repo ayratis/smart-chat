@@ -24,10 +24,7 @@ object ChatListProfileUDF {
     sealed class SideEffect {
         object LoadUserProfile : SideEffect()
         data class ShowProfileLoadError(val error: Throwable) : SideEffect()
-        data class NavToCreateChat(
-            val storeInfo: StoreInfo?,
-            val userProfile: UserProfile
-        ) : SideEffect()
+        data class NavToCreateChat(val storeInfo: StoreInfo?) : SideEffect()
     }
 
     class Store : BaseStore<State, Action, SideEffect>(State.Empty) {
@@ -61,8 +58,7 @@ object ChatListProfileUDF {
                     if (state is State.Success) {
                         sideEffectListener.invoke(
                             SideEffect.NavToCreateChat(
-                                null, //todo
-                                state.userProfile
+                                null //todo
                             )
                         )
                     }

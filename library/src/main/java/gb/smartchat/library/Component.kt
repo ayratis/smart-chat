@@ -19,6 +19,7 @@ import gb.smartchat.library.data.socket.SocketApiImpl
 import gb.smartchat.library.data.socket.SocketEvent
 import gb.smartchat.library.entity.Message
 import gb.smartchat.library.entity.StoreInfo
+import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.publisher.*
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -53,6 +54,8 @@ class Component constructor(
             return Component(application, baseUrl, userId, storeInfoList) as T
         }
     }
+
+    var userProfile: UserProfile? = null
 
     val resourceManager: ResourceManager by lazy {
         ResourceManagerImpl(application.resources)

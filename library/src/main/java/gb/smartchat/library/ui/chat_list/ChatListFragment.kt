@@ -17,7 +17,6 @@ import gb.smartchat.R
 import gb.smartchat.databinding.FragmentChatListBinding
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Chat
-import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.ProgressDialog
 import gb.smartchat.library.ui.chat.ChatFragment
@@ -45,7 +44,6 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
 
     private var _binding: FragmentChatListBinding? = null
     private val binding: FragmentChatListBinding get() = _binding!!
-    private var userProfile: UserProfile? = null
     private val compositeDisposable = CompositeDisposable()
     private val argIsArchive by lazy {
         requireArguments().getBoolean(ARG_IS_ARCHIVE)
@@ -186,7 +184,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                         }
                         R.id.action_user_profile -> {
                             dismissPopupMenus()
-                            userProfile?.let(this@ChatListFragment::navigateToUserProfile)
+                            navigateToUserProfile()
                             true
                         }
                         else -> false
@@ -194,7 +192,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 }
             }
             binding.profileContent.setOnClickListener {
-                userProfile?.let(this::navigateToUserProfile)
+                navigateToUserProfile()
             }
             binding.btnCreateChat.apply {
                 visible(true)
@@ -221,18 +219,18 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 .subscribe { profileState ->
                     when (profileState) {
                         is ChatListProfileUDF.State.Error -> {
-                            userProfile = null
+                            component.userProfile = null
                             binding.toolbar.title = null
                             binding.profileContent.visible(false)
                         }
                         is ChatListProfileUDF.State.Empty,
                         is ChatListProfileUDF.State.Loading -> {
-                            userProfile = null
+                            component.userProfile = null
                             binding.toolbar.title = getString(R.string.refreshing)
                             binding.profileContent.visible(false)
                         }
                         is ChatListProfileUDF.State.Success -> {
-                            userProfile = profileState.userProfile
+                            component.userProfile = profileState.userProfile
                             binding.toolbar.title = null
                             binding.profileContent.visible(true)
                             Glide.with(binding.ivProfileAvatar)
@@ -258,12 +256,11 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
 
             profileViewModel.navToCreateChat
                 .subscribe { event ->
-                    event.getContentIfNotHandled()?.let { (storeInfo, userProfile) ->
+                    event.getContentIfNotHandled()?.let { storeInfo ->
                         parentFragmentManager.navigateTo(
                             CreateChatFragment.create(
                                 storeInfo,
-                                CreateChatMode.CREATE_GROUP,
-                                userProfile
+                                CreateChatMode.CREATE_GROUP
                             ),
                             NavAnim.OPEN
                         )
@@ -352,7 +349,8 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
         }
     }
 
-    private fun navigateToUserProfile(userProfile: UserProfile) {
+    private fun navigateToUserProfile() {
+        val userProfile = component.userProfile ?: return
         parentFragmentManager.navigateTo(
             UserProfileFragment.create(userProfile),
             NavAnim.SLIDE

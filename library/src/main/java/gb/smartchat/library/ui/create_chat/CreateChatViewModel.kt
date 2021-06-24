@@ -22,7 +22,6 @@ import io.reactivex.schedulers.Schedulers
 class CreateChatViewModel(
     private val storeInfo: StoreInfo?,
     private val chatId: Long?,
-    private val mode: CreateChatMode,
     private val httpApi: HttpApi,
     private val store: CreateChatUDF.Store,
     private val resourceManager: ResourceManager,
