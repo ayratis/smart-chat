@@ -72,4 +72,5 @@
     <string name="chats">Чаты</string>
     <string name="contacts">Контакты</string>
     <string name="partner_selection">Выбор партнера</string>
+    <string name="user_missing_message">Выбранного пользователя не существует</string>
 </resources>

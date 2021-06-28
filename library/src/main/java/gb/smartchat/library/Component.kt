@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
 import gb.smartchat.library.data.content.ContentHelper
 import gb.smartchat.library.data.content.ContentHelperImpl
@@ -21,6 +22,7 @@ import gb.smartchat.library.entity.Message
 import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.entity.UserProfile
 import gb.smartchat.library.publisher.*
+import gb.smartchat.library.utils.SingleEvent
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -157,9 +159,10 @@ class Component constructor(
 
     private var newMessagesDisposable: Disposable? = null
     private val sendNewMessagePushCommand = PublishRelay.create<Message>()
+    private val userMissingCommand = BehaviorRelay.create<SingleEvent<Unit>>()
 
     val sendNewMessagePush: Observable<Message> = sendNewMessagePushCommand.hide()
-
+    val userMissing: Observable<SingleEvent<Unit>> = userMissingCommand.hide()
 
     private fun observeNewMessages() {
         newMessagesDisposable?.dispose()
@@ -167,8 +170,13 @@ class Component constructor(
             .observeEvents()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { socketEvent ->
-                if (socketEvent is SocketEvent.MessageNew) {
-                    sendNewMessagePushCommand.accept(socketEvent.message)
+                when(socketEvent) {
+                    is SocketEvent.MessageNew -> {
+                        sendNewMessagePushCommand.accept(socketEvent.message)
+                    }
+                    is SocketEvent.UserMissing -> {
+                        userMissingCommand.accept(SingleEvent(Unit))
+                    }
                 }
             }
     }
@@ -179,7 +187,7 @@ class Component constructor(
     }
 
     fun connect() {
-        socket.connect()
+        socketApi.connect()
         observeNewMessages()
     }
 }
