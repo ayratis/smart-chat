@@ -187,7 +187,7 @@ class Component constructor(
     }
 
     fun connect() {
-        socket.connect()
+        socketApi.connect()
         observeNewMessages()
     }
 }
