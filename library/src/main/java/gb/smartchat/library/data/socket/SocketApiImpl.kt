@@ -92,7 +92,7 @@ class SocketApiImpl(
                     ServerEvent.USERNAME_MISSING -> SocketEvent.UsernameMissing
                     ServerEvent.USER_MISSING -> SocketEvent.UserMissing
                 }
-                socketEvent?.let { socketEventsRelay.accept(it) }
+                socketEventsRelay.accept(socketEvent)
             } catch (e: Throwable) {
                 e.printStackTrace()
             }

@@ -122,10 +122,12 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container),
         component.userMissing
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let {
-                    supportFragmentManager.newRootScreen(
-                        UsernameMissingFragment(),
-                        NavAnim.OPEN
-                    )
+                    MessageDialogFragment
+                        .create(
+                            message = getString(R.string.user_missing_message),
+                            tag = USER_MISSING_TAG
+                        )
+                        .show(supportFragmentManager, USER_MISSING_TAG)
                 }
             }
             .also { compositeDisposable.add(it) }
@@ -133,12 +135,10 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container),
         component.usernameMissing
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let {
-                    MessageDialogFragment
-                        .create(
-                            message = getString(R.string.user_missing_message),
-                            tag = USER_MISSING_TAG
-                        )
-                        .show(supportFragmentManager, USER_MISSING_TAG)
+                    supportFragmentManager.newRootScreen(
+                        UsernameMissingFragment(),
+                        NavAnim.OPEN
+                    )
                 }
             }
             .also { compositeDisposable.add(it) }
