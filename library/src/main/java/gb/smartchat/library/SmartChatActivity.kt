@@ -10,18 +10,21 @@ import androidx.fragment.app.Fragment
 import gb.smartchat.R
 import gb.smartchat.library.entity.Message
 import gb.smartchat.library.entity.StoreInfo
+import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui.chat.ChatFragment
 import gb.smartchat.library.ui.chat_list.ChatListFragment
 import gb.smartchat.library.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
-class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
+class SmartChatActivity : AppCompatActivity(R.layout.layout_container),
+    MessageDialogFragment.OnClickListener {
 
     companion object {
         private const val TAG = "SmartChatActivity"
         private const val ARG_USER_ID = "arg user id"
         private const val ARG_CHAT_ID_TO_OPEN = "arg chat id to open"
         private const val ARG_STORE_INFO_LIST = "arg store info list"
+        private const val USER_MISSING_TAG = "user missing tag"
 
         fun createLaunchIntent(
             context: Context,
@@ -114,6 +117,19 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         component.sendNewMessagePush
             .subscribe(this::proceedNewMessage)
             .also { compositeDisposable.add(it) }
+
+        component.userMissing
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let {
+                    MessageDialogFragment
+                        .create(
+                            message = getString(R.string.user_missing_message),
+                            tag = USER_MISSING_TAG
+                        )
+                        .show(supportFragmentManager, USER_MISSING_TAG)
+                }
+            }
+            .also { compositeDisposable.add(it) }
     }
 
     override fun onPause() {
@@ -141,5 +157,17 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container) {
         }
 
         ChatPushNotificationManager.proceedSocketMessage(this, userId, storeInfoList, message)
+    }
+
+    override fun dialogCanceled(tag: String) {
+        when (tag) {
+            USER_MISSING_TAG -> finish()
+        }
+    }
+
+    override fun dialogPositiveClicked(tag: String) {
+        when (tag) {
+            USER_MISSING_TAG -> finish()
+        }
     }
 }
