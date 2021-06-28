@@ -19,6 +19,7 @@ sealed class SocketEvent {
     object Connected : SocketEvent()
     object Disconnected : SocketEvent()
     object UserMissing : SocketEvent()
+    object UsernameMissing : SocketEvent()
 }
 
 enum class ServerEvent(val eventName: String) {

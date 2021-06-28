@@ -1,10 +1,7 @@
 package gb.smartchat.library.data.http
 
 import gb.smartchat.library.entity.*
-import gb.smartchat.library.entity.request.AddRecipientsRequest
-import gb.smartchat.library.entity.request.CreateChatRequest
-import gb.smartchat.library.entity.request.MessageFavoriteRequest
-import gb.smartchat.library.entity.request.PinChatRequest
+import gb.smartchat.library.entity.request.*
 import gb.smartchat.library.entity.response.*
 import io.reactivex.Single
 import okhttp3.MultipartBody
@@ -142,4 +139,9 @@ interface HttpApi {
     fun getChat(
         @Query("chat_id") chatId: Long
     ): Single<BaseResponse<ChatResponse>>
+
+    @POST("chat/contacts/add_username")
+    fun postUsername(
+        @Body request: UsernameRequest
+    ): Single<BaseResponse<Any>>
 }

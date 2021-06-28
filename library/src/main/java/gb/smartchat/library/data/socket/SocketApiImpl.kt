@@ -89,7 +89,7 @@ class SocketApiImpl(
                         SocketEvent.DeleteRecipients(result)
                     }
 
-                    ServerEvent.USERNAME_MISSING -> null
+                    ServerEvent.USERNAME_MISSING -> SocketEvent.UsernameMissing
                     ServerEvent.USER_MISSING -> SocketEvent.UserMissing
                 }
                 socketEvent?.let { socketEventsRelay.accept(it) }
@@ -120,6 +120,7 @@ class SocketApiImpl(
                         is SocketEvent.Connected -> true
                         is SocketEvent.Disconnected -> true
                         is SocketEvent.UserMissing -> true
+                        is SocketEvent.UsernameMissing -> true
                         is SocketEvent.MessageChange -> socketEvent.changedMessage.chatId == chatId
                         is SocketEvent.MessageNew -> socketEvent.message.chatId == chatId
                         is SocketEvent.MessageRead -> socketEvent.messageRead.chatId == chatId

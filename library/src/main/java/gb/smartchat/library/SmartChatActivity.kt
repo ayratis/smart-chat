@@ -13,6 +13,7 @@ import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui.chat.ChatFragment
 import gb.smartchat.library.ui.chat_list.ChatListFragment
+import gb.smartchat.library.ui.username_missing.UsernameMissingFragment
 import gb.smartchat.library.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -119,6 +120,17 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container),
             .also { compositeDisposable.add(it) }
 
         component.userMissing
+            .subscribe { event ->
+                event.getContentIfNotHandled()?.let {
+                    supportFragmentManager.newRootScreen(
+                        UsernameMissingFragment(),
+                        NavAnim.OPEN
+                    )
+                }
+            }
+            .also { compositeDisposable.add(it) }
+
+        component.usernameMissing
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let {
                     MessageDialogFragment

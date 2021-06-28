@@ -160,9 +160,11 @@ class Component constructor(
     private var newMessagesDisposable: Disposable? = null
     private val sendNewMessagePushCommand = PublishRelay.create<Message>()
     private val userMissingCommand = BehaviorRelay.create<SingleEvent<Unit>>()
+    private val usernameMissingCommand = BehaviorRelay.create<SingleEvent<Unit>>()
 
     val sendNewMessagePush: Observable<Message> = sendNewMessagePushCommand.hide()
     val userMissing: Observable<SingleEvent<Unit>> = userMissingCommand.hide()
+    val usernameMissing: Observable<SingleEvent<Unit>> = usernameMissingCommand.hide()
 
     private fun observeNewMessages() {
         newMessagesDisposable?.dispose()
@@ -176,6 +178,9 @@ class Component constructor(
                     }
                     is SocketEvent.UserMissing -> {
                         userMissingCommand.accept(SingleEvent(Unit))
+                    }
+                    is SocketEvent.UsernameMissing -> {
+                        usernameMissingCommand.accept(SingleEvent(Unit))
                     }
                 }
             }
