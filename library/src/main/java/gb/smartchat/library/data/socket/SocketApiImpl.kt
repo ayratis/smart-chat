@@ -88,7 +88,6 @@ class SocketApiImpl(
                             gson.fromJson(response.toString(), DeleteRecipientsResponse::class.java)
                         SocketEvent.DeleteRecipients(result)
                     }
-
                     ServerEvent.USERNAME_MISSING -> SocketEvent.UsernameMissing
                     ServerEvent.USER_MISSING -> SocketEvent.UserMissing
                 }

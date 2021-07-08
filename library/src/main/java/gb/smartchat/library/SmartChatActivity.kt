@@ -25,18 +25,21 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container),
         private const val ARG_USER_ID = "arg user id"
         private const val ARG_CHAT_ID_TO_OPEN = "arg chat id to open"
         private const val ARG_STORE_INFO_LIST = "arg store info list"
+        private const val ARG_BASE_URL = "arg base url"
         private const val USER_MISSING_TAG = "user missing tag"
 
         fun createLaunchIntent(
             context: Context,
             userId: String,
             storeInfoList: List<StoreInfo>,
-            chatId: Long = 0
+            chatId: Long = 0,
+            baseUrl: String = "https://chat-dev.swnn.ru:56479"
         ): Intent {
             return Intent(context, SmartChatActivity::class.java).apply {
                 putExtra(ARG_USER_ID, userId)
                 putExtra(ARG_STORE_INFO_LIST, ArrayList(storeInfoList))
                 putExtra(ARG_CHAT_ID_TO_OPEN, chatId)
+                putExtra(ARG_BASE_URL, baseUrl)
             }
         }
     }
@@ -59,11 +62,15 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container),
         intent.getLongExtra(ARG_CHAT_ID_TO_OPEN, 0)
     }
 
+    private val baseUrl: String by lazy {
+        intent.getStringExtra(ARG_BASE_URL)!!
+    }
+
     val component: Component by viewModels {
         Component.Factory(
             application = application,
             userId = userId,
-            baseUrl = "http://91.201.41.157:8001/",
+            baseUrl = baseUrl,
             storeInfoList = storeInfoList
         )
     }

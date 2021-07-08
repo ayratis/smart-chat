@@ -23,7 +23,7 @@ class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
             StoreInfo("1", "1", 1, "1", 1, null),
             StoreInfo("2", "2", 2, "2", 2, null),
         )
-        val intent = SmartChatActivity.createLaunchIntent(this, userId, storeInfoList)
+        val intent = SmartChatActivity.createLaunchIntent(this, userId, storeInfoList, baseUrl = "http://91.201.41.157:8001/")
         startActivity(intent)
     }
 }
