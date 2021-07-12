@@ -36,7 +36,6 @@ interface HttpApi {
     ): Single<BaseResponse<File>>
 
     @GET("chat/contacts/list")
-    @Headers("smart-user-id: 0eeb970e-9c3f-11e2-b7e9-e41f13e6ace6") //todo remove (it's test)
     fun getContactList(
         @Query("store_id") storeId: String?, //GUID
         @Query("store_name") storeName: String?,
