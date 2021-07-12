@@ -6,6 +6,6 @@
     - smartUserId - UUID идентификатор пользователя (в Smart приходит в настройках в /shops, поле СсылкаПользователя);
     - storeInfoList - список объектов [StoreInfo](https://github.com/ayratis/smart-chat/blob/master/library/src/main/java/gb/smartchat/library/entity/StoreInfo.kt) (в Smart это shops и partners);
     - baseUrl - необзятельный параметр, нужен только для отладки.
-3) Для отображения пуш уведомлений, необходимо проверить поле is_chat_push_message, которое придет в data сообщения. Если is_chat_push_message == true, необходимо передать обработку данного сообщения библиотеке, используя статическую функцию [ChatPushNotificationManager.proceedRemoteMessage(...)](https://github.com/ayratis/smart-chat/blob/master/library/src/main/java/gb/smartchat/library/ChatPushNotificationManager.kt), где:
+3) Для отображения пуш уведомлений необходимо проверить поле is_chat_push_message, которое придет в data сообщения. Если is_chat_push_message == true, необходимо передать обработку данного сообщения библиотеке, используя статическую функцию [ChatPushNotificationManager.proceedRemoteMessage(...)](https://github.com/ayratis/smart-chat/blob/master/library/src/main/java/gb/smartchat/library/ChatPushNotificationManager.kt), где:
     - dataMap - data сообщения, полученная в сообщении сервиса;
     - iconRes - id ресурса иконки для уведомления (например R.drawable.icon_24).
