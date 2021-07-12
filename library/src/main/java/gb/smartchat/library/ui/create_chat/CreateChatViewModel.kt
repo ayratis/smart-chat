@@ -104,11 +104,11 @@ class CreateChatViewModel(
     private fun fetchContacts() {
         httpApi
             .getContactList(
-                storeInfo?.storeId,
-                storeInfo?.storeName,
-                storeInfo?.partnerCode,
-                storeInfo?.partnerName,
-                storeInfo?.agentCode
+                storeInfo.storeId,
+                storeInfo.storeName,
+                storeInfo.partnerCode,
+                storeInfo.partnerName,
+                storeInfo.agentCode
             )
             .map { it.result.groups ?: emptyList() }
             .subscribeOn(Schedulers.io())

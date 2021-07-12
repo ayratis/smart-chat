@@ -12,5 +12,7 @@ data class Contact(
     @SerializedName("avatar")
     val avatar: String?,
     @SerializedName("online")
-    val online: Boolean?
+    val online: Boolean?,
+    @SerializedName("store_id")
+    val storeId: String?
 ) : Serializable

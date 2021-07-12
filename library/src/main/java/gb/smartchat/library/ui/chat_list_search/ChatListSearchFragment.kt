@@ -15,9 +15,10 @@ import gb.smartchat.library.Component
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.Contact
+import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.ui._global.viewbinding.FragmentChatListSearchBinding
 import gb.smartchat.library.ui.chat.ChatFragment
-import gb.smartchat.library.ui.contact_profile.ContactProfileFragment
+import gb.smartchat.library.ui.group_complete.GroupCompleteFragment
 import gb.smartchat.library.utils.*
 import io.reactivex.disposables.CompositeDisposable
 
@@ -50,7 +51,7 @@ class ChatListSearchFragment : Fragment() {
         SearchResultsAdapter(
             userId = component.userId,
             onChatClickListener = this::navigateToChat,
-            onContactClickListener = this::navigateToContactProfile,
+            onContactClickListener = this::navigateToGroupComplete,
             nextPageCallback = viewModel::loadMore
         )
     }
@@ -128,9 +129,18 @@ class ChatListSearchFragment : Fragment() {
         )
     }
 
-    private fun navigateToContactProfile(contact: Contact) {
+    private fun navigateToGroupComplete(contact: Contact) {
+        val storeInfo = component.storeInfoList.find { it.storeId == contact.storeId }
+            ?: StoreInfo(
+                storeId = contact.storeId,
+                storeName = null,
+                agentCode = null,
+                partnerName = null,
+                partnerCode = null,
+                partnerAvatar = null
+            )
         parentFragmentManager.navigateTo(
-            ContactProfileFragment.create(contact, chatId = null),
+            GroupCompleteFragment.create(storeInfo, listOf(contact)),
             NavAnim.SLIDE
         )
     }
