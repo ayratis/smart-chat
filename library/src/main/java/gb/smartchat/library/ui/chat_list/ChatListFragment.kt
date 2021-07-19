@@ -200,7 +200,8 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 setOnClickListener {
                     profileViewModel.onCreateChatClick()
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                val isTablet = resources.getBoolean(R.bool.tablet)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && !isTablet) {
                     doOnApplyWindowInsets { _, insets, _ ->
                         updateLayoutParams<CoordinatorLayout.LayoutParams> {
                             bottomMargin = 16.dp(this@apply) + insets.systemWindowInsetBottom

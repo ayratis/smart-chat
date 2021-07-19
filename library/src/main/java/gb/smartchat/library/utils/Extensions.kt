@@ -70,7 +70,8 @@ fun View.addSystemTopPadding(
     targetView: View = this,
     isConsumed: Boolean = false
 ) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+    val isTablet = context.resources.getBoolean(R.bool.tablet)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && !isTablet) {
         doOnApplyWindowInsets { _, insets, initialPadding ->
             targetView.updatePadding(
                 top = initialPadding.top + insets.systemWindowInsetTop
@@ -91,37 +92,12 @@ fun View.addSystemTopPadding(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.KITKAT)
-fun View.addSystemTopPadding(
-    targetViews: List<View>,
-    isConsumed: Boolean = false
-) {
-    doOnApplyWindowInsets { _, insets, initialPadding ->
-        targetViews.forEach {
-            it.updatePadding(
-                top = initialPadding.top + insets.systemWindowInsetTop
-            )
-        }
-        if (isConsumed) {
-            WindowInsetsCompat.Builder(insets).setSystemWindowInsets(
-                Insets.of(
-                    insets.systemWindowInsetLeft,
-                    0,
-                    insets.systemWindowInsetRight,
-                    insets.systemWindowInsetBottom
-                )
-            ).build()
-        } else {
-            insets
-        }
-    }
-}
-
 fun View.addSystemBottomPadding(
     targetView: View = this,
     isConsumed: Boolean = false
 ) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+    val isTablet = context.resources.getBoolean(R.bool.tablet)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && !isTablet) {
         doOnApplyWindowInsets { _, insets, initialPadding ->
             targetView.updatePadding(
                 bottom = initialPadding.bottom + insets.systemWindowInsetBottom

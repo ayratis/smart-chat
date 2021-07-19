@@ -4,8 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import gb.smartchat.R
 import gb.smartchat.library.entity.Message
@@ -16,8 +18,9 @@ import gb.smartchat.library.ui.chat_list.ChatListFragment
 import gb.smartchat.library.ui.username_missing.UsernameMissingFragment
 import gb.smartchat.library.utils.*
 import io.reactivex.disposables.CompositeDisposable
+import kotlin.math.roundToInt
 
-class SmartChatActivity : AppCompatActivity(R.layout.layout_container),
+class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
     MessageDialogFragment.OnClickListener {
 
     companion object {
@@ -80,6 +83,22 @@ class SmartChatActivity : AppCompatActivity(R.layout.layout_container),
             window?.configureSystemBars()
         }
         super.onCreate(savedInstanceState)
+
+        val isTablet = resources.getBoolean(R.bool.tablet)
+
+        if (isTablet) {
+            val container = findViewById<View>(R.id.container)
+            val viewTop = findViewById<View>(R.id.view_top)
+            val viewBot = findViewById<View>(R.id.view_bot)
+            val minPadding = (container.height * 0.05).roundToInt()
+            container.doOnApplyWindowInsets { _, insets, _ ->
+                val topPadding = maxOf(insets.systemWindowInsetTop, minPadding)
+                val botPadding = maxOf(insets.systemWindowInsetBottom, minPadding)
+                viewTop.updateLayoutParams { height = topPadding }
+                viewBot.updateLayoutParams { height = botPadding }
+                insets
+            }
+        }
 
         if (savedInstanceState == null) {
 
