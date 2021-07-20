@@ -2,6 +2,7 @@ package gb.smartchat.library
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -79,6 +80,10 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        requestedOrientation =
+            if (resources.getBoolean(R.bool.tablet)) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            else ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             window?.configureSystemBars()
         }
@@ -90,7 +95,12 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
             val container = findViewById<View>(R.id.container)
             val viewTop = findViewById<View>(R.id.view_top)
             val viewBot = findViewById<View>(R.id.view_bot)
-            val minPadding = (container.height * 0.05).roundToInt()
+
+            val screenHeight = resources.displayMetrics.heightPixels
+            val screenWidth = resources.displayMetrics.widthPixels
+            val minWidth = minOf(screenHeight, screenWidth)
+            val minPadding = (minWidth * 0.1).roundToInt()
+
             container.doOnApplyWindowInsets { _, insets, _ ->
                 val topPadding = maxOf(insets.systemWindowInsetTop, minPadding)
                 val botPadding = maxOf(insets.systemWindowInsetBottom, minPadding)
