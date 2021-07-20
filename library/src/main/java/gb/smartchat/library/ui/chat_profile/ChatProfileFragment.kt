@@ -14,7 +14,6 @@ import gb.smartchat.R
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.Contact
-import gb.smartchat.library.entity.User
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.viewbinding.FragmentChatProfileBinding
 import gb.smartchat.library.ui.chat_profile.files.ChatProfileFilesFragment
@@ -34,6 +33,7 @@ class ChatProfileFragment : Fragment(),
         private const val ARG_CHAT = "arg chat"
         private const val LEAVE_CHAT_DIALOG_TAG = "leave chat dialog tag"
         private const val ARCHIVE_CHAT_DIALOG_TAG = "archive chat dialog tag"
+        private const val UNARCHIVE_CHAT_DIALOG_TAG = "unarchive chat dialog tag"
 
         fun create(chat: Chat) = ChatProfileFragment().apply {
             arguments = Bundle().apply {
@@ -66,7 +66,8 @@ class ChatProfileFragment : Fragment(),
                     component.userId,
                     component.resourceManager,
                     component.leaveChatPublisher,
-                    component.chatArchivePublisher
+                    component.chatArchivePublisher,
+                    component.chatUnarchivePublisher
                 ) as T
             }
         }
@@ -110,25 +111,55 @@ class ChatProfileFragment : Fragment(),
         binding.tvAgentName.text = chat.partnerName
         binding.viewPager.adapter = ViewPageAdapter()
         binding.tabLayout.setupWithViewPager(binding.viewPager)
-        binding.btnAddMembers.setOnClickListener {
-            parentFragmentManager.navigateTo(
-                CreateChatFragment.create(
-                    storeInfo = chat.storeInfo,
-                    mode = CreateChatMode.ADD_MEMBERS,
-                    chat = chat
+        binding.btnAddMembers.apply {
+            visible(chat.isArchived == false)
+            setOnClickListener {
+                parentFragmentManager.navigateTo(
+                    CreateChatFragment.create(
+                        storeInfo = chat.storeInfo,
+                        mode = CreateChatMode.ADD_MEMBERS,
+                        chat = chat
+                    )
                 )
+            }
+        }
+        binding.btnArchive.apply {
+
+            val drawableIcon = context.drawable(
+                if (chat.isArchived == true) R.drawable.ic_group_profile_unarchive_chat
+                else R.drawable.ic_group_profile_archive_chat
             )
+
+            setCompoundDrawablesWithIntrinsicBounds(null, drawableIcon, null, null)
+
+            text = getString(
+                if (chat.isArchived == true) R.string.unarchive
+                else R.string.archive
+            )
+
+            setOnClickListener {
+                if (chat.isArchived == true) {
+                    MessageDialogFragment
+                        .create(
+                            message = getString(R.string.unarchive_chat_dialog_message),
+                            positive = getString(R.string.yes),
+                            negative = getString(R.string.no),
+                            tag = UNARCHIVE_CHAT_DIALOG_TAG
+                        )
+                        .show(childFragmentManager, UNARCHIVE_CHAT_DIALOG_TAG)
+                } else {
+                    MessageDialogFragment
+                        .create(
+                            message = getString(R.string.archive_chat_dialog_message),
+                            positive = getString(R.string.yes),
+                            negative = getString(R.string.no),
+                            tag = ARCHIVE_CHAT_DIALOG_TAG
+                        )
+                        .show(childFragmentManager, ARCHIVE_CHAT_DIALOG_TAG)
+                }
+            }
         }
-        binding.btnArchive.setOnClickListener {
-            MessageDialogFragment
-                .create(
-                    message = getString(R.string.archive_chat_dialog_message),
-                    positive = getString(R.string.yes),
-                    negative = getString(R.string.no),
-                    tag = ARCHIVE_CHAT_DIALOG_TAG
-                )
-                .show(childFragmentManager, ARCHIVE_CHAT_DIALOG_TAG)
-        }
+
         binding.btnLeaveChat.setOnClickListener {
             MessageDialogFragment
                 .create(
@@ -158,6 +189,8 @@ class ChatProfileFragment : Fragment(),
                 }
             }
             .also { compositeDisposable.add(it) }
+
+
     }
 
     override fun onPause() {
@@ -176,6 +209,7 @@ class ChatProfileFragment : Fragment(),
         when (tag) {
             LEAVE_CHAT_DIALOG_TAG -> viewModel.leaveChat()
             ARCHIVE_CHAT_DIALOG_TAG -> viewModel.archiveChat()
+            UNARCHIVE_CHAT_DIALOG_TAG -> viewModel.unarchiveChat()
         }
     }
 
@@ -197,8 +231,7 @@ class ChatProfileFragment : Fragment(),
         override fun getItem(position: Int): Fragment {
             return when (position) {
                 0 -> {
-                    val creator = chat.users.find { it.role == User.Role.CREATOR }
-                    val isCreator = creator?.id == component.userId
+                    val isCreator = chat.isAdmin == true && chat.isArchived == false
                     ChatProfileMembersFragment.create(chat.id, isCreator)
                 }
                 1 -> ChatProfileFilesFragment.create(chat.id, true)
