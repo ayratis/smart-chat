@@ -56,6 +56,7 @@
     <string name="archive_chat_error">Ошибка при попытке архивировать чат</string>
     <string name="leave_chat_dialog_message">Вы действительно хотите покинуть этот чат?</string>
     <string name="archive_chat_dialog_message">Вы действительно хотите архивировать этот чат?</string>
+    <string name="unarchive_chat_dialog_message">Вы действительно хотите разархивировать этот чат?</string>
     <string name="members">Участники</string>
     <string name="media">Медиа</string>
     <string name="links">Ссылки</string>

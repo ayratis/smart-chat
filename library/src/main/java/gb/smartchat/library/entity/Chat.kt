@@ -12,7 +12,6 @@ data class Chat(
     val name: String?,
     @SerializedName("avatar")
     val avatar: String?,
-
     @SerializedName("last_message")
     val lastMessage: Message?,
     @SerializedName("unread_messages_count")
@@ -34,7 +33,11 @@ data class Chat(
     @SerializedName("agent_code")
     val agentCode: Int?,
     @SerializedName("partner_avatar")
-    val partnerAvatar: String?
+    val partnerAvatar: String?,
+    @SerializedName("is_admin")
+    val isAdmin: Boolean?,
+    @SerializedName("is_archived")
+    val isArchived: Boolean?
 ) : Serializable, Comparable<Chat> {
 
     fun getReadInfo(userId: String): ReadInfo {
