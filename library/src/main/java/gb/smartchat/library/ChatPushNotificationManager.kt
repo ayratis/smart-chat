@@ -25,6 +25,7 @@ object ChatPushNotificationManager {
         storeInfoList: List<StoreInfo>,
         dataMap: Map<String, String>,
         @DrawableRes iconRes: Int = 0,
+        baseUrl: String = "https://chat.swnn.ru:56479"
     ): Boolean {
         if (dataMap["is_chat_push_message"] != "true") return false
         val chatId = dataMap["chat_id"] ?: return false
@@ -45,6 +46,7 @@ object ChatPushNotificationManager {
             title,
             message,
             iconRes,
+            baseUrl
         )
 
         return true
@@ -54,7 +56,8 @@ object ChatPushNotificationManager {
         context: Context,
         smartUserId: String,
         storeInfoList: List<StoreInfo>,
-        message: Message
+        message: Message,
+        baseUrl: String = "https://chat.swnn.ru:56479"
     ) {
         message.chatId ?: return
         val title = message.chatName ?: ""
@@ -73,6 +76,7 @@ object ChatPushNotificationManager {
             title,
             text,
             iconRes = 0,
+            baseUrl
         )
     }
 
@@ -84,6 +88,7 @@ object ChatPushNotificationManager {
         title: String,
         message: String,
         @DrawableRes iconRes: Int = 0,
+        baseUrl: String
     ) {
         createNotificationChannel(context)
 
@@ -91,7 +96,8 @@ object ChatPushNotificationManager {
             context,
             smartUserId,
             storeInfoList,
-            chatId
+            chatId,
+            baseUrl
         ).apply {
             action = ACTION_PUSH
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP

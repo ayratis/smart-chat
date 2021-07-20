@@ -37,7 +37,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
             userId: String,
             storeInfoList: List<StoreInfo>,
             chatId: Long = 0,
-            baseUrl: String = "https://chat-dev.swnn.ru:56479"
+            baseUrl: String = "https://chat.swnn.ru:56479"
         ): Intent {
             return Intent(context, SmartChatActivity::class.java).apply {
                 putExtra(ARG_USER_ID, userId)
@@ -198,13 +198,20 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
                     this,
                     userId,
                     storeInfoList,
-                    message
+                    message,
+                    baseUrl
                 )
             }
             return
         }
 
-        ChatPushNotificationManager.proceedSocketMessage(this, userId, storeInfoList, message)
+        ChatPushNotificationManager.proceedSocketMessage(
+            this,
+            userId,
+            storeInfoList,
+            message,
+            baseUrl
+        )
     }
 
     override fun dialogCanceled(tag: String) {
