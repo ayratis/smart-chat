@@ -112,7 +112,7 @@
             android:clipToPadding="false"
             android:overScrollMode="never"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
-            tools:listitem="@layout/item_contact" />
+            tools:listitem="@layout/item_chat_contact" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/btn_create_chat"

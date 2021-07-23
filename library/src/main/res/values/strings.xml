@@ -39,6 +39,7 @@
     <string name="d_members">%d участников</string>
     <string name="clear">Очистить</string>
     <string name="close">Закрыть</string>
+    <string name="close_chats">Закрыть чаты</string>
     <string name="pin">Закрепить</string>
     <string name="unpin">Открепить</string>
     <string name="pin_error">Произошла ошибка при закреплении чата</string>

@@ -160,6 +160,7 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                 inflateMenu(R.menu.archive_messages)
                 inflateMenu(R.menu.favorite_messages)
                 inflateMenu(R.menu.user_profile)
+                inflateMenu(R.menu.close_chats)
                 setOnMenuItemClickListener { menuItem ->
                     when (menuItem.itemId) {
                         R.id.search -> {
@@ -186,6 +187,11 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                         R.id.action_user_profile -> {
                             dismissPopupMenus()
                             navigateToUserProfile()
+                            true
+                        }
+                        R.id.action_close_chats -> {
+                            dismissPopupMenus()
+                            activity?.finish()
                             true
                         }
                         else -> false
