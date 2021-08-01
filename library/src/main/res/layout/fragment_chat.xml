@@ -10,34 +10,83 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                app:navigationIcon="@drawable/ic_arrow_back_purple_24"
-                app:subtitleTextColor="@color/razzmatazz"
-                tools:subtitle="158579 ООО Мясокомбинат"
-                tools:title="@string/app_name" />
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:navigationIcon="@drawable/ic_arrow_back_purple_24" />
 
-            <ImageView
-                android:id="@+id/iv_chat_avatar"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginHorizontal="14dp"
-                android:background="?attr/actionBarItemBackground"
-                android:contentDescription="@null"
-                android:padding="2dp"
-                android:scaleType="fitCenter"
-                tools:src="@drawable/group_avatar_placeholder" />
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/chat_info_layout"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:layout_marginStart="72dp">
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/tv_title"
+                    style="?attr/textAppearanceHeadline6"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    app:layout_constraintBottom_toTopOf="@id/tv_subtitle"
+                    app:layout_constraintEnd_toStartOf="@id/iv_chat_avatar"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_chainStyle="packed"
+                    tools:text="Smart Chat" />
+
+                <ImageView
+                    android:id="@+id/iv_partner_icon"
+                    android:layout_width="12sp"
+                    android:layout_height="12sp"
+                    android:layout_marginEnd="4dp"
+                    android:visibility="gone"
+                    android:importantForAccessibility="no"
+                    app:layout_constraintBottom_toBottomOf="@id/tv_subtitle"
+                    app:layout_constraintEnd_toStartOf="@id/tv_subtitle"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/tv_subtitle"
+                    tools:background="@color/gray" />
+
+                <TextView
+                    android:id="@+id/tv_subtitle"
+                    style="@style/Caption1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/razzmatazz"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/iv_chat_avatar"
+                    app:layout_constraintStart_toEndOf="@id/iv_partner_icon"
+                    app:layout_constraintTop_toBottomOf="@id/tv_title"
+                    tools:text="158579 ООО Мясокомбинат" />
+
+                <ImageView
+                    android:id="@+id/iv_chat_avatar"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginHorizontal="14dp"
+                    android:background="?attr/actionBarItemBackground"
+                    android:contentDescription="@null"
+                    android:padding="2dp"
+                    android:scaleType="fitCenter"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:src="@drawable/group_avatar_placeholder" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </FrameLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 

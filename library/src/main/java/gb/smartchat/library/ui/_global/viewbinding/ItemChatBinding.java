@@ -27,6 +27,9 @@ public final class ItemChatBinding implements ViewBinding {
   public final ImageView ivSendStatus;
 
   @NonNull
+  public final ImageView ivPartnerIcon;
+
+  @NonNull
   public final TextView tvAgentName;
 
   @NonNull
@@ -48,7 +51,7 @@ public final class ItemChatBinding implements ViewBinding {
       @NonNull ImageView ivPin, @NonNull ImageView ivSendStatus, @NonNull TextView tvAgentName,
       @NonNull TextView tvChatName, @NonNull TextView tvLastMsgDate,
       @NonNull TextView tvLastMsgSenderName, @NonNull TextView tvLastMsgText,
-      @NonNull TextView tvUnreadCounter) {
+      @NonNull TextView tvUnreadCounter, @NonNull ImageView ivPartnerIcon) {
     this.rootView = rootView;
     this.ivAvatar = ivAvatar;
     this.ivPin = ivPin;
@@ -59,6 +62,7 @@ public final class ItemChatBinding implements ViewBinding {
     this.tvLastMsgSenderName = tvLastMsgSenderName;
     this.tvLastMsgText = tvLastMsgText;
     this.tvUnreadCounter = tvUnreadCounter;
+    this.ivPartnerIcon = ivPartnerIcon;
   }
 
   @Override
@@ -142,9 +146,15 @@ public final class ItemChatBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.iv_partner_icon;
+      ImageView ivPartnerIcon = rootView.findViewById(id);
+      if (ivPartnerIcon == null) {
+        break missingId;
+      }
+
       return new ItemChatBinding((ConstraintLayout) rootView, ivAvatar, ivPin, ivSendStatus,
           tvAgentName, tvChatName, tvLastMsgDate, tvLastMsgSenderName, tvLastMsgText,
-          tvUnreadCounter);
+          tvUnreadCounter, ivPartnerIcon);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

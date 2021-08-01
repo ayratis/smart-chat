@@ -108,7 +108,11 @@ class ChatProfileFragment : Fragment(),
             .into(binding.ivPhoto)
         binding.tvGroupName.text = chat.name
         binding.tvMemberCount.text = getString(R.string.d_members, chat.users.size)
-        binding.tvAgentName.text = chat.partnerName
+        Glide.with(binding.ivPartnerIcon)
+            .load(chat.partnerAvatar)
+            .into(binding.ivPartnerIcon)
+        binding.ivPartnerIcon.visible(chat.partnerAvatar != null)
+        binding.tvAgentName.text = chat.storeName
         binding.viewPager.adapter = ViewPageAdapter()
         binding.tabLayout.setupWithViewPager(binding.viewPager)
         binding.btnAddMembers.apply {

@@ -84,6 +84,7 @@ class GroupCompleteViewModel(
             storeName = storeInfo.storeName,
             partnerName = storeInfo.partnerName,
             agentCode = storeInfo.agentCode,
+            partnerCode = storeInfo.partnerCode
         )
         httpApi
             .postCreateChat(requestBody)

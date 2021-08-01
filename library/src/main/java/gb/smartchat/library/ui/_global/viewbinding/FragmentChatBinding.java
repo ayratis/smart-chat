@@ -128,6 +128,18 @@ public final class FragmentChatBinding implements ViewBinding {
   @NonNull
   public final ConstraintLayout viewQuotedMessage;
 
+  @NonNull
+  public final ConstraintLayout chatInfoLayout;
+
+  @NonNull
+  public final TextView tvTitle;
+
+  @NonNull
+  public final TextView tvSubtitle;
+
+  @NonNull
+  public final ImageView ivPartnerIcon;
+
   private FragmentChatBinding(@NonNull RelativeLayout rootView, @NonNull AppBarLayout appBarLayout,
       @NonNull ImageButton btnAttach, @NonNull ImageButton btnDetach,
       @NonNull ImageButton btnEditingClose, @NonNull Button btnEmptyRetry,
@@ -143,7 +155,9 @@ public final class FragmentChatBinding implements ViewBinding {
       @NonNull TextView tvQuotedPerson, @NonNull TextView tvUnreadMessageCount,
       @NonNull FrameLayout viewAttachment, @NonNull ConstraintLayout viewEditingMessage,
       @NonNull LinearLayout viewEmptyError, @NonNull LinearLayout viewFileAttachment,
-      @NonNull View viewQuot, @NonNull ConstraintLayout viewQuotedMessage) {
+      @NonNull View viewQuot, @NonNull ConstraintLayout viewQuotedMessage,
+      @NonNull ConstraintLayout chatInfoLayout, @NonNull TextView tvTitle,
+      @NonNull TextView tvSubtitle, @NonNull ImageView ivPartnerIcon) {
     this.rootView = rootView;
     this.appBarLayout = appBarLayout;
     this.btnAttach = btnAttach;
@@ -178,6 +192,10 @@ public final class FragmentChatBinding implements ViewBinding {
     this.viewFileAttachment = viewFileAttachment;
     this.viewQuot = viewQuot;
     this.viewQuotedMessage = viewQuotedMessage;
+    this.chatInfoLayout = chatInfoLayout;
+    this.tvTitle = tvTitle;
+    this.tvSubtitle = tvSubtitle;
+    this.ivPartnerIcon = ivPartnerIcon;
   }
 
   @Override
@@ -405,13 +423,37 @@ public final class FragmentChatBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.chat_info_layout;
+      ConstraintLayout chatInfoLayout = rootView.findViewById(id);
+      if (chatInfoLayout == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_title;
+      TextView tvTitle = rootView.findViewById(id);
+      if (tvTitle == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_subtitle;
+      TextView tvSubtitle = rootView.findViewById(id);
+      if (tvSubtitle == null) {
+        break missingId;
+      }
+
+      id = R.id.iv_partner_icon;
+      ImageView ivPartnerIcon = rootView.findViewById(id);
+      if (ivPartnerIcon == null) {
+        break missingId;
+      }
+
       return new FragmentChatBinding((RelativeLayout) rootView, appBarLayout, btnAttach, btnDetach,
           btnEditingClose, btnEmptyRetry, btnQuotedClose, btnScrollDown, btnSend, content, divider,
           etInput, ivAttachmentPhoto, ivChatAvatar, ivFile, labelEditing, layoutInput,
           progressBarFile, progressBarPhoto, rvChat, rvMentions, toolbar, tvEditingMessage,
           tvFileName, tvFileSize, tvQuotedMessage, tvQuotedPerson, tvUnreadMessageCount,
           viewAttachment, viewEditingMessage, viewEmptyError, viewFileAttachment, viewQuot,
-          viewQuotedMessage);
+          viewQuotedMessage, chatInfoLayout, tvTitle, tvSubtitle, ivPartnerIcon);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

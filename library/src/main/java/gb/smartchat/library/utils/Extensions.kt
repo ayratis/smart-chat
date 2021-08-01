@@ -328,7 +328,7 @@ fun StoreInfo.toCreateChatRequest(
         contacts = contacts,
         storeId = storeId,
         storeName = storeName,
-//        partnerCode,
+        partnerCode = partnerCode,
         partnerName = partnerName,
         agentCode = agentCode,
     )

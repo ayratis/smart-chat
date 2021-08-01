@@ -1,6 +1,7 @@
 package gb.smartchat.library.ui._global.view_holder
 
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -68,6 +69,7 @@ class ChatViewHolder(
 
     fun bind(chat: Chat) {
         this.chat = chat
+        Log.d("TAG", "bind: $chat")
         Glide.with(binding.ivAvatar)
             .load(chat.avatar)
             .placeholder(R.drawable.profile_avatar_placeholder)
@@ -104,10 +106,12 @@ class ChatViewHolder(
             text = if (chat.hasActualMention(userId)) "@" else chat.unreadMessagesCount?.toString()
             visible(chat.unreadMessagesCount ?: 0 > 0)
         }
-        binding.tvAgentName.apply {
-            text = chat.partnerName
-            visible(!chat.partnerName.isNullOrBlank())
-        }
+        Glide
+            .with(binding.ivPartnerIcon)
+            .load(chat.partnerAvatar)
+            .into(binding.ivPartnerIcon)
+        binding.ivPartnerIcon.visible(chat.partnerAvatar != null)
+        binding.tvAgentName.text = chat.storeName
         binding.ivPin.visible(chat.isPinned == true)
     }
 

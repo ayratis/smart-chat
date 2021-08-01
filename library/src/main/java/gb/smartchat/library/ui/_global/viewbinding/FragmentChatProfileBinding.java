@@ -72,6 +72,9 @@ public final class FragmentChatProfileBinding implements ViewBinding {
   @NonNull
   public final ViewPager viewPager;
 
+  @NonNull
+  public final ImageView ivPartnerIcon;
+
   private FragmentChatProfileBinding(@NonNull LinearLayout rootView,
       @NonNull AppBarLayout appBarLayout, @NonNull TextView btnAddMembers,
       @NonNull TextView btnArchive, @NonNull TextView btnLeaveChat,
@@ -79,7 +82,8 @@ public final class FragmentChatProfileBinding implements ViewBinding {
       @NonNull Toolbar fakeToolbar, @NonNull ImageView ivPhoto, @NonNull LinearLayout linearLayout,
       @NonNull LinearLayout profileInfoLayout, @NonNull TabLayout tabLayout,
       @NonNull Toolbar toolbar, @NonNull TextView tvAgentName, @NonNull TextView tvGroupName,
-      @NonNull TextView tvMemberCount, @NonNull ViewPager viewPager) {
+      @NonNull TextView tvMemberCount, @NonNull ViewPager viewPager,
+      @NonNull ImageView ivPartnerIcon) {
     this.rootView = rootView;
     this.appBarLayout = appBarLayout;
     this.btnAddMembers = btnAddMembers;
@@ -97,6 +101,7 @@ public final class FragmentChatProfileBinding implements ViewBinding {
     this.tvGroupName = tvGroupName;
     this.tvMemberCount = tvMemberCount;
     this.viewPager = viewPager;
+    this.ivPartnerIcon = ivPartnerIcon;
   }
 
   @Override
@@ -218,10 +223,16 @@ public final class FragmentChatProfileBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.iv_partner_icon;
+      ImageView ivPartnerIcon = rootView.findViewById(id);
+      if (ivPartnerIcon == null) {
+        break missingId;
+      }
+
       return new FragmentChatProfileBinding((LinearLayout) rootView, appBarLayout, btnAddMembers,
           btnArchive, btnLeaveChat, collapsingToolbar, coordinator, fakeToolbar, ivPhoto,
           linearLayout, profileInfoLayout, tabLayout, toolbar, tvAgentName, tvGroupName,
-          tvMemberCount, viewPager);
+          tvMemberCount, viewPager, ivPartnerIcon);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

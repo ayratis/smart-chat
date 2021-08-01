@@ -15,6 +15,7 @@ import gb.smartchat.library.entity.Message
 import gb.smartchat.library.entity.StoreInfo
 import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
+import org.json.JSONObject
 import java.io.IOException
 
 object ChatPushNotificationManager {
@@ -33,14 +34,17 @@ object ChatPushNotificationManager {
         deviceType: String,
         baseUrl: String = "https://chat.swnn.ru:56479"
     ) {
-        val formBody: RequestBody = FormBody.Builder()
-            .add("token", token)
-            .add("device_type", deviceType)
-            .build()
-
+        val bodyJson = JSONObject().apply {
+            put("token", token)
+            put("device_type", deviceType)
+        }
+        val body = RequestBody.create(
+            MediaType.parse("application/json; charset=utf-8"),
+            bodyJson.toString()
+        )
         val request = Request.Builder()
             .url("$baseUrl/chat/contacts/put_notifications_token")
-            .method("POST", formBody)
+            .method("POST", body)
             .header("smart-user-id", smartUserId)
             .build()
 
@@ -63,7 +67,10 @@ object ChatPushNotificationManager {
                 override fun onResponse(call: Call, response: Response) {
                     Log.d(
                         "PushNotificationManager",
-                        "onRegisterTokenResponse: isSuccessful: ${response.isSuccessful}"
+                        "onRegisterTokenResponse: " +
+                                "isSuccessful: ${response.isSuccessful}" +
+                                "code: ${response.code()}" +
+                                "message: ${response.message()}"
                     )
                 }
             })

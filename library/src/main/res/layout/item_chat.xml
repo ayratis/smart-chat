@@ -111,22 +111,35 @@
         android:layout_height="24dp"
         android:layout_marginEnd="8dp"
         android:contentDescription="@null"
-        android:visibility="gone"
-        tools:visibility="visible"
         android:src="@drawable/ic_pin_24"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/tv_unread_counter"
         app:layout_constraintEnd_toStartOf="@+id/tv_unread_counter"
-        app:layout_constraintTop_toTopOf="@id/tv_unread_counter" />
+        app:layout_constraintTop_toTopOf="@id/tv_unread_counter"
+        tools:visibility="visible" />
+
+    <ImageView
+        android:id="@+id/iv_partner_icon"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:importantForAccessibility="no"
+        android:layout_marginEnd="4dp"
+        app:layout_constraintBottom_toBottomOf="@id/tv_agent_name"
+        app:layout_constraintEnd_toStartOf="@id/tv_agent_name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tv_agent_name"
+        tools:background="@color/black" />
 
     <TextView
         android:id="@+id/tv_agent_name"
         style="@style/Caption1"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:drawablePadding="4dp"
         android:textColor="@color/razzmatazz"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/iv_partner_icon"
         tools:text="Тюлькин Заречка (Свит лайф)" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

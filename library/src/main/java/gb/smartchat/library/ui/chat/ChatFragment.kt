@@ -373,14 +373,14 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                         .placeholder(R.drawable.group_avatar_placeholder)
                         .circleCrop()
                         .into(binding.ivChatAvatar)
-                    binding.ivChatAvatar.setOnClickListener {
+                    binding.chatInfoLayout.setOnClickListener {
                         parentFragmentManager.navigateTo(
                             ChatProfileFragment.create(chat),
                             NavAnim.SLIDE
                         )
                     }
                 }
-                binding.toolbar.title = chat.name
+                binding.tvTitle.text = chat.name
             }
             .also { newsDisposables.add(it) }
 
@@ -388,14 +388,17 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
             .map { it.chat to it.isOnline }
             .distinctUntilChanged()
             .subscribe { (chat, isOnline) ->
-                binding.toolbar.apply {
-                    if (isOnline) {
-                        setSubtitleTextColor(context.color(R.color.razzmatazz))
-                        subtitle = chat.partnerName
-                    } else {
-                        setSubtitleTextColor(context.color(R.color.santas_gray))
-                        subtitle = getString(R.string.waiting_for_network)
-                    }
+                if (isOnline) {
+                    binding.tvSubtitle.setTextColor(requireContext().color(R.color.razzmatazz))
+                    binding.tvSubtitle.text = chat.storeName
+                    Glide.with(this)
+                        .load(chat.partnerAvatar)
+                        .into(binding.ivPartnerIcon)
+                    binding.ivPartnerIcon.visible(chat.partnerAvatar != null)
+                } else {
+                    binding.tvSubtitle.setTextColor(requireContext().color(R.color.santas_gray))
+                    binding.tvSubtitle.text = getString(R.string.waiting_for_network)
+                    binding.ivPartnerIcon.visible(false)
                 }
             }
             .also { renderDisposables.add(it) }
