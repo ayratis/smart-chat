@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
+import gb.smartchat.BuildConfig
 import gb.smartchat.library.data.content.ContentHelper
 import gb.smartchat.library.data.content.ContentHelperImpl
 import gb.smartchat.library.data.download.FileDownloadHelper
@@ -78,11 +79,13 @@ class Component constructor(
                         .build()
                 it.proceed(newRequest)
             }
-            addInterceptor(
-                HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BODY
-                }
-            )
+            if (BuildConfig.DEBUG) {
+                addInterceptor(
+                    HttpLoggingInterceptor().apply {
+                        level = HttpLoggingInterceptor.Level.BODY
+                    }
+                )
+            }
             build()
         }
     }

@@ -10,9 +10,11 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
+import gb.smartchat.BuildConfig
 import gb.smartchat.library.entity.Message
 import gb.smartchat.library.entity.StoreInfo
 import okhttp3.*
+import okhttp3.logging.HttpLoggingInterceptor
 import java.io.IOException
 
 object ChatPushNotificationManager {
@@ -37,12 +39,22 @@ object ChatPushNotificationManager {
             .build()
 
         val request = Request.Builder()
-            .url("$baseUrl/put_notifications_token")
+            .url("$baseUrl/chat/management/put_notifications_token")
             .method("POST", formBody)
             .header("smart-user-id", smartUserId)
             .build()
 
-        OkHttpClient.Builder().build().newCall(request).enqueue(
+        val okHttpClientBuilder = OkHttpClient.Builder()
+        if (BuildConfig.DEBUG) {
+            okHttpClientBuilder.addInterceptor(
+                HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                }
+            )
+        }
+        val okHttpClient = okHttpClientBuilder.build()
+
+        okHttpClient.newCall(request).enqueue(
             object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     Log.d("PushNotificationManager", "onRegisterTokenFailure: $e")
