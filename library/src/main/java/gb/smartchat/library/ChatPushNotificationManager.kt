@@ -39,7 +39,7 @@ object ChatPushNotificationManager {
             .build()
 
         val request = Request.Builder()
-            .url("$baseUrl/chat/management/put_notifications_token")
+            .url("$baseUrl/chat/contacts/put_notifications_token")
             .method("POST", formBody)
             .header("smart-user-id", smartUserId)
             .build()
