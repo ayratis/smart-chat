@@ -16,6 +16,7 @@ import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui.chat.ChatFragment
 import gb.smartchat.library.ui.chat_list.ChatListFragment
+import gb.smartchat.library.ui.group_complete.GroupCompleteFragment
 import gb.smartchat.library.ui.username_missing.UsernameMissingFragment
 import gb.smartchat.library.utils.*
 import io.reactivex.disposables.CompositeDisposable
@@ -186,6 +187,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
     }
 
     private fun proceedNewMessage(message: Message) {
+        Log.d(TAG, "proceedNewMessage: $message")
         val currentFragment = currentFragment
 
         if (currentFragment is ChatListFragment) {
@@ -193,6 +195,19 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
         }
 
         if (currentFragment is ChatFragment) {
+            if (!currentFragment.isSameChat(message)) {
+                ChatPushNotificationManager.proceedSocketMessage(
+                    this,
+                    userId,
+                    storeInfoList,
+                    message,
+                    baseUrl
+                )
+            }
+            return
+        }
+
+        if (currentFragment is GroupCompleteFragment) {
             if (!currentFragment.isSameChat(message)) {
                 ChatPushNotificationManager.proceedSocketMessage(
                     this,

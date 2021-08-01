@@ -19,6 +19,7 @@ import gb.smartchat.R
 import gb.smartchat.library.Component
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Contact
+import gb.smartchat.library.entity.Message
 import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.ProgressDialog
@@ -218,5 +219,9 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
             ProgressDialog().show(childFragmentManager, PROGRESS_TAG)
             childFragmentManager.executePendingTransactions()
         }
+    }
+
+    fun isSameChat(message: Message): Boolean {
+        return viewModel.isSameChat(message)
     }
 }

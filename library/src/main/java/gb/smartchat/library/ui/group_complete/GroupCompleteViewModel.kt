@@ -7,10 +7,7 @@ import gb.smartchat.R
 import gb.smartchat.library.data.content.ContentHelper
 import gb.smartchat.library.data.http.HttpApi
 import gb.smartchat.library.data.resources.ResourceManager
-import gb.smartchat.library.entity.Chat
-import gb.smartchat.library.entity.Contact
-import gb.smartchat.library.entity.StoreInfo
-import gb.smartchat.library.entity.UserProfile
+import gb.smartchat.library.entity.*
 import gb.smartchat.library.entity.request.CreateChatRequest
 import gb.smartchat.library.publisher.ChatCreatedPublisher
 import gb.smartchat.library.publisher.ContactDeletePublisher
@@ -39,6 +36,7 @@ class GroupCompleteViewModel(
     private var uploadDisposable: Disposable? = null
     private val navToChatCommand = BehaviorRelay.create<SingleEvent<Chat>>()
     private val showDialogCommand = BehaviorRelay.create<SingleEvent<String>>()
+    private var createdChat: Chat? = null
 
     val contacts: Observable<List<Contact>> = store.hide().map { it.contacts }
     val createEnabled: Observable<Boolean> = store.hide().map { state ->
@@ -82,10 +80,10 @@ class GroupCompleteViewModel(
             chatName = chatName,
             fileUrl = avatarUrl,
             contacts = contacts + userProfile.toContact(),
-            storeId = storeInfo?.storeId,
-            storeName = storeInfo?.storeName,
-            partnerName = storeInfo?.partnerName,
-            agentCode = storeInfo?.agentCode,
+            storeId = storeInfo.storeId,
+            storeName = storeInfo.storeName,
+            partnerName = storeInfo.partnerName,
+            agentCode = storeInfo.agentCode,
         )
         httpApi
             .postCreateChat(requestBody)
@@ -93,7 +91,10 @@ class GroupCompleteViewModel(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
-                { store.accept(GroupCompleteUDF.Action.CreateGroupSuccess(it)) },
+                {
+                    createdChat = it
+                    store.accept(GroupCompleteUDF.Action.CreateGroupSuccess(it))
+                },
                 { store.accept(GroupCompleteUDF.Action.CreateGroupError(it)) }
             )
             .also { compositeDisposable.add(it) }
@@ -133,6 +134,10 @@ class GroupCompleteViewModel(
 
     fun onCreateGroup() {
         store.accept(GroupCompleteUDF.Action.CreateGroup)
+    }
+
+    fun isSameChat(message: Message): Boolean {
+        return createdChat?.id == message.chatId
     }
 
     override fun onCleared() {

@@ -38,10 +38,6 @@ interface HttpApi {
     @GET("chat/contacts/list")
     fun getContactList(
         @Query("store_id") storeId: String?, //GUID
-        @Query("store_name") storeName: String?,
-        @Query("partner_code") partnerCode: Int?,
-        @Query("partner_name") partnerName: String?,
-        @Query("agent_code") agentCode: Int?
     ): Single<BaseResponse<ContactListResponse>>
 
     @POST("chat/management/create")

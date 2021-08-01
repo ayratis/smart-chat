@@ -152,8 +152,8 @@ object ChatListUDF {
                                 lastMessage = action.message,
                                 unreadMessagesCount = unreadMessageCount
                             )
-                            removeAt(targetPosition)
-                            add(0, newChat)
+                            set(targetPosition, newChat)
+                            sort()
                         }
                         return state.copy(chatList = newChatList)
                     } else {

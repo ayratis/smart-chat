@@ -7,10 +7,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import gb.smartchat.library.entity.Message
 import gb.smartchat.library.entity.StoreInfo
+import okhttp3.*
+import java.io.IOException
 
 object ChatPushNotificationManager {
 
@@ -18,6 +21,41 @@ object ChatPushNotificationManager {
     const val ARG_CHAT_ID = "arg chat id"
     const val ACTION_PUSH = "action push"
     const val CHANNEL_NAME = "smart-chat-channel"
+
+    /**
+     * @param deviceType - ios | android | huawei | no_google
+     */
+    fun registerPushToken(
+        smartUserId: String,
+        token: String,
+        deviceType: String,
+        baseUrl: String = "https://chat.swnn.ru:56479"
+    ) {
+        val formBody: RequestBody = FormBody.Builder()
+            .add("token", token)
+            .add("device_type", deviceType)
+            .build()
+
+        val request = Request.Builder()
+            .url("$baseUrl/put_notifications_token")
+            .method("POST", formBody)
+            .header("smart-user-id", smartUserId)
+            .build()
+
+        OkHttpClient.Builder().build().newCall(request).enqueue(
+            object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.d("PushNotificationManager", "onRegisterTokenFailure: $e")
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    Log.d(
+                        "PushNotificationManager",
+                        "onRegisterTokenResponse: isSuccessful: ${response.isSuccessful}"
+                    )
+                }
+            })
+    }
 
     fun proceedRemoteMessage(
         context: Context,

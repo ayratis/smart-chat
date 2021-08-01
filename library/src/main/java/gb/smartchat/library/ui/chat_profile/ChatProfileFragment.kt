@@ -112,7 +112,7 @@ class ChatProfileFragment : Fragment(),
         binding.viewPager.adapter = ViewPageAdapter()
         binding.tabLayout.setupWithViewPager(binding.viewPager)
         binding.btnAddMembers.apply {
-            visible(chat.isArchived == false)
+            visible(chat.isArchived != true)
             setOnClickListener {
                 parentFragmentManager.navigateTo(
                     CreateChatFragment.create(
