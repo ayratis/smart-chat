@@ -97,7 +97,7 @@ class ChatViewModel(
     private fun fetchChat(chatId: Long) {
         httpApi
             .getChat(chatId)
-            .map { it.result.chat.first() }
+            .map { it.result.chat }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSubscribe { fullScreenProgressBehavior.accept(true) }
@@ -109,6 +109,7 @@ class ChatViewModel(
                     start()
                 },
                 {
+                    Log.e(TAG, "fetchChat: error", it)
                     val message = it.humanMessage(resourceManager)
                     showMessageDialogCommand.accept(SingleEvent(message to FETCH_CHAT_ERROR_TAG))
                 }

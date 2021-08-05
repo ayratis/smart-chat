@@ -12,10 +12,10 @@ class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
         super.onCreate(savedInstanceState)
         findViewById<Button>(R.id.btn_user1).setOnClickListener {
 
-            openChatList(/*"46343a36-9ad0-4002-822d-61d81da5c831"*/"d9d39587-de82-11eb-941d-9418820bda83") //Достоевский
+            openChatList("46343a36-9ad0-4002-822d-61d81da5c831"/*"d9d39587-de82-11eb-941d-9418820bda83"*/) //Достоевский
         }
         findViewById<Button>(R.id.btn_user2).setOnClickListener {
-            openChatList(/*"77f21ecc-0d4a-4f85-9173-55acf327f007"*/"fa736de8-dd08-11e8-80d5-ecebb89a056f") //Борщев
+            openChatList("77f21ecc-0d4a-4f85-9173-55acf327f007"/*"fa736de8-dd08-11e8-80d5-ecebb89a056f"*/) //Борщев
         }
     }
 
@@ -45,7 +45,7 @@ class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
             this,
             userId,
             storeInfoList,
-//            baseUrl = "http://91.201.41.157:8001/"
+            baseUrl = "http://91.201.41.157:8001/"
         )
         startActivity(intent)
     }

@@ -72,7 +72,7 @@ class ChatViewHolder(
         Log.d("TAG", "bind: $chat")
         Glide.with(binding.ivAvatar)
             .load(chat.avatar)
-            .placeholder(R.drawable.profile_avatar_placeholder)
+            .placeholder(R.drawable.group_avatar_placeholder)
             .circleCrop()
             .into(binding.ivAvatar)
         

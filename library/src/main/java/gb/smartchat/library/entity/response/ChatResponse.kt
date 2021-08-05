@@ -5,5 +5,5 @@ import gb.smartchat.library.entity.Chat
 
 data class ChatResponse(
     @SerializedName("chat")
-    val chat: List<Chat>
+    val chat: Chat
 )

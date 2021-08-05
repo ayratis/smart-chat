@@ -104,7 +104,7 @@ object ChatListUDF {
                                 )
                             } else {
                                 state.copy(
-                                    chatList = action.items,
+                                    chatList = action.items.sorted(),
                                     pagingState = PagingState.DATA,
                                     pageCount = 1
                                 )
@@ -115,7 +115,7 @@ object ChatListUDF {
                                 state.copy(pagingState = PagingState.FULL_DATA)
                             } else {
                                 state.copy(
-                                    chatList = state.chatList + action.items,
+                                    chatList = (state.chatList + action.items).sorted(),
                                     pagingState = PagingState.DATA,
                                     pageCount = state.pageCount + 1
                                 )
