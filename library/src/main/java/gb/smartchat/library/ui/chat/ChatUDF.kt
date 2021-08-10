@@ -248,7 +248,7 @@ object ChatUDF {
                     }
 
                     if (state.pagingState == PagingState.READ_INFO_PROGRESS) {
-                        return state
+                        return state.copy(draft = draft)
                     }
 
                     if (state.fullDataDown && (
