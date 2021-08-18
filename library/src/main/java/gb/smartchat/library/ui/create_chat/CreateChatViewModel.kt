@@ -139,6 +139,7 @@ class CreateChatViewModel(
         when (this.contactsResponseState) {
             is CreateChatUDF.ContactsResponseState.Data -> {
                 for (group in this.groupsToShow) {
+                    list += ContactItem.Group(group)
                     list += group.contacts.map {
                         ContactItem.SelectableContact(it, selectedContacts.contains(it))
                     }
