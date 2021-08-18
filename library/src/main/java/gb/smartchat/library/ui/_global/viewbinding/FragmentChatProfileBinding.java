@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -75,6 +76,9 @@ public final class FragmentChatProfileBinding implements ViewBinding {
   @NonNull
   public final ImageView ivPartnerIcon;
 
+  @NonNull
+  public final ProgressBar progressBarPhoto;
+
   private FragmentChatProfileBinding(@NonNull LinearLayout rootView,
       @NonNull AppBarLayout appBarLayout, @NonNull TextView btnAddMembers,
       @NonNull TextView btnArchive, @NonNull TextView btnLeaveChat,
@@ -83,7 +87,7 @@ public final class FragmentChatProfileBinding implements ViewBinding {
       @NonNull LinearLayout profileInfoLayout, @NonNull TabLayout tabLayout,
       @NonNull Toolbar toolbar, @NonNull TextView tvAgentName, @NonNull TextView tvGroupName,
       @NonNull TextView tvMemberCount, @NonNull ViewPager viewPager,
-      @NonNull ImageView ivPartnerIcon) {
+      @NonNull ImageView ivPartnerIcon, @NonNull ProgressBar progressBarPhoto) {
     this.rootView = rootView;
     this.appBarLayout = appBarLayout;
     this.btnAddMembers = btnAddMembers;
@@ -102,6 +106,7 @@ public final class FragmentChatProfileBinding implements ViewBinding {
     this.tvMemberCount = tvMemberCount;
     this.viewPager = viewPager;
     this.ivPartnerIcon = ivPartnerIcon;
+    this.progressBarPhoto = progressBarPhoto;
   }
 
   @Override
@@ -229,10 +234,16 @@ public final class FragmentChatProfileBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.progress_bar_photo;
+      ProgressBar progressBarPhoto = rootView.findViewById(id);
+      if (progressBarPhoto == null) {
+        break missingId;
+      }
+
       return new FragmentChatProfileBinding((LinearLayout) rootView, appBarLayout, btnAddMembers,
           btnArchive, btnLeaveChat, collapsingToolbar, coordinator, fakeToolbar, ivPhoto,
           linearLayout, profileInfoLayout, tabLayout, toolbar, tvAgentName, tvGroupName,
-          tvMemberCount, viewPager, ivPartnerIcon);
+          tvMemberCount, viewPager, ivPartnerIcon, progressBarPhoto);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

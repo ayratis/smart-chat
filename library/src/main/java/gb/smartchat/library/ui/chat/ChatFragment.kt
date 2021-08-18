@@ -98,7 +98,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                     downloadHelper = component.fileDownloadHelper,
                     resourceManager = component.resourceManager,
                     messageReadInternalPublisher = component.messageReadInternalPublisher,
-                    unreadMessageCountPublisher = component.chatUnreadMessageCountPublisher
+                    unreadMessageCountPublisher = component.chatUnreadMessageCountPublisher,
+                    chatEditedPublisher = component.chatEditedPublisher
                 ) as T
             }
         }
@@ -283,13 +284,12 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
         binding.btnEmptyRetry.setOnClickListener {
             viewModel.emptyRetry()
         }
-        renderViewModel()
-
         binding.layoutInput.visible(!isFavoritesChat)
     }
 
     override fun onResume() {
         super.onResume()
+        renderViewModel()
         viewModel.openFile
             .subscribe { singleEvent ->
                 singleEvent.getContentIfNotHandled()?.let { uri ->
@@ -367,6 +367,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
 
         viewModel.chatObservable
             .subscribe { chat ->
+                Log.d(TAG, "renderViewModel: $chat")
                 if (!isFavoritesChat) {
                     Glide.with(binding.ivChatAvatar)
                         .load(chat.avatar)

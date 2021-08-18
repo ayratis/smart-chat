@@ -53,7 +53,7 @@ class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
             this,
             userId,
             storeInfoList,
-//            baseUrl = "http://91.201.41.157:8001/"
+            baseUrl = "http://91.201.41.157:8001/"
         )
         startActivity(intent)
     }

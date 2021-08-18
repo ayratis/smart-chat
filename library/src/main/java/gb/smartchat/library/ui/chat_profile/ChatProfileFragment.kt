@@ -1,5 +1,6 @@
 package gb.smartchat.library.ui.chat_profile
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +17,7 @@ import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.Contact
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.viewbinding.FragmentChatProfileBinding
+import gb.smartchat.library.ui.chat.AttachDialogFragment
 import gb.smartchat.library.ui.chat_profile.files.ChatProfileFilesFragment
 import gb.smartchat.library.ui.chat_profile.links.ChatProfileLinksFragment
 import gb.smartchat.library.ui.chat_profile.members.ChatProfileMembersFragment
@@ -27,7 +29,8 @@ import io.reactivex.disposables.CompositeDisposable
 
 class ChatProfileFragment : Fragment(),
     ChatProfileMembersFragment.Router,
-    MessageDialogFragment.OnClickListener {
+    MessageDialogFragment.OnClickListener,
+    AttachDialogFragment.Listener {
 
     companion object {
         private const val ARG_CHAT = "arg chat"
@@ -67,7 +70,9 @@ class ChatProfileFragment : Fragment(),
                     component.resourceManager,
                     component.leaveChatPublisher,
                     component.chatArchivePublisher,
-                    component.chatUnarchivePublisher
+                    component.chatUnarchivePublisher,
+                    component.contentHelper,
+                    component.chatEditedPublisher
                 ) as T
             }
         }
@@ -101,11 +106,11 @@ class ChatProfileFragment : Fragment(),
             }
         }
 
-        Glide.with(binding.ivPhoto)
-            .load(chat.avatar)
-            .placeholder(R.drawable.group_avatar_placeholder)
-            .circleCrop()
-            .into(binding.ivPhoto)
+        binding.ivPhoto.setOnClickListener {
+            AttachDialogFragment
+                .create(camera = true, gallery = true, files = false)
+                .show(childFragmentManager, null)
+        }
         binding.tvGroupName.text = chat.name
         binding.tvMemberCount.text = getString(R.string.d_members, chat.users.size)
         Glide.with(binding.ivPartnerIcon)
@@ -178,6 +183,21 @@ class ChatProfileFragment : Fragment(),
 
     override fun onResume() {
         super.onResume()
+
+        viewModel.avatar
+            .subscribe { uri ->
+                Glide.with(binding.ivPhoto)
+                    .load(uri)
+                    .placeholder(R.drawable.group_avatar_placeholder)
+                    .circleCrop()
+                    .into(binding.ivPhoto)
+            }
+            .also { compositeDisposable.add(it) }
+
+        viewModel.photoUploading
+            .subscribe { binding.progressBarPhoto.visible(it) }
+            .also { compositeDisposable.add(it) }
+
         viewModel.exitToRootScreen
             .subscribe { event ->
                 event.getContentIfNotHandled()?.let {
@@ -215,6 +235,14 @@ class ChatProfileFragment : Fragment(),
             ARCHIVE_CHAT_DIALOG_TAG -> viewModel.archiveChat()
             UNARCHIVE_CHAT_DIALOG_TAG -> viewModel.unarchiveChat()
         }
+    }
+
+    override fun onPhotoFromGallery(uri: Uri) {
+        viewModel.editPhoto(uri)
+    }
+
+    override fun onCameraPicture(uri: Uri) {
+        viewModel.editPhoto(uri)
     }
 
     inner class ViewPageAdapter : FragmentPagerAdapter(childFragmentManager) {

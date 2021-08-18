@@ -77,7 +77,8 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                     component.chatUnreadMessageCountPublisher,
                     component.chatUnarchivePublisher,
                     component.leaveChatPublisher,
-                    component.chatArchivePublisher
+                    component.chatArchivePublisher,
+                    component.chatEditedPublisher
                 ) as T
             }
         }
