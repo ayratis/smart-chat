@@ -1,5 +1,6 @@
 package gb.smartchat.library.ui.chat
 
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -82,6 +83,18 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
 
     private val contentHelper by lazy {
         component.contentHelper
+    }
+
+    private val imgIcon: Drawable by lazy {
+        requireContext().drawable(R.drawable.ic_img_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
+    }
+
+    private val docIcon: Drawable by lazy {
+        requireContext().drawable(R.drawable.ic_doc_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
     }
 
     private val viewModel: ChatViewModel by viewModels {
@@ -430,7 +443,18 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                 val editingMessage = it.first()
                 binding.btnAttach.visible(editingMessage == null)
                 binding.viewEditingMessage.visible(editingMessage != null)
-                binding.tvEditingMessage.text = editingMessage?.text
+                val icon: Drawable? = when {
+                    editingMessage?.file == null -> null
+                    editingMessage.file.isImage() -> imgIcon
+                    else -> docIcon
+                }
+                binding.tvEditingMessage.setCompoundDrawables(icon, null, null, null)
+                binding.tvEditingMessage.text = when {
+                    !editingMessage?.text.isNullOrBlank() -> editingMessage?.text
+                    editingMessage?.file?.isImage() == true -> getString(R.string.photo)
+                    editingMessage?.file != null -> editingMessage.file.name
+                    else -> null
+                }
                 binding.btnSend.setImageResource(
                     if (editingMessage != null) R.drawable.ic_baseline_check_24
                     else R.drawable.btn_send
@@ -494,7 +518,18 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                 val quotingMessage = it.first()
                 binding.viewQuotedMessage.visible(quotingMessage != null)
                 binding.tvQuotedPerson.text = quotingMessage?.user?.name
-                binding.tvQuotedMessage.text = quotingMessage?.text
+                val icon: Drawable? = when {
+                    quotingMessage?.file == null -> null
+                    quotingMessage.file.isImage() -> imgIcon
+                    else -> docIcon
+                }
+                binding.tvQuotedMessage.setCompoundDrawables(icon, null, null, null)
+                binding.tvQuotedMessage.text = when {
+                    !quotingMessage?.text.isNullOrBlank() -> quotingMessage?.text
+                    quotingMessage?.file?.isImage() == true -> getString(R.string.photo)
+                    quotingMessage?.file != null -> quotingMessage.file.name
+                    else -> null
+                }
             }
             .also { renderDisposables.add(it) }
         viewModel.viewState

@@ -1,6 +1,7 @@
 package gb.smartchat.library.entity
 
 
+import android.util.Log
 import android.webkit.MimeTypeMap
 import com.google.gson.annotations.SerializedName
 import gb.smartchat.library.data.download.DownloadStatus
