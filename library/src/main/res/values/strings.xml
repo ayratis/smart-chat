@@ -70,7 +70,7 @@
     <string name="delete_member_error">Ошибка при исключении пользователя из чата</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
-    <string name="to_favorites">Отметить как важное</string>
+    <string name="to_favorites">Сохранить в избранное</string>
     <string name="chats">Чаты</string>
     <string name="contacts">Контакты</string>
     <string name="partner_selection">Выбор партнера</string>
