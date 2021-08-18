@@ -21,6 +21,7 @@ class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
 
 
     private fun openChatList(userId: String) {
+
         val storeInfoList = listOf(
             StoreInfo(
                 "d9d39588-de82-11eb-941d-9418820bda83",
