@@ -1,6 +1,5 @@
 package gb.smartchat.library.ui.create_chat
 
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -74,13 +73,14 @@ class CreateChatFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return CreateChatViewModel(
                     storeInfo,
-                    chat?.id,
+                    chat,
                     component.httpApi,
                     CreateChatUDF.Store(mode),
                     component.resourceManager,
                     component.chatCreatedPublisher,
                     component.contactDeletePublisher,
-                    component.addRecipientsPublisher
+                    component.addRecipientsPublisher,
+                    mode
                 ) as T
             }
         }
@@ -115,8 +115,8 @@ class CreateChatFragment : Fragment() {
         binding.appBarLayout.addSystemTopPadding()
         binding.toolbar.apply {
             title = when (mode) {
-                CreateChatMode.CREATE_GROUP -> getString(R.string.create_chat)
-                CreateChatMode.ADD_MEMBERS -> getString(R.string.add)
+                CreateChatMode.CREATE_GROUP -> getString(R.string.add_members)
+                CreateChatMode.ADD_MEMBERS -> getString(R.string.add_members)
             }
             setNavigationOnClickListener {
                 parentFragmentManager.popBackStack()
@@ -157,13 +157,11 @@ class CreateChatFragment : Fragment() {
             setOnClickListener {
                 viewModel.onCreateGroupNextClick()
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                doOnApplyWindowInsets { _, insets, _ ->
-                    updateLayoutParams<CoordinatorLayout.LayoutParams> {
-                        bottomMargin = 16.dp(resources) + insets.systemWindowInsetBottom
-                    }
-                    insets
+            doOnApplyWindowInsets { _, insets, _ ->
+                updateLayoutParams<CoordinatorLayout.LayoutParams> {
+                    bottomMargin = 16.dp(resources) + insets.systemWindowInsetBottom
                 }
+                insets
             }
         }
     }

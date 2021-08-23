@@ -17,7 +17,7 @@
     <string name="refreshing">Обновление</string>
     <string name="image">Изображение</string>
     <string name="file_open_error">Не удалось открыть файл</string>
-    <string name="typing_users_s">Набирает сообщение: %s</string>
+    <string name="typing_users_s">Печатает: %s</string>
     <string name="editing">Редактирование</string>
     <string name="waiting_for_network">Ожидание сети…</string>
     <string name="camera">Камера</string>
@@ -32,6 +32,7 @@
     <string name="profile">Профиль</string>
     <string name="profile_error">Ошибка при загрузке профиля</string>
     <string name="search">Поиск</string>
+    <string name="photo">Фото</string>
     <string name="upload_photo">Загрузить фотографию</string>
     <string name="upload_photo_error">Ошибка при загрузке фотографии</string>
     <string name="group_name">Название группы</string>
@@ -70,7 +71,7 @@
     <string name="delete_member_error">Ошибка при исключении пользователя из чата</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
-    <string name="to_favorites">Отметить как важное</string>
+    <string name="to_favorites">Сохранить в избранное</string>
     <string name="chats">Чаты</string>
     <string name="contacts">Контакты</string>
     <string name="partner_selection">Выбор партнера</string>
@@ -78,4 +79,6 @@
     <string name="username_missing_message">Пожалуйста, укажите Ваше имя, чтобы пользоваться чатами</string>
     <string name="name">Имя</string>
     <string name="continue_text">Продолжить</string>
+    <string name="today">Сегодня</string>
+    <string name="yesterday">Вчера</string>
 </resources>

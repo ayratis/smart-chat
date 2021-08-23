@@ -38,14 +38,28 @@
                     android:orientation="vertical"
                     android:paddingBottom="49dp">
 
-                    <ImageView
-                        android:id="@+id/iv_photo"
+                    <FrameLayout
                         android:layout_width="96dp"
                         android:layout_height="96dp"
                         android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="8dp"
-                        android:contentDescription="@string/upload_photo"
-                        android:src="@drawable/ic_group_photo_96" />
+                        android:layout_marginTop="8dp">
+
+                        <ImageView
+                            android:id="@+id/iv_photo"
+                            android:layout_width="96dp"
+                            android:layout_height="96dp"
+                            android:contentDescription="@string/upload_photo"
+                            android:src="@drawable/ic_group_photo_96" />
+
+                        <ProgressBar
+                            android:id="@+id/progress_bar_photo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:visibility="gone"
+                            tools:visibility="visible" />
+
+                    </FrameLayout>
 
                     <TextView
                         android:id="@+id/tv_group_name"
@@ -85,10 +99,10 @@
                         <TextView
                             android:id="@+id/tv_agent_name"
                             style="@style/Caption3"
-                            android:maxWidth="260dp"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:gravity="center_horizontal"
+                            android:maxWidth="260dp"
                             android:textColor="@color/razzmatazz"
                             app:layout_constraintBottom_toBottomOf="parent"
                             tools:text="Тюлькин Заречка (Свит лайф)" />

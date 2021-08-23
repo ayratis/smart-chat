@@ -9,6 +9,8 @@ import gb.smartchat.library.entity.Mention
 import gb.smartchat.library.ui._global.StickyHeaderHelper
 import gb.smartchat.library.ui._global.view_holder.chat.*
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 class ChatAdapter(
     private val onItemBindListener: (ChatItem) -> Unit,
@@ -24,6 +26,8 @@ class ChatAdapter(
     private val onPhotoClickListener: (File) -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()),
     StickyHeaderHelper {
+
+    private val headerDateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru"))
 
     var fullDataUp = false
     var fullDataDown = false
@@ -41,7 +45,7 @@ class ChatAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            1 -> DateHeaderViewHolder.create(parent)
+            1 -> DateHeaderViewHolder.create(parent, headerDateTimeFormatter)
             2 -> IncomingViewHolder.create(
                 parent,
                 onQuoteListener,

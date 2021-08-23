@@ -55,7 +55,7 @@ class ChatProfileMemberViewHolder private constructor(
             .placeholder(R.drawable.profile_avatar_placeholder)
             .circleCrop()
             .into(binding.ivAvatar)
-        binding.tvCreator.visible(false) //todo
+        binding.tvCreator.visible(contact.role == Contact.ROLE.CREATOR)
         binding.tvName.text = contact.name
         binding.tvOnline.apply {
             if (contact.online == true) {
@@ -69,6 +69,7 @@ class ChatProfileMemberViewHolder private constructor(
     }
 
     private fun showMenu() {
+        if (contact.role == Contact.ROLE.CREATOR) return
         val menu = android.widget.PopupMenu(itemView.context, itemView)
         if (deleteContactListener != null) {
             menu.inflate(R.menu.delete_member)

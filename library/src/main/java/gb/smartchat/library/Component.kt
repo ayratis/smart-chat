@@ -160,6 +160,10 @@ class Component constructor(
         ChatArchivePublisher()
     }
 
+    val chatEditedPublisher by lazy {
+        ChatEditedPublisher()
+    }
+
     private var newMessagesDisposable: Disposable? = null
     private val sendNewMessagePushCommand = PublishRelay.create<Message>()
     private val userMissingCommand = BehaviorRelay.create<SingleEvent<Unit>>()
@@ -189,13 +193,13 @@ class Component constructor(
             }
     }
 
-    override fun onCleared() {
-        newMessagesDisposable?.dispose()
-        socket.disconnect()
-    }
-
     fun connect() {
         socketApi.connect()
         observeNewMessages()
+    }
+
+    fun disconnect() {
+        newMessagesDisposable?.dispose()
+        socket.disconnect()
     }
 }

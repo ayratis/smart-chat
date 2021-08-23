@@ -77,7 +77,8 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                     component.chatUnreadMessageCountPublisher,
                     component.chatUnarchivePublisher,
                     component.leaveChatPublisher,
-                    component.chatArchivePublisher
+                    component.chatArchivePublisher,
+                    component.chatEditedPublisher
                 ) as T
             }
         }
@@ -157,9 +158,9 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                     activity?.finish()
                 }
                 inflateMenu(R.menu.search)
-                inflateMenu(R.menu.archive_messages)
-                inflateMenu(R.menu.favorite_messages)
                 inflateMenu(R.menu.user_profile)
+                inflateMenu(R.menu.favorite_messages)
+                inflateMenu(R.menu.archive_messages)
                 inflateMenu(R.menu.close_chats)
                 setOnMenuItemClickListener { menuItem ->
                     when (menuItem.itemId) {

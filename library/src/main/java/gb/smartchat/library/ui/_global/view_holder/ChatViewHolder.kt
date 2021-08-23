@@ -69,22 +69,24 @@ class ChatViewHolder(
 
     fun bind(chat: Chat) {
         this.chat = chat
-        Log.d("TAG", "bind: $chat")
         Glide.with(binding.ivAvatar)
             .load(chat.avatar)
             .placeholder(R.drawable.group_avatar_placeholder)
             .circleCrop()
             .into(binding.ivAvatar)
-        
+
         val icon: Drawable? = when {
             chat.lastMessage?.file == null -> null
-            chat.lastMessage.file.isImage() -> imgIcon
+            chat.lastMessage.file.type == "media" -> imgIcon
             else -> docIcon
         }
         binding.tvLastMsgText.setCompoundDrawables(icon, null, null, null)
-        binding.tvLastMsgText.text =
-            if (!chat.lastMessage?.text.isNullOrBlank()) chat.lastMessage?.text
-            else chat.lastMessage?.file?.name
+        binding.tvLastMsgText.text = when {
+            !chat.lastMessage?.text.isNullOrBlank() -> chat.lastMessage?.text
+            chat.lastMessage?.file?.type == "media" -> itemView.context.getString(R.string.photo)
+            chat.lastMessage?.file != null -> chat.lastMessage.file.name
+            else -> null
+        }
         binding.tvChatName.text = chat.name
         binding.tvLastMsgDate.text = chat.lastMessage?.timeCreated?.let { sdf.format(it) }
         binding.ivSendStatus.apply {

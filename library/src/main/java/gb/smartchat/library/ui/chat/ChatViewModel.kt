@@ -17,6 +17,7 @@ import gb.smartchat.library.entity.request.MessageFavoriteRequest
 import gb.smartchat.library.entity.request.MessageReadRequest
 import gb.smartchat.library.entity.request.ReadInfoRequest
 import gb.smartchat.library.entity.request.TypingRequest
+import gb.smartchat.library.publisher.ChatEditedPublisher
 import gb.smartchat.library.publisher.ChatUnreadMessageCountPublisher
 import gb.smartchat.library.publisher.MessageReadInternalPublisher
 import gb.smartchat.library.utils.*
@@ -41,7 +42,8 @@ class ChatViewModel(
     private val downloadHelper: FileDownloadHelper,
     private val resourceManager: ResourceManager,
     private val messageReadInternalPublisher: MessageReadInternalPublisher,
-    private val unreadMessageCountPublisher: ChatUnreadMessageCountPublisher
+    private val unreadMessageCountPublisher: ChatUnreadMessageCountPublisher,
+    chatEditedPublisher: ChatEditedPublisher
 ) : ViewModel() {
 
     companion object {
@@ -92,6 +94,16 @@ class ChatViewModel(
         } else {
             fetchChat(chatId)
         }
+
+        chatEditedPublisher
+            .subscribe {
+                if (it.id == chatId) {
+                    chatBehavior.accept(it)
+                }
+            }
+            .also {
+                compositeDisposable.add(it)
+            }
     }
 
     private fun fetchChat(chatId: Long) {

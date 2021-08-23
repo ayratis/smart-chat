@@ -15,6 +15,7 @@ import gb.smartchat.library.utils.SingleEvent
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
 class ChatListViewModel(
@@ -28,13 +29,15 @@ class ChatListViewModel(
     chatUnreadMessageCountPublisher: ChatUnreadMessageCountPublisher,
     private val chatUnarchivePublisher: ChatUnarchivePublisher,
     leaveChatPublisher: LeaveChatPublisher,
-    chatArchivePublisher: ChatArchivePublisher
+    chatArchivePublisher: ChatArchivePublisher,
+    chatEditedPublisher: ChatEditedPublisher
 ) : ViewModel() {
 
     companion object {
         private const val TAG = "ChatListViewModel"
     }
 
+    private var fetchPageDisposable: Disposable? = null
     private val compositeDisposable = CompositeDisposable()
     private val showErrorMessageCommand = BehaviorRelay.create<SingleEvent<String>>()
 
@@ -67,6 +70,9 @@ class ChatListViewModel(
             .also { compositeDisposable.add(it) }
         chatArchivePublisher
             .subscribe { store.accept(ChatListUDF.Action.ExternalChatArchived(it)) }
+            .also { compositeDisposable.add(it) }
+        chatEditedPublisher
+            .subscribe { store.accept(ChatListUDF.Action.ChatEdited(it)) }
             .also { compositeDisposable.add(it) }
     }
 
@@ -144,6 +150,7 @@ class ChatListViewModel(
     }
 
     private fun fetchPage(pageCount: Int) {
+        fetchPageDisposable?.dispose()
         httpApi
             .getChatList(
                 pageCount = pageCount,
@@ -157,7 +164,10 @@ class ChatListViewModel(
                 { store.accept(ChatListUDF.Action.NewPage(pageCount, it)) },
                 { store.accept(ChatListUDF.Action.PageError(it)) }
             )
-            .also { compositeDisposable.add(it) }
+            .also {
+                fetchPageDisposable = it
+                compositeDisposable.add(it)
+            }
     }
 
     private fun pinChatOnServer(chat: Chat, pin: Boolean) {

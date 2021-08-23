@@ -53,6 +53,7 @@ object ChatListUDF {
         data class DeleteRecipients(val chatId: Long, val deletedUserIds: List<String>) : Action()
         data class LeaveChat(val chat: Chat) : Action()
         data class ExternalChatArchived(val chat: Chat) : Action()
+        data class ChatEdited(val chat: Chat) : Action()
     }
 
     sealed class SideEffect {
@@ -390,6 +391,13 @@ object ChatListUDF {
                         chatList = chatList,
                         pagingState = newPagingState
                     )
+                }
+                is Action.ChatEdited -> {
+                    val chatList = state.chatList.map { chat ->
+                        if (chat.id == action.chat.id) action.chat
+                        else chat
+                    }
+                    return state.copy(chatList = chatList)
                 }
             }
         }
