@@ -17,7 +17,7 @@
     <string name="refreshing">Обновление</string>
     <string name="image">Изображение</string>
     <string name="file_open_error">Не удалось открыть файл</string>
-    <string name="typing_users_s">Набирает сообщение: %s</string>
+    <string name="typing_users_s">Печатает: %s</string>
     <string name="editing">Редактирование</string>
     <string name="waiting_for_network">Ожидание сети…</string>
     <string name="camera">Камера</string>
