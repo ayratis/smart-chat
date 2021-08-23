@@ -1,6 +1,5 @@
 package gb.smartchat.library.ui.create_chat
 
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -74,13 +73,14 @@ class CreateChatFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return CreateChatViewModel(
                     storeInfo,
-                    chat?.id,
+                    chat,
                     component.httpApi,
                     CreateChatUDF.Store(mode),
                     component.resourceManager,
                     component.chatCreatedPublisher,
                     component.contactDeletePublisher,
-                    component.addRecipientsPublisher
+                    component.addRecipientsPublisher,
+                    mode
                 ) as T
             }
         }

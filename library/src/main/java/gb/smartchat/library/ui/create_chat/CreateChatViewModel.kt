@@ -7,6 +7,7 @@ import gb.smartchat.library.data.http.HttpApi
 import gb.smartchat.library.data.resources.ResourceManager
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.Contact
+import gb.smartchat.library.entity.Group
 import gb.smartchat.library.entity.StoreInfo
 import gb.smartchat.library.entity.request.AddRecipientsRequest
 import gb.smartchat.library.publisher.AddRecipientsPublisher
@@ -21,13 +22,14 @@ import io.reactivex.schedulers.Schedulers
 
 class CreateChatViewModel(
     private val storeInfo: StoreInfo,
-    private val chatId: Long?,
+    private val chat: Chat?,
     private val httpApi: HttpApi,
     private val store: CreateChatUDF.Store,
     private val resourceManager: ResourceManager,
     private val chatCreatedPublisher: ChatCreatedPublisher,
     contactDeletePublisher: ContactDeletePublisher,
-    private val addRecipientsPublisher: AddRecipientsPublisher
+    private val addRecipientsPublisher: AddRecipientsPublisher,
+    private val createChatMode: CreateChatMode
 ) : ViewModel() {
 
     companion object {
@@ -105,6 +107,23 @@ class CreateChatViewModel(
         httpApi
             .getContactList(storeInfo.storeId)
             .map { it.result.groups ?: emptyList() }
+            .map { groups ->
+                if (createChatMode == CreateChatMode.ADD_MEMBERS) {
+                    val alreadyAddedUserIds = chat!!.users.map { it.id }
+                    val filteredGroups = mutableListOf<Group>()
+                    for (group in groups) {
+                        val filteredContacts = group.contacts.filter { contact ->
+                            !alreadyAddedUserIds.contains(contact.id)
+                        }
+                        if (filteredContacts.isNotEmpty()) {
+                            filteredGroups += group.copy(contacts = filteredContacts)
+                        }
+                    }
+                    filteredGroups
+                } else {
+                    groups
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -118,7 +137,7 @@ class CreateChatViewModel(
         httpApi
             .postAddRecipients(
                 AddRecipientsRequest(
-                    chatId = chatId!!,
+                    chatId = chat!!.id,
                     contacts = contacts
                 )
             )
