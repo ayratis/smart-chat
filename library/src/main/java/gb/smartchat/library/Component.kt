@@ -193,13 +193,13 @@ class Component constructor(
             }
     }
 
-    override fun onCleared() {
-        newMessagesDisposable?.dispose()
-        socket.disconnect()
-    }
-
     fun connect() {
         socketApi.connect()
         observeNewMessages()
+    }
+
+    fun disconnect() {
+        newMessagesDisposable?.dispose()
+        socket.disconnect()
     }
 }

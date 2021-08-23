@@ -144,14 +144,10 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        component.connect()
-    }
-
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume")
+        component.connect()
         component.sendNewMessagePush
             .subscribe(this::proceedNewMessage)
             .also { compositeDisposable.add(it) }
@@ -182,6 +178,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
     }
 
     override fun onPause() {
+        component.disconnect()
         compositeDisposable.clear()
         super.onPause()
     }
