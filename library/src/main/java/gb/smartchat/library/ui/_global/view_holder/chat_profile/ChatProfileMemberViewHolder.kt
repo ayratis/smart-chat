@@ -55,7 +55,7 @@ class ChatProfileMemberViewHolder private constructor(
             .placeholder(R.drawable.profile_avatar_placeholder)
             .circleCrop()
             .into(binding.ivAvatar)
-        binding.tvCreator.visible(false) //todo
+        binding.tvCreator.visible(contact.role == Contact.ROLE.CREATOR)
         binding.tvName.text = contact.name
         binding.tvOnline.apply {
             if (contact.online == true) {
