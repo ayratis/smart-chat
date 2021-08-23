@@ -69,6 +69,7 @@ class ChatProfileMemberViewHolder private constructor(
     }
 
     private fun showMenu() {
+        if (contact.role == Contact.ROLE.CREATOR) return
         val menu = android.widget.PopupMenu(itemView.context, itemView)
         if (deleteContactListener != null) {
             menu.inflate(R.menu.delete_member)

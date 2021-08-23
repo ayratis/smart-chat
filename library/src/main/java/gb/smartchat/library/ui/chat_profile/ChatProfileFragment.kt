@@ -263,7 +263,7 @@ class ChatProfileFragment : Fragment(),
         override fun getItem(position: Int): Fragment {
             return when (position) {
                 0 -> {
-                    val isCreator = chat.isAdmin == true && chat.isArchived == false
+                    val isCreator = chat.isCreator(component.userId) && chat.isArchived == false
                     ChatProfileMembersFragment.create(chat.id, isCreator)
                 }
                 1 -> ChatProfileFilesFragment.create(chat.id, true)

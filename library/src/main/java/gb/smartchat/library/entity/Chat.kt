@@ -34,8 +34,6 @@ data class Chat(
     val agentCode: Int?,
     @SerializedName("partner_avatar")
     val partnerAvatar: String?,
-    @SerializedName("is_admin")
-    val isAdmin: Boolean?,
     @SerializedName("is_archived")
     val isArchived: Boolean?
 ) : Serializable, Comparable<Chat> {
@@ -82,5 +80,9 @@ data class Chat(
             }
             result
         }
+    }
+
+    fun isCreator(userId: String): Boolean {
+        return users.find { it.id == userId }?.role == User.Role.CREATOR
     }
 }
