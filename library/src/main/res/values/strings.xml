@@ -79,4 +79,6 @@
     <string name="username_missing_message">Пожалуйста, укажите Ваше имя, чтобы пользоваться чатами</string>
     <string name="name">Имя</string>
     <string name="continue_text">Продолжить</string>
+    <string name="today">Сегодня</string>
+    <string name="yesterday">Вчера</string>
 </resources>
