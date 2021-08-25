@@ -227,7 +227,6 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
     }
 
     override fun onDestroyView() {
-        renderDisposables.clear()
         binding.layoutInput.removeOnLayoutChangeListener(onLayoutChangeListener)
         super.onDestroyView()
         _binding = null
@@ -342,6 +341,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
     }
 
     override fun onPause() {
+        renderDisposables.clear()
         newsDisposables.clear()
         super.onPause()
         hideSoftInput()
