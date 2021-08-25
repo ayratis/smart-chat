@@ -71,22 +71,27 @@ class OutgoingViewHolder private constructor(
     }
 
     init {
+        binding.content.setOnClickListener { showMenu() }
+        binding.content.setOnLongClickListener(this::onLongClickListener)
         binding.viewQuotedMessage.setOnClickListener {
             onQuotedMsgClickListener?.invoke(chatItem)
         }
+        binding.viewQuotedMessage.setOnLongClickListener(this::onLongClickListener)
         binding.viewDocAttachment.setOnClickListener {
             onFileClickListener.invoke(chatItem)
         }
-        binding.content.setOnClickListener {
-            showMenu()
-        }
-        binding.content.setOnLongClickListener {
-            showMenu()
-            true
-        }
+        binding.viewDocAttachment.setOnLongClickListener(this::onLongClickListener)
         binding.ivAttachmentPhoto.setOnClickListener {
             chatItem.message.file?.let(onPhotoClickListener::invoke)
         }
+        binding.ivAttachmentPhoto.setOnLongClickListener(this::onLongClickListener)
+        binding.tvContent.setOnLongClickListener(this::onLongClickListener)
+        binding.tvContent.setOnClickListener { showMenu() }
+    }
+
+    private fun onLongClickListener(view: View): Boolean {
+        showMenu()
+        return true
     }
 
     fun bind(chatItem: ChatItem.Msg.Outgoing) {
@@ -139,34 +144,33 @@ class OutgoingViewHolder private constructor(
         )
 
         binding.tvContent.apply {
-            text =
-                if (chatItem.message.mentions.isNullOrEmpty()) {
-                    chatItem.message.text
-                } else {
-                    SpannableStringBuilder(chatItem.message.text).apply {
-                        chatItem.message.mentions.forEach { mention ->
-                            val mentionUtf8 = ByteArray(mention.lengthUtf8)
-                            chatItem.message.text!!.encodeToByteArray().copyInto(
-                                destination = mentionUtf8,
-                                startIndex = mention.offsetUtf8,
-                                endIndex = mention.offsetUtf8 + mention.lengthUtf8
-                            )
-                            val mentionString = mentionUtf8.decodeToString()
-                            val offset = chatItem.message.text.indexOf(mentionString)
-                            setSpan(
-                                AppClickableSpan(
-                                    isUnderlineText = false,
-                                    linkColor = itemView.context.color(R.color.purple_heart)
-                                ) {
-                                    onMentionClickListener?.invoke(mention)
-                                },
-                                offset,
-                                offset + mentionString.length,
-                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                            )
-                        }
+            if (chatItem.message.mentions.isNullOrEmpty()) {
+                text = chatItem.message.text
+            } else {
+                text = SpannableStringBuilder(chatItem.message.text).apply {
+                    chatItem.message.mentions.forEach { mention ->
+                        val mentionUtf8 = ByteArray(mention.lengthUtf8)
+                        chatItem.message.text!!.encodeToByteArray().copyInto(
+                            destination = mentionUtf8,
+                            startIndex = mention.offsetUtf8,
+                            endIndex = mention.offsetUtf8 + mention.lengthUtf8
+                        )
+                        val mentionString = mentionUtf8.decodeToString()
+                        val offset = chatItem.message.text.indexOf(mentionString)
+                        setSpan(
+                            AppClickableSpan(
+                                isUnderlineText = false,
+                                linkColor = itemView.context.color(R.color.purple_heart)
+                            ) {
+                                onMentionClickListener?.invoke(mention)
+                            },
+                            offset,
+                            offset + mentionString.length,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
                     }
                 }
+            }
             movementMethod = LinkMovementMethod.getInstance()
             visible(!chatItem.message.text.isNullOrBlank())
         }
