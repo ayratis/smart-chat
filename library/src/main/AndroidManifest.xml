@@ -18,7 +18,7 @@
         <activity
             android:name=".library.SmartChatActivity"
             android:theme="@style/Theme.SmartChat"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize|stateHidden">
 
         </activity>
 
