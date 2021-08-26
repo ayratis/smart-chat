@@ -54,7 +54,11 @@ class ChatProfileMembersViewModel(
         fetchDisposable?.dispose()
         fetchDisposable = httpApi
             .getRecipients(chatId)
-            .map { it.result }
+            .map { response ->
+                response.result.filter { contact ->
+                    contact.state != Contact.STATE.DELETED
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSubscribe {

@@ -311,7 +311,8 @@ fun UserProfile.toContact(): Contact {
         avatar = avatar,
         online = null,
         storeId = null,
-        role = null
+        role = null,
+        state = null
     )
 }
 
@@ -322,7 +323,8 @@ fun User.toContact(): Contact {
         avatar = avatar,
         online = null,
         storeId = null,
-        role = null
+        role = null,
+        state = null
     )
 }
 

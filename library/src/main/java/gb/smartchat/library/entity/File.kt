@@ -14,7 +14,7 @@ data class File(
     @SerializedName("name")
     val name: String?,
     @SerializedName("type")
-    val type: String?,
+    val type: TYPE?,
 
     val downloadStatus: DownloadStatus = DownloadStatus.Empty
 //    @SerializedName("preview")
@@ -26,7 +26,14 @@ data class File(
             val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
             return mimeType?.startsWith("image") == true
         }
-        return type == "media"
+        return type == TYPE.MEDIA
+    }
+
+    enum class TYPE : Serializable {
+        @SerializedName("media")
+        MEDIA,
+        @SerializedName("regular")
+        REGULAR
     }
 }
 

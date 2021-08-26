@@ -77,7 +77,7 @@ class ChatViewHolder(
 
         val icon: Drawable? = when {
             chat.lastMessage?.file == null -> null
-            chat.lastMessage.file.type == "media" -> imgIcon
+            chat.lastMessage.file.isImage() -> imgIcon
             else -> docIcon
         }
         binding.tvLastMsgText.setCompoundDrawables(icon, null, null, null)
