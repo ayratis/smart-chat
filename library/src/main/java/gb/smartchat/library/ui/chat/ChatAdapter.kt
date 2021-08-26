@@ -23,7 +23,8 @@ class ChatAdapter(
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
     private val onMentionClickListener: ((Mention) -> Unit)?,
     private val onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
-    private val onPhotoClickListener: (File) -> Unit
+    private val onPhotoClickListener: (File) -> Unit,
+    private val onShareClickListener: (String) -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItem.DiffUtilItemCallback()),
     StickyHeaderHelper {
 
@@ -53,7 +54,8 @@ class ChatAdapter(
                 onFileClickListener,
                 onMentionClickListener,
                 onToFavoritesClickListener,
-                onPhotoClickListener
+                onPhotoClickListener,
+                onShareClickListener
             )
             3 -> SystemViewHolder.create(parent)
             4 -> OutgoingViewHolder.create(
@@ -65,7 +67,8 @@ class ChatAdapter(
                 onFileClickListener,
                 onMentionClickListener,
                 onToFavoritesClickListener,
-                onPhotoClickListener
+                onPhotoClickListener,
+                onShareClickListener
             )
             5 -> DraftViewHolder.create(
                 parent,

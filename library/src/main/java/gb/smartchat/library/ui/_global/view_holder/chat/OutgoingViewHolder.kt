@@ -1,6 +1,5 @@
 package gb.smartchat.library.ui._global.view_holder.chat
 
-import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context.CLIPBOARD_SERVICE
@@ -35,7 +34,8 @@ class OutgoingViewHolder private constructor(
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
     private val onMentionClickListener: ((Mention) -> Unit)?,
     private val onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
-    private val onPhotoClickListener: (File) -> Unit
+    private val onPhotoClickListener: (File) -> Unit,
+    private val onShareListener: (String) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
 
     companion object {
@@ -50,7 +50,8 @@ class OutgoingViewHolder private constructor(
             onFileClickListener: (ChatItem.Msg) -> Unit,
             onMentionClickListener: ((Mention) -> Unit)?,
             onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
-            onPhotoClickListener: (File) -> Unit
+            onPhotoClickListener: (File) -> Unit,
+            onShareListener: (String) -> Unit,
         ) =
             OutgoingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_outgoing),
@@ -61,7 +62,8 @@ class OutgoingViewHolder private constructor(
                 onFileClickListener,
                 onMentionClickListener,
                 onToFavoritesClickListener,
-                onPhotoClickListener
+                onPhotoClickListener,
+                onShareListener
             )
     }
 
@@ -213,9 +215,8 @@ class OutgoingViewHolder private constructor(
         if (onQuoteListener != null) {
             menu.inflate(R.menu.quote)
         }
-        if (!chatItem.message.text.isNullOrBlank()) {
-            menu.inflate(R.menu.copy)
-        }
+        menu.inflate(R.menu.copy)
+        menu.inflate(R.menu.share)
         if (chatItem.message.file?.downloadStatus == DownloadStatus.Empty) {
             menu.inflate(R.menu.download)
         }
@@ -238,8 +239,21 @@ class OutgoingViewHolder private constructor(
                 }
                 R.id.action_copy -> {
                     Log.d(TAG, "onCreateContextMenu: copy")
-                    val clip = ClipData.newPlainText(null, chatItem.message.text)
+                    val clipText = listOfNotNull(
+                        chatItem.message.text,
+                        chatItem.message.file?.url
+                    ).joinToString("\n")
+                    val clip = ClipData.newPlainText(null, clipText)
                     clipboard.setPrimaryClip(clip)
+                    true
+                }
+                R.id.action_share -> {
+                    Log.d(TAG, "onCreateContextMenu: share")
+                    val shareText = listOfNotNull(
+                        chatItem.message.text,
+                        chatItem.message.file?.url
+                    ).joinToString("\n")
+                    onShareListener.invoke(shareText)
                     true
                 }
                 R.id.action_download -> {
