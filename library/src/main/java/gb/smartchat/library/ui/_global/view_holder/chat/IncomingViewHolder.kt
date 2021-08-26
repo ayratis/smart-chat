@@ -3,6 +3,7 @@ package gb.smartchat.library.ui._global.view_holder.chat
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
@@ -58,6 +59,16 @@ class IncomingViewHolder private constructor(
 
     private val sdf = DateTimeFormatter.ofPattern("H:mm")
     private val binding = ItemChatMsgIncomingBinding.bind(itemView)
+    private val imgIcon: Drawable by lazy {
+        binding.root.context.drawable(R.drawable.ic_img_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
+    }
+    private val docIcon: Drawable by lazy {
+        binding.root.context.drawable(R.drawable.ic_doc_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
+    }
     private lateinit var chatItem: ChatItem.Msg
     private val clipboard by lazy {
         itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -89,8 +100,6 @@ class IncomingViewHolder private constructor(
 
     fun bind(chatItem: ChatItem.Msg.Incoming) {
         this.chatItem = chatItem
-        //        binding.tvContent.text = chatItem.message.id.toString() //debug
-        //        return
         Glide.with(binding.ivAvatar)
             .load(chatItem.message.user?.avatar)
             .placeholder(R.drawable.profile_avatar_placeholder)
@@ -133,7 +142,22 @@ class IncomingViewHolder private constructor(
             binding.ivAttachmentPhoto.visible(false)
         }
         binding.viewQuotedMessage.visible(chatItem.message.quotedMessage != null)
-        binding.tvQuotedMessage.text = chatItem.message.quotedMessage?.text
+        binding.tvQuotedPerson.text = chatItem.message.quotedMessage?.user?.name
+        val icon: Drawable? = when {
+            chatItem.message.quotedMessage?.file == null -> null
+            chatItem.message.quotedMessage.file.isImage() -> imgIcon
+            else -> docIcon
+        }
+        binding.tvQuotedMessage.setCompoundDrawables(icon, null, null, null)
+        binding.tvQuotedMessage.text = when {
+            !chatItem.message.quotedMessage?.text.isNullOrBlank() ->
+                chatItem.message.quotedMessage?.text
+            chatItem.message.quotedMessage?.file?.isImage() == true ->
+                binding.root.context.getString(R.string.photo)
+            chatItem.message.quotedMessage?.file != null ->
+                chatItem.message.quotedMessage.file.name
+            else -> null
+        }
         binding.tvContent.apply {
             if (chatItem.message.mentions.isNullOrEmpty()) {
                 text = chatItem.message.text

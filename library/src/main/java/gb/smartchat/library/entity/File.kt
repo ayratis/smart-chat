@@ -1,7 +1,6 @@
 package gb.smartchat.library.entity
 
 
-import android.util.Log
 import android.webkit.MimeTypeMap
 import com.google.gson.annotations.SerializedName
 import gb.smartchat.library.data.download.DownloadStatus
@@ -22,11 +21,12 @@ data class File(
 //    val preview: Any?
 ) : Serializable {
     fun isImage(): Boolean {
-        val mimeType = url?.let {
-            val extension = MimeTypeMap.getFileExtensionFromUrl(it)
-            MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        if (url != null) {
+            val extension = MimeTypeMap.getFileExtensionFromUrl(url)
+            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+            return mimeType?.startsWith("image") == true
         }
-        return mimeType?.startsWith("image") == true
+        return type == "media"
     }
 }
 

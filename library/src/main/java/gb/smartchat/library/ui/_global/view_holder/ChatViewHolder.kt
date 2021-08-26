@@ -83,7 +83,7 @@ class ChatViewHolder(
         binding.tvLastMsgText.setCompoundDrawables(icon, null, null, null)
         binding.tvLastMsgText.text = when {
             !chat.lastMessage?.text.isNullOrBlank() -> chat.lastMessage?.text
-            chat.lastMessage?.file?.type == "media" -> itemView.context.getString(R.string.photo)
+            chat.lastMessage?.file?.isImage() == true -> itemView.context.getString(R.string.photo)
             chat.lastMessage?.file != null -> chat.lastMessage.file.name
             else -> null
         }

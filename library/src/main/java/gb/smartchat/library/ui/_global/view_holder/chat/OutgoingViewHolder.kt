@@ -1,8 +1,10 @@
 package gb.smartchat.library.ui._global.view_holder.chat
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context.CLIPBOARD_SERVICE
+import android.graphics.drawable.Drawable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
@@ -64,6 +66,16 @@ class OutgoingViewHolder private constructor(
     }
 
     private val binding = ItemChatMsgOutgoingBinding.bind(itemView)
+    private val imgIcon: Drawable by lazy {
+        binding.root.context.drawable(R.drawable.ic_img_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
+    }
+    private val docIcon: Drawable by lazy {
+        binding.root.context.drawable(R.drawable.ic_doc_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
+    }
     private lateinit var chatItem: ChatItem.Msg
     private val sdf = DateTimeFormatter.ofPattern("H:mm")
     private val clipboard by lazy {
@@ -96,8 +108,6 @@ class OutgoingViewHolder private constructor(
 
     fun bind(chatItem: ChatItem.Msg.Outgoing) {
         this.chatItem = chatItem
-//        binding.tvContent.text = chatItem.message.id.toString() //debug
-//        return
         if (chatItem.message.file != null) {
             if (chatItem.message.file.isImage()) {
                 binding.viewDocAttachment.visible(false)
@@ -134,7 +144,22 @@ class OutgoingViewHolder private constructor(
             binding.ivAttachmentPhoto.visible(false)
         }
         binding.viewQuotedMessage.visible(chatItem.message.quotedMessage != null)
-        binding.tvQuotedMessage.text = chatItem.message.quotedMessage?.text
+        binding.tvQuotedPerson.text = chatItem.message.quotedMessage?.user?.name
+        val icon: Drawable? = when {
+            chatItem.message.quotedMessage?.file == null -> null
+            chatItem.message.quotedMessage.file.isImage() -> imgIcon
+            else -> docIcon
+        }
+        binding.tvQuotedMessage.setCompoundDrawables(icon, null, null, null)
+        binding.tvQuotedMessage.text = when {
+            !chatItem.message.quotedMessage?.text.isNullOrBlank() ->
+                chatItem.message.quotedMessage?.text
+            chatItem.message.quotedMessage?.file?.isImage() == true ->
+                binding.root.context.getString(R.string.photo)
+            chatItem.message.quotedMessage?.file != null ->
+                chatItem.message.quotedMessage.file.name
+            else -> null
+        }
         binding.ivStatus.visible(chatItem.message.type != Message.Type.DELETED)
         binding.ivStatus.setImageResource(
             when (chatItem.status) {
