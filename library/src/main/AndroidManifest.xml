@@ -18,7 +18,7 @@
         <activity
             android:name=".library.SmartChatActivity"
             android:theme="@style/Theme.SmartChat"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize|stateHidden">
 
         </activity>
 
@@ -30,6 +30,16 @@
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/smart_chat_file_paths" />
+        </provider>
+
+        <provider
+            android:name="gb.smartchat.library.SmartChatImageFileProvider"
+            android:authorities="gb.smartchat.library.imagefileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/smart_chat_image_file_paths" />
         </provider>
 
     </application>

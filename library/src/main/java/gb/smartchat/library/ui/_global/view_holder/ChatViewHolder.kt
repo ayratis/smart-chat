@@ -77,13 +77,13 @@ class ChatViewHolder(
 
         val icon: Drawable? = when {
             chat.lastMessage?.file == null -> null
-            chat.lastMessage.file.type == "media" -> imgIcon
+            chat.lastMessage.file.isImage() -> imgIcon
             else -> docIcon
         }
         binding.tvLastMsgText.setCompoundDrawables(icon, null, null, null)
         binding.tvLastMsgText.text = when {
             !chat.lastMessage?.text.isNullOrBlank() -> chat.lastMessage?.text
-            chat.lastMessage?.file?.type == "media" -> itemView.context.getString(R.string.photo)
+            chat.lastMessage?.file?.isImage() == true -> itemView.context.getString(R.string.photo)
             chat.lastMessage?.file != null -> chat.lastMessage.file.name
             else -> null
         }

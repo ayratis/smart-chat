@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
+import gb.smartchat.BuildConfig
 import gb.smartchat.library.data.download.DownloadStatus
 import gb.smartchat.library.entity.*
 import gb.smartchat.library.utils.SingleEvent
@@ -122,7 +123,34 @@ object ChatUDF {
         val typingSenderIds: List<String> = emptyList(),
         val withScrollTo: SingleEvent<WithScrollTo>? = null,
         val mentions: List<User> = emptyList()
-    )
+    ) {
+
+        override fun toString(): String {
+            if (BuildConfig.DEBUG) {
+                return "State(" +
+//                    "chat=$chat, " +
+//                    "users=$users," +
+//                    " readInfo=$readInfo, " +
+//                    "messages=$messages, " +
+//                    "draft=$draft, " +
+                        "pagingState=$pagingState, " +
+//                    "currentText='$currentText', " +
+//                    "editingMessage=$editingMessage, " +
+//                    "quotingMessage=$quotingMessage, " +
+//                    "attachmentState=$attachmentState, " +
+                        "isOnline=$isOnline, " +
+                        "fullDataUp=$fullDataUp, " +
+                        "fullDataDown=$fullDataDown, " +
+                        "atBottom=$atBottom, " +
+//                    "sendEnabled=$sendEnabled, " +
+//                    "typingSenderIds=$typingSenderIds, " +
+                        "withScrollTo=$withScrollTo, " +
+//                    "mentions=$mentions" +
+                        ")"
+            }
+            return super.toString()
+        }
+    }
 
     data class WithScrollTo(
         val message: Message,
@@ -165,10 +193,11 @@ object ChatUDF {
 
         private val disposable: Disposable = actions.hide()
             .subscribe { action ->
+                Log.d(TAG, "action: $action")
                 val newState = reduce(state.value!!, action) {
+                    Log.d(TAG, "sideEffect: $it")
                     sideEffectListener.invoke(it)
                 }
-                Log.d(TAG, "action: $action")
                 Log.d(TAG, "state: $newState")
                 state.accept(newState)
             }

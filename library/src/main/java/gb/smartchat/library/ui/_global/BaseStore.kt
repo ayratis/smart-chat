@@ -29,7 +29,10 @@ abstract class BaseStore<State: Any, Action: Any, SideEffect: Any>(
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe { action ->
             Log.d(tag, "action: $action")
-            val newState = reduce(viewState.value!!, action, sideEffectListener)
+            val newState = reduce(viewState.value!!, action) {
+                Log.d(tag, "sideEffect: $it")
+                sideEffectListener.invoke(it)
+            }
             Log.d(tag, "state: $newState")
             viewState.accept(newState)
         }

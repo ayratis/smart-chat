@@ -11,7 +11,6 @@ class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         findViewById<Button>(R.id.btn_user1).setOnClickListener {
-
             openChatList("46343a36-9ad0-4002-822d-61d81da5c831"/*"d9d39587-de82-11eb-941d-9418820bda83"*/) //Достоевский
         }
         findViewById<Button>(R.id.btn_user2).setOnClickListener {
@@ -53,6 +52,7 @@ class SelectUserActivity : AppCompatActivity(R.layout.activity_select_user) {
             this,
             userId,
             storeInfoList,
+//            baseUrl = "https://chat.swnn.ru:56479"
             baseUrl = "http://91.201.41.157:8001/"
         )
         startActivity(intent)

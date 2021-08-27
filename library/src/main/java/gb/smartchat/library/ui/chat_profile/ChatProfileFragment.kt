@@ -112,7 +112,6 @@ class ChatProfileFragment : Fragment(),
                 .show(childFragmentManager, null)
         }
         binding.tvGroupName.text = chat.name
-        binding.tvMemberCount.text = getString(R.string.d_members, chat.users.size)
         Glide.with(binding.ivPartnerIcon)
             .load(chat.partnerAvatar)
             .into(binding.ivPartnerIcon)
@@ -123,13 +122,7 @@ class ChatProfileFragment : Fragment(),
         binding.btnAddMembers.apply {
             visible(chat.isArchived != true)
             setOnClickListener {
-                parentFragmentManager.navigateTo(
-                    CreateChatFragment.create(
-                        storeInfo = chat.storeInfo,
-                        mode = CreateChatMode.ADD_MEMBERS,
-                        chat = chat
-                    )
-                )
+                viewModel.addContacts()
             }
         }
         binding.btnArchive.apply {
@@ -184,6 +177,12 @@ class ChatProfileFragment : Fragment(),
     override fun onResume() {
         super.onResume()
 
+        viewModel.memberCount
+            .subscribe { memberCount ->
+                binding.tvMemberCount.text = getString(R.string.d_members, memberCount)
+            }
+            .also { compositeDisposable.add(it) }
+
         viewModel.avatar
             .subscribe { uri ->
                 Glide.with(binding.ivPhoto)
@@ -214,6 +213,19 @@ class ChatProfileFragment : Fragment(),
             }
             .also { compositeDisposable.add(it) }
 
+       viewModel.navigateToAddContacts
+           .subscribe { event ->
+               event.getContentIfNotHandled()?.let { chat ->
+                   parentFragmentManager.navigateTo(
+                       CreateChatFragment.create(
+                           storeInfo = chat.storeInfo,
+                           mode = CreateChatMode.ADD_MEMBERS,
+                           chat = chat
+                       )
+                   )
+               }
+           }
+           .also { compositeDisposable.add(it) }
 
     }
 
@@ -264,7 +276,7 @@ class ChatProfileFragment : Fragment(),
             return when (position) {
                 0 -> {
                     val isCreator = chat.isCreator(component.userId) && chat.isArchived == false
-                    ChatProfileMembersFragment.create(chat.id, isCreator)
+                    ChatProfileMembersFragment.create(chat, isCreator)
                 }
                 1 -> ChatProfileFilesFragment.create(chat.id, true)
                 2 -> ChatProfileLinksFragment.create(chat.id)

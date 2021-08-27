@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import gb.smartchat.library.SmartChatActivity
+import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.Contact
 import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui._global.viewbinding.FragmentChatProfilePageBinding
@@ -19,12 +20,12 @@ import io.reactivex.disposables.CompositeDisposable
 class ChatProfileMembersFragment : Fragment() {
 
     companion object {
-        private const val ARG_CHAT_ID = "arg chat id"
+        private const val ARG_CHAT = "arg chat"
         private const val ARG_IS_CREATOR = "arg is creator"
 
-        fun create(chatId: Long, isCreator: Boolean) = ChatProfileMembersFragment().apply {
+        fun create(chat: Chat, isCreator: Boolean) = ChatProfileMembersFragment().apply {
             arguments = Bundle().apply {
-                putLong(ARG_CHAT_ID, chatId)
+                putSerializable(ARG_CHAT, chat)
                 putBoolean(ARG_IS_CREATOR, isCreator)
             }
         }
@@ -40,8 +41,8 @@ class ChatProfileMembersFragment : Fragment() {
 
     private val compositeDisposable = CompositeDisposable()
 
-    private val chatId: Long by lazy {
-        requireArguments().getLong(ARG_CHAT_ID)
+    private val chat: Chat by lazy {
+        requireArguments().getSerializable(ARG_CHAT) as Chat
     }
 
     private val isCreator by lazy {
@@ -57,10 +58,11 @@ class ChatProfileMembersFragment : Fragment() {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return ChatProfileMembersViewModel(
-                    chatId,
+                    chat,
                     component.httpApi,
                     component.resourceManager,
-                    component.addRecipientsPublisher
+                    component.addRecipientsPublisher,
+                    component.chatEditedPublisher
                 ) as T
             }
         }

@@ -3,6 +3,7 @@ package gb.smartchat.library.ui._global.view_holder.chat
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
@@ -30,7 +31,8 @@ class IncomingViewHolder private constructor(
     private val onFileClickListener: (ChatItem.Msg) -> Unit,
     private val onMentionClickListener: ((Mention) -> Unit)?,
     private val onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
-    private val onPhotoClickListener: (File) -> Unit
+    private val onPhotoClickListener: (File) -> Unit,
+    private val onShareListener: (String) -> Unit,
 ) : RecyclerView.ViewHolder(itemView) {
 
     companion object {
@@ -43,7 +45,8 @@ class IncomingViewHolder private constructor(
             onFileClickListener: (ChatItem.Msg) -> Unit,
             onMentionClickListener: ((Mention) -> Unit)?,
             onToFavoritesClickListener: ((ChatItem.Msg) -> Unit)?,
-            onPhotoClickListener: (File) -> Unit
+            onPhotoClickListener: (File) -> Unit,
+            onShareListener: (String) -> Unit,
         ) =
             IncomingViewHolder(
                 parent.inflate(R.layout.item_chat_msg_incoming),
@@ -52,40 +55,54 @@ class IncomingViewHolder private constructor(
                 onFileClickListener,
                 onMentionClickListener,
                 onToFavoritesClickListener,
-                onPhotoClickListener
+                onPhotoClickListener,
+                onShareListener,
             )
     }
 
     private val sdf = DateTimeFormatter.ofPattern("H:mm")
     private val binding = ItemChatMsgIncomingBinding.bind(itemView)
+    private val imgIcon: Drawable by lazy {
+        binding.root.context.drawable(R.drawable.ic_img_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
+    }
+    private val docIcon: Drawable by lazy {
+        binding.root.context.drawable(R.drawable.ic_doc_14).apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        }
+    }
     private lateinit var chatItem: ChatItem.Msg
     private val clipboard by lazy {
         itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     }
 
     init {
+        binding.content.setOnClickListener { showMenu() }
+        binding.content.setOnLongClickListener(this::onLongClickListener)
         binding.viewQuotedMessage.setOnClickListener {
             onQuotedMsgClickListener?.invoke(chatItem)
         }
+        binding.viewQuotedMessage.setOnLongClickListener(this::onLongClickListener)
         binding.viewDocAttachment.setOnClickListener {
             onFileClickListener.invoke(chatItem)
         }
-        binding.content.setOnClickListener {
-            showMenu()
-        }
-        binding.content.setOnLongClickListener {
-            showMenu()
-            true
-        }
+        binding.viewDocAttachment.setOnLongClickListener(this::onLongClickListener)
         binding.ivAttachmentPhoto.setOnClickListener {
             chatItem.message.file?.let(onPhotoClickListener::invoke)
         }
+        binding.ivAttachmentPhoto.setOnLongClickListener(this::onLongClickListener)
+        binding.tvContent.setOnLongClickListener(this::onLongClickListener)
+        binding.tvContent.setOnClickListener { showMenu() }
+    }
+
+    private fun onLongClickListener(view: View): Boolean {
+        showMenu()
+        return true
     }
 
     fun bind(chatItem: ChatItem.Msg.Incoming) {
         this.chatItem = chatItem
-        //        binding.tvContent.text = chatItem.message.id.toString() //debug
-        //        return
         Glide.with(binding.ivAvatar)
             .load(chatItem.message.user?.avatar)
             .placeholder(R.drawable.profile_avatar_placeholder)
@@ -128,39 +145,52 @@ class IncomingViewHolder private constructor(
             binding.ivAttachmentPhoto.visible(false)
         }
         binding.viewQuotedMessage.visible(chatItem.message.quotedMessage != null)
-        binding.tvQuotedMessage.text = chatItem.message.quotedMessage?.text
+        binding.tvQuotedPerson.text = chatItem.message.quotedMessage?.user?.name
+        val icon: Drawable? = when {
+            chatItem.message.quotedMessage?.file == null -> null
+            chatItem.message.quotedMessage.file.isImage() -> imgIcon
+            else -> docIcon
+        }
+        binding.tvQuotedMessage.setCompoundDrawables(icon, null, null, null)
+        binding.tvQuotedMessage.text = when {
+            !chatItem.message.quotedMessage?.text.isNullOrBlank() ->
+                chatItem.message.quotedMessage?.text
+            chatItem.message.quotedMessage?.file?.isImage() == true ->
+                binding.root.context.getString(R.string.photo)
+            chatItem.message.quotedMessage?.file != null ->
+                chatItem.message.quotedMessage.file.name
+            else -> null
+        }
         binding.tvContent.apply {
-            text =
-                if (chatItem.message.mentions.isNullOrEmpty()) {
-                    chatItem.message.text
-                } else {
-                    SpannableStringBuilder(chatItem.message.text).apply {
-                        chatItem.message.mentions.forEach { mention ->
-                            val mentionUtf8 = ByteArray(mention.lengthUtf8)
-                            chatItem.message.text!!.encodeToByteArray().copyInto(
-                                destination = mentionUtf8,
-                                startIndex = mention.offsetUtf8,
-                                endIndex = mention.offsetUtf8 + mention.lengthUtf8
-                            )
-                            val mentionString = mentionUtf8.decodeToString()
-                            val offset = chatItem.message.text.indexOf(mentionString)
-                            setSpan(
-                                AppClickableSpan(
-                                    isUnderlineText = false,
-                                    linkColor = itemView.context.color(R.color.purple_heart)
-                                ) {
-                                    onMentionClickListener?.invoke(mention)
-                                },
-                                offset,
-                                offset + mentionString.length,
-                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                            )
-                        }
+            if (chatItem.message.mentions.isNullOrEmpty()) {
+                text = chatItem.message.text
+                movementMethod = null
+            } else {
+                text = SpannableStringBuilder(chatItem.message.text).apply {
+                    chatItem.message.mentions.forEach { mention ->
+                        val mentionUtf8 = ByteArray(mention.lengthUtf8)
+                        chatItem.message.text!!.encodeToByteArray().copyInto(
+                            destination = mentionUtf8,
+                            startIndex = mention.offsetUtf8,
+                            endIndex = mention.offsetUtf8 + mention.lengthUtf8
+                        )
+                        val mentionString = mentionUtf8.decodeToString()
+                        val offset = chatItem.message.text.indexOf(mentionString)
+                        setSpan(
+                            AppClickableSpan(
+                                isUnderlineText = false,
+                                linkColor = itemView.context.color(R.color.purple_heart)
+                            ) {
+                                onMentionClickListener?.invoke(mention)
+                            },
+                            offset,
+                            offset + mentionString.length,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
                     }
                 }
-
-            movementMethod = LinkMovementMethod.getInstance()
-
+                movementMethod = LinkMovementMethod.getInstance()
+            }
             visible(!chatItem.message.text.isNullOrBlank())
         }
         binding.tvTime.text = sdf.format(chatItem.message.timeCreated)
@@ -177,9 +207,8 @@ class IncomingViewHolder private constructor(
         onQuoteListener?.let {
             menu.inflate(R.menu.quote)
         }
-        if (!chatItem.message.text.isNullOrBlank()) {
-            menu.inflate(R.menu.copy)
-        }
+        menu.inflate(R.menu.copy)
+        menu.inflate(R.menu.share)
         if (chatItem.message.file?.downloadStatus == DownloadStatus.Empty) {
             menu.inflate(R.menu.download)
         }
@@ -195,8 +224,21 @@ class IncomingViewHolder private constructor(
                 }
                 R.id.action_copy -> {
                     Log.d(TAG, "onCreateContextMenu: copy")
-                    val clip = ClipData.newPlainText(null, chatItem.message.text)
+                    val clipText = listOfNotNull(
+                        chatItem.message.text,
+                        chatItem.message.file?.url
+                    ).joinToString("\n")
+                    val clip = ClipData.newPlainText(null, clipText)
                     clipboard.setPrimaryClip(clip)
+                    true
+                }
+                R.id.action_share -> {
+                    Log.d(TAG, "onCreateContextMenu: share")
+                    val shareText = listOfNotNull(
+                        chatItem.message.text,
+                        chatItem.message.file?.url
+                    ).joinToString("\n")
+                    onShareListener.invoke(shareText)
                     true
                 }
                 R.id.action_download -> {

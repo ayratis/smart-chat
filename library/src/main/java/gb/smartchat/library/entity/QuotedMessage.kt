@@ -10,5 +10,10 @@ data class QuotedMessage(
     @SerializedName("text")
     val text: String?,
     @SerializedName("sender_id")
-    val senderId: String?
+    val senderId: String?,
+    @SerializedName("file")
+    val file: File?,
+
+    //custom
+    val user: User?,
 ) : Serializable

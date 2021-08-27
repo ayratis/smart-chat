@@ -124,12 +124,15 @@ fun ChatItemsInfo.mapIntoChatItems(
                 scrollPosition = list.lastIndex
             }
         }
-        if (scrollPosition == list.lastIndex) {
-            scrollPosition++
-        }
-        val typingUsers = typingSenderIds.mapNotNull { id -> users.find { it.id == id } }
-        list += ChatItem.Typing(typingUsers)
     }
+    if (scrollPosition == list.lastIndex) {
+        scrollPosition++
+    }
+    val typingUsers = typingSenderIds.mapNotNull { id -> users.find { it.id == id } }
+    list += ChatItem.Typing(
+        if (fullDataDown) typingUsers
+        else emptyList()
+    )
     return if (scrollPosition != -1 && withScrollTo != null) {
         list to ScrollOptions(scrollPosition, withScrollTo.fake, withScrollTo.isUp)
     } else {
@@ -141,15 +144,15 @@ private fun Message.mapIntoChatItem(readOut: Long, userId: String): ChatItem.Msg
     return when {
         senderId == userId -> {
             val status =
-                if (id > readOut) gb.smartchat.library.ui.chat.ChatItem.OutgoingStatus.SENT
-                else gb.smartchat.library.ui.chat.ChatItem.OutgoingStatus.RED
-            gb.smartchat.library.ui.chat.ChatItem.Msg.Outgoing(this, status)
+                if (id > readOut) ChatItem.OutgoingStatus.SENT
+                else ChatItem.OutgoingStatus.RED
+            ChatItem.Msg.Outgoing(this, status)
         }
         (type == Message.Type.SYSTEM) -> {
-            gb.smartchat.library.ui.chat.ChatItem.Msg.System(this)
+            ChatItem.Msg.System(this)
         }
         else -> {
-            gb.smartchat.library.ui.chat.ChatItem.Msg.Incoming(this)
+            ChatItem.Msg.Incoming(this)
         }
     }
 }

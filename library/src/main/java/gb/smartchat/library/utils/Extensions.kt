@@ -71,7 +71,7 @@ fun View.addSystemTopPadding(
     isConsumed: Boolean = false
 ) {
     val isTablet = context.resources.getBoolean(R.bool.tablet)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && !isTablet) {
+    if (!isTablet) {
         doOnApplyWindowInsets { _, insets, initialPadding ->
             targetView.updatePadding(
                 top = initialPadding.top + insets.systemWindowInsetTop
@@ -97,7 +97,7 @@ fun View.addSystemBottomPadding(
     isConsumed: Boolean = false
 ) {
     val isTablet = context.resources.getBoolean(R.bool.tablet)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && !isTablet) {
+    if (!isTablet) {
         doOnApplyWindowInsets { _, insets, initialPadding ->
             targetView.updatePadding(
                 bottom = initialPadding.bottom + insets.systemWindowInsetBottom
@@ -227,7 +227,12 @@ fun Message.composeWithDownloadStatus(downloadHelper: FileDownloadHelper): Messa
 
 fun Message.composeWithUser(users: List<User>): Message {
     val user = users.find { it.id == this.senderId }
-    return this.copy(user = user)
+    val quotedMessage = quotedMessage?.let {
+        it.copy(
+            user = users.find { user -> user.id == it.senderId }
+        )
+    }
+    return this.copy(user = user, quotedMessage = quotedMessage)
 }
 
 fun Message.toMessageCreateRequestBody(): MessageCreateRequest? {
@@ -276,6 +281,8 @@ fun Message.toQuotedMessage(): QuotedMessage {
         messageId = id,
         text = text,
         senderId = senderId,
+        file = file,
+        user = user
     )
 }
 
@@ -304,7 +311,8 @@ fun UserProfile.toContact(): Contact {
         avatar = avatar,
         online = null,
         storeId = null,
-        role = null
+        role = null,
+        state = null
     )
 }
 
@@ -315,7 +323,19 @@ fun User.toContact(): Contact {
         avatar = avatar,
         online = null,
         storeId = null,
-        role = null
+        role = role,
+        state = null
+    )
+}
+
+fun Contact.toUser(): User {
+    return User(
+        id = id,
+        name = name,
+        avatar = avatar,
+        role = role,
+        lastMentionMessageId = null,
+        lastReadMessageId = null
     )
 }
 
@@ -350,7 +370,7 @@ fun Fragment.hideSoftInput() {
     }
 }
 
-fun String.extractLinks() : List<String> {
+fun String.extractLinks(): List<String> {
     val links = mutableListOf<String>()
     val matcher = Patterns.WEB_URL.matcher(this)
     while (matcher.find()) {

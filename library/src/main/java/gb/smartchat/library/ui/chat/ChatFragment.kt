@@ -1,5 +1,6 @@
 package gb.smartchat.library.ui.chat
 
+import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
@@ -150,7 +151,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                 onFileClickListener = viewModel::onFileClick,
                 onMentionClickListener = null,
                 onToFavoritesClickListener = null,
-                onPhotoClickListener = this::openMedia
+                onPhotoClickListener = this::openMedia,
+                onShareClickListener = this::shareText,
             ).apply {
                 setHasStableIds(true)
             }
@@ -190,7 +192,8 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                 onToFavoritesClickListener = { chatItem ->
                     viewModel.onToFavoriteClick(chatItem.message)
                 },
-                onPhotoClickListener = this::openMedia
+                onPhotoClickListener = this::openMedia,
+                onShareClickListener = this::shareText,
             ).apply {
                 setHasStableIds(true)
             }
@@ -227,7 +230,6 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
     }
 
     override fun onDestroyView() {
-        renderDisposables.clear()
         binding.layoutInput.removeOnLayoutChangeListener(onLayoutChangeListener)
         super.onDestroyView()
         _binding = null
@@ -342,6 +344,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
     }
 
     override fun onPause() {
+        renderDisposables.clear()
         newsDisposables.clear()
         super.onPause()
         hideSoftInput()
@@ -661,5 +664,16 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
     private fun openMedia(file: File) {
         file.url ?: return
         ImageViewerDialogFragment.create(file.url).show(childFragmentManager, null)
+    }
+
+    private fun shareText(text: String) {
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, text)
+            type = "text/plain"
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, null)
+        startActivity(shareIntent)
     }
 }

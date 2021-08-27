@@ -5,11 +5,14 @@ import com.jakewharton.rxrelay2.BehaviorRelay
 import gb.smartchat.R
 import gb.smartchat.library.data.http.HttpApi
 import gb.smartchat.library.data.resources.ResourceManager
+import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.Contact
 import gb.smartchat.library.entity.request.AddRecipientsRequest
 import gb.smartchat.library.publisher.AddRecipientsPublisher
+import gb.smartchat.library.publisher.ChatEditedPublisher
 import gb.smartchat.library.utils.SingleEvent
 import gb.smartchat.library.utils.humanMessage
+import gb.smartchat.library.utils.toUser
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -17,16 +20,18 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
 class ChatProfileMembersViewModel(
-    private val chatId: Long,
+    chatArg: Chat,
     private val httpApi: HttpApi,
     private val resourceManager: ResourceManager,
-    addRecipientsPublisher: AddRecipientsPublisher
+    addRecipientsPublisher: AddRecipientsPublisher,
+    private val chatEditedPublisher: ChatEditedPublisher
 ) : ViewModel() {
 
     companion object {
         private const val RETRY_TAG = "retry tag"
     }
 
+    private var chat: Chat = chatArg
     private val compositeDisposable = CompositeDisposable()
     private var fetchDisposable: Disposable? = null
     private val state = BehaviorRelay.create<List<ChatProfileMembersItem>>()
@@ -45,6 +50,8 @@ class ChatProfileMembersViewModel(
                             items + newRecipients.map { ChatProfileMembersItem.Data(it) }
                         )
                     }
+                    chat = chat.plusRecipients(newRecipients)
+                    chatEditedPublisher.accept(chat)
                 }
             }
             .also { compositeDisposable.add(it) }
@@ -53,8 +60,12 @@ class ChatProfileMembersViewModel(
     private fun fetchContacts() {
         fetchDisposable?.dispose()
         fetchDisposable = httpApi
-            .getRecipients(chatId)
-            .map { it.result }
+            .getRecipients(chat.id)
+            .map { response ->
+                response.result.filter { contact ->
+                    contact.state != Contact.State.DELETED
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSubscribe {
@@ -81,7 +92,7 @@ class ChatProfileMembersViewModel(
 
     private fun deleteUser(contact: Contact) {
         httpApi
-            .postDeleteRecipients(AddRecipientsRequest(chatId, listOf(contact)))
+            .postDeleteRecipients(AddRecipientsRequest(chat.id, listOf(contact)))
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -94,6 +105,8 @@ class ChatProfileMembersViewModel(
                             true
                         }
                         state.accept(newItems)
+                        chat = chat.minusRecipients(listOf(contact))
+                        chatEditedPublisher.accept(chat)
                     }
                 },
                 {
@@ -116,5 +129,16 @@ class ChatProfileMembersViewModel(
 
     override fun onCleared() {
         compositeDisposable.dispose()
+    }
+
+    private fun Chat.plusRecipients(recipientsList: List<Contact>): Chat {
+        val chatUserIds = users.map { it.id }
+        val newUsers = recipientsList.filter { !chatUserIds.contains(it.id) }.map { it.toUser() }
+        return copy(users = users + newUsers)
+    }
+
+    private fun Chat.minusRecipients(recipientsList: List<Contact>): Chat {
+        val deletedUserIds = recipientsList.map { it.id }
+        return copy(users = users.filter { !deletedUserIds.contains(it.id) })
     }
 }
