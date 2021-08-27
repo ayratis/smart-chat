@@ -16,18 +16,12 @@ data class Contact(
     @SerializedName("store_id")
     val storeId: String?,
     @SerializedName("role")
-    val role: ROLE?,
+    val role: User.Role?,
     @SerializedName("state")
-    val state: STATE?
+    val state: State?
 ) : Serializable {
-    enum class ROLE : Serializable {
-        @SerializedName("CREATOR")
-        CREATOR,
-        @SerializedName("USER")
-        USER
-    }
 
-    enum class STATE : Serializable {
+    enum class State : Serializable {
         @SerializedName("ACTIVE")
         ACTIVE,
         @SerializedName("DELETED")

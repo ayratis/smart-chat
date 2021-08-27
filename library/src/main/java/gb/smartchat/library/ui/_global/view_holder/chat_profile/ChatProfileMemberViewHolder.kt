@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import gb.smartchat.R
 import gb.smartchat.library.entity.Contact
+import gb.smartchat.library.entity.User
 import gb.smartchat.library.ui._global.viewbinding.ItemChatProfileMemberBinding
 import gb.smartchat.library.utils.color
 import gb.smartchat.library.utils.visible
@@ -55,7 +56,7 @@ class ChatProfileMemberViewHolder private constructor(
             .placeholder(R.drawable.profile_avatar_placeholder)
             .circleCrop()
             .into(binding.ivAvatar)
-        binding.tvCreator.visible(contact.role == Contact.ROLE.CREATOR)
+        binding.tvCreator.visible(contact.role == User.Role.CREATOR)
         binding.tvName.text = contact.name
         binding.tvOnline.apply {
             if (contact.online == true) {
@@ -69,7 +70,7 @@ class ChatProfileMemberViewHolder private constructor(
     }
 
     private fun showMenu() {
-        if (contact.role == Contact.ROLE.CREATOR) return
+        if (contact.role == User.Role.CREATOR) return
         val menu = android.widget.PopupMenu(itemView.context, itemView)
         if (deleteContactListener != null) {
             menu.inflate(R.menu.delete_member)

@@ -323,8 +323,19 @@ fun User.toContact(): Contact {
         avatar = avatar,
         online = null,
         storeId = null,
-        role = null,
+        role = role,
         state = null
+    )
+}
+
+fun Contact.toUser(): User {
+    return User(
+        id = id,
+        name = name,
+        avatar = avatar,
+        role = role,
+        lastMentionMessageId = null,
+        lastReadMessageId = null
     )
 }
 
@@ -359,7 +370,7 @@ fun Fragment.hideSoftInput() {
     }
 }
 
-fun String.extractLinks() : List<String> {
+fun String.extractLinks(): List<String> {
     val links = mutableListOf<String>()
     val matcher = Patterns.WEB_URL.matcher(this)
     while (matcher.find()) {

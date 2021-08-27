@@ -14,7 +14,6 @@ import gb.smartchat.library.publisher.ChatArchivePublisher
 import gb.smartchat.library.publisher.ChatEditedPublisher
 import gb.smartchat.library.publisher.ChatUnarchivePublisher
 import gb.smartchat.library.publisher.LeaveChatPublisher
-import gb.smartchat.library.ui.group_complete.GroupCompleteUDF
 import gb.smartchat.library.utils.SingleEvent
 import gb.smartchat.library.utils.toContact
 import io.reactivex.Observable
@@ -26,7 +25,7 @@ import okhttp3.MultipartBody
 
 class ChatProfileViewModel(
     private val httpApi: HttpApi,
-    private val chat: Chat,
+    chatArg: Chat,
     private val userId: String,
     private val resourceManager: ResourceManager,
     private val leaveChatPublisher: LeaveChatPublisher,
@@ -39,31 +38,40 @@ class ChatProfileViewModel(
     private val compositeDisposable = CompositeDisposable()
     private var uploadDisposable: Disposable? = null
 
+    private var chat = BehaviorRelay.createDefault(chatArg)
     private val avatarBehavior = BehaviorRelay.create<Uri>()
     private val photoUploadingBehavior = BehaviorRelay.createDefault(false)
     private val exitToRootScreenCommand = BehaviorRelay.create<SingleEvent<Unit>>()
     private val showDialogCommand = BehaviorRelay.create<SingleEvent<String>>()
+    private val navigateToAddContactsCommand = BehaviorRelay.create<SingleEvent<Chat>>()
 
     val avatar: Observable<Uri> = avatarBehavior.hide()
     val photoUploading: Observable<Boolean> = photoUploadingBehavior.hide()
+    val memberCount: Observable<Int> = chat.hide().map { it.users.size }
     val exitToRootScreen: Observable<SingleEvent<Unit>> = exitToRootScreenCommand.hide()
     val showDialog: Observable<SingleEvent<String>> = showDialogCommand.hide()
+    val navigateToAddContacts: Observable<SingleEvent<Chat>> = navigateToAddContactsCommand.hide()
 
     init {
-        chat.avatar?.let { url ->
+        chatArg.avatar?.let { url ->
             avatarBehavior.accept(Uri.parse(url))
         }
+        chatEditedPublisher
+            .subscribe { editedChat ->
+                chat.accept(editedChat)
+            }
+            .also { compositeDisposable.add(it) }
     }
 
     fun leaveChat() {
-        val me = chat.users.find { it.id == userId } ?: return
+        val me = chat.value!!.users.find { it.id == userId } ?: return
         httpApi
-            .postLeaveChat(AddRecipientsRequest(chat.id, listOf(me.toContact())))
+            .postLeaveChat(AddRecipientsRequest(chat.value!!.id, listOf(me.toContact())))
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 {
-                    leaveChatPublisher.accept(chat)
+                    leaveChatPublisher.accept(chat.value!!)
                     exitToRootScreenCommand.accept(SingleEvent(Unit))
                 },
                 {
@@ -76,12 +84,12 @@ class ChatProfileViewModel(
 
     fun archiveChat() {
         httpApi
-            .postArchiveChat(PinChatRequest(chatId = chat.id))
+            .postArchiveChat(PinChatRequest(chatId = chat.value!!.id))
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 {
-                    chatArchivePublisher.accept(chat)
+                    chatArchivePublisher.accept(chat.value!!)
                     exitToRootScreenCommand.accept(SingleEvent(Unit))
                 },
                 {
@@ -94,12 +102,12 @@ class ChatProfileViewModel(
 
     fun unarchiveChat() {
         httpApi
-            .postUnarchiveChat(PinChatRequest(chatId = chat.id))
+            .postUnarchiveChat(PinChatRequest(chatId = chat.value!!.id))
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 {
-                    chatUnarchivePublisher.accept(chat)
+                    chatUnarchivePublisher.accept(chat.value!!)
                     exitToRootScreenCommand.accept(SingleEvent(Unit))
                 },
                 {
@@ -128,7 +136,7 @@ class ChatProfileViewModel(
             .subscribe(
                 { file ->
                     chatEditedPublisher.accept(
-                        chat.copy(avatar = file.url)
+                        chat.value!!.copy(avatar = file.url)
                     )
                 },
                 {
@@ -140,6 +148,10 @@ class ChatProfileViewModel(
                 uploadDisposable = it
                 compositeDisposable.add(it)
             }
+    }
+
+    fun addContacts() {
+        navigateToAddContactsCommand.accept(SingleEvent(chat.value!!))
     }
 
     override fun onCleared() {
