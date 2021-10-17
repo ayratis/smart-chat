@@ -14,6 +14,8 @@ import gb.smartchat.library.data.download.FileDownloadHelper
 import gb.smartchat.library.data.download.FileDownloadHelperImpl
 import gb.smartchat.library.data.gson.GsonDateAdapter
 import gb.smartchat.library.data.http.HttpApi
+import gb.smartchat.library.data.http.interceptor.AuthHeaderInterceptor
+import gb.smartchat.library.data.http.interceptor.ErrorResponseInterceptor
 import gb.smartchat.library.data.resources.ResourceManager
 import gb.smartchat.library.data.resources.ResourceManagerImpl
 import gb.smartchat.library.data.socket.SocketApi
@@ -72,15 +74,10 @@ class Component constructor(
 
     val okHttpClient: OkHttpClient by lazy {
         with(OkHttpClient.Builder()) {
-            addInterceptor {
-                val request = it.request()
-                val newRequest =
-                    request.newBuilder().addHeader("smart-user-id", userId)
-                        .build()
-                it.proceed(newRequest)
-            }
+            addNetworkInterceptor(AuthHeaderInterceptor(userId))
+            addNetworkInterceptor(ErrorResponseInterceptor(gson))
             if (BuildConfig.DEBUG) {
-                addInterceptor(
+                addNetworkInterceptor(
                     HttpLoggingInterceptor().apply {
                         level = HttpLoggingInterceptor.Level.BODY
                     }

@@ -30,6 +30,7 @@ import androidx.lifecycle.*
 import gb.smartchat.R
 import gb.smartchat.library.data.download.DownloadStatus
 import gb.smartchat.library.data.download.FileDownloadHelper
+import gb.smartchat.library.data.http.ServerException
 import gb.smartchat.library.data.resources.ResourceManager
 import gb.smartchat.library.entity.*
 import gb.smartchat.library.entity.request.CreateChatRequest
@@ -300,6 +301,7 @@ fun ChangedMessage.composeWithMessage(message: Message): Message {
 fun Throwable.humanMessage(resourceManager: ResourceManager): String {
     return when (this) {
         is IOException -> resourceManager.getString(R.string.connection_error)
+        is ServerException -> message ?: resourceManager.getString(R.string.unknown_error)
         else -> resourceManager.getString(R.string.unknown_error)
     }
 }

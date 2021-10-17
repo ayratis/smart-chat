@@ -12,6 +12,7 @@ import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.request.PinChatRequest
 import gb.smartchat.library.publisher.*
 import gb.smartchat.library.utils.SingleEvent
+import gb.smartchat.library.utils.humanMessage
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -89,10 +90,7 @@ class ChatListViewModel(
                     pinChatOnServer(sideEffect.chat, sideEffect.pin)
                 }
                 is ChatListUDF.SideEffect.ShowPinChatError -> {
-                    val message = resourceManager.getString(
-                        if (sideEffect.pin) R.string.pin_error
-                        else R.string.unpin_error
-                    )
+                    val message = sideEffect.error.humanMessage(resourceManager)
                     showErrorMessageCommand.accept(SingleEvent(message))
                 }
                 is ChatListUDF.SideEffect.ArchiveChat -> {
