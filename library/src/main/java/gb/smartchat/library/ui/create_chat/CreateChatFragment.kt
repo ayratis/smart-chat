@@ -115,8 +115,8 @@ class CreateChatFragment : Fragment() {
         binding.appBarLayout.addSystemTopPadding()
         binding.toolbar.apply {
             title = when (mode) {
-                CreateChatMode.CREATE_GROUP -> getString(R.string.add_members)
-                CreateChatMode.ADD_MEMBERS -> getString(R.string.add_members)
+                CreateChatMode.CREATE_GROUP -> getString(R.string.select_members)
+                CreateChatMode.ADD_MEMBERS -> getString(R.string.select_members)
             }
             setNavigationOnClickListener {
                 parentFragmentManager.popBackStack()
