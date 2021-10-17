@@ -408,6 +408,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                 if (isOnline) {
                     binding.tvSubtitle.setTextColor(requireContext().color(R.color.razzmatazz))
                     binding.tvSubtitle.text = chat.storeName
+                    binding.tvSubtitle.visible(!chat.storeName.isNullOrBlank())
                     Glide.with(this)
                         .load(chat.partnerAvatar)
                         .into(binding.ivPartnerIcon)
