@@ -97,9 +97,11 @@ class ChatListViewModel(
                     archiveChatOnServer(sideEffect.chat, sideEffect.archive)
                 }
                 is ChatListUDF.SideEffect.ShowArchiveChatError -> {
-                    val message = resourceManager.getString(
-                        if (sideEffect.archive) R.string.archive_error
-                        else R.string.unarchive_error
+                    val message = sideEffect.error.humanMessage(
+                        defaultMessage = resourceManager.getString(
+                            if (sideEffect.archive) R.string.archive_error
+                            else R.string.unarchive_error
+                        )
                     )
                     showErrorMessageCommand.accept(SingleEvent(message))
                 }

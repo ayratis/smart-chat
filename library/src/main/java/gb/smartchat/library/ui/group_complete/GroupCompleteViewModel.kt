@@ -67,7 +67,9 @@ class GroupCompleteViewModel(
                     uploadAvatar(sideEffect.contentUri)
                 }
                 is GroupCompleteUDF.SideEffect.ShowUploadAvatarError -> {
-                    val message = resourceManager.getString(R.string.upload_photo_error)
+                    val message = sideEffect.error.humanMessage(
+                        resourceManager.getString(R.string.upload_photo_error)
+                    )
                     showDialogCommand.accept(SingleEvent(message))
                 }
             }
@@ -103,7 +105,7 @@ class GroupCompleteViewModel(
 
     private fun uploadAvatar(contentUri: Uri) {
         uploadDisposable?.dispose()
-        val (name, size) = contentHelper.nameSize(contentUri) ?: return
+        val (name, _) = contentHelper.nameSize(contentUri) ?: return
         val filePart = MultipartBody.Part
             .createFormData("upload_file", name, contentHelper.requestBody(contentUri))
         httpApi

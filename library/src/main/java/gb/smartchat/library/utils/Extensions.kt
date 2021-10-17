@@ -306,6 +306,14 @@ fun Throwable.humanMessage(resourceManager: ResourceManager): String {
     }
 }
 
+fun Throwable.humanMessage(defaultMessage: String): String {
+    return when (this) {
+        is IOException -> defaultMessage
+        is ServerException -> message ?: defaultMessage
+        else -> defaultMessage
+    }
+}
+
 fun UserProfile.toContact(): Contact {
     return Contact(
         id = id,

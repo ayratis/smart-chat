@@ -9,6 +9,7 @@ import gb.smartchat.library.data.http.HttpApi
 import gb.smartchat.library.data.resources.ResourceManager
 import gb.smartchat.library.publisher.UserAvatarChangedPublisher
 import gb.smartchat.library.utils.SingleEvent
+import gb.smartchat.library.utils.humanMessage
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -32,7 +33,7 @@ class UserProfileViewModel(
 
     fun uploadAvatar(contentUri: Uri) {
         uploadDisposable?.dispose()
-        val (name, size) = contentHelper.nameSize(contentUri) ?: return
+        val (name, _) = contentHelper.nameSize(contentUri) ?: return
         val filePart = MultipartBody.Part
             .createFormData("upload_file", name, contentHelper.requestBody(contentUri))
         httpApi
@@ -48,7 +49,8 @@ class UserProfileViewModel(
                 },
                 {
                     avatarStateBehavior.accept(AvatarState.Empty)
-                    val message = resourceManager.getString(R.string.upload_photo_error)
+                    val message =
+                        it.humanMessage(resourceManager.getString(R.string.upload_photo_error))
                     showDialogCommand.accept(SingleEvent(message))
                 }
             ).also {

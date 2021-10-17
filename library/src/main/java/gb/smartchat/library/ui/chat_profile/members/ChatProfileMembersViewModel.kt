@@ -110,7 +110,8 @@ class ChatProfileMembersViewModel(
                     }
                 },
                 {
-                    val message = resourceManager.getString(R.string.delete_member_error)
+                    val message =
+                        it.humanMessage(resourceManager.getString(R.string.delete_member_error))
                     showErrorDialogCommand.accept(SingleEvent(message))
                 }
             )

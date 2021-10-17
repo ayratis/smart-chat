@@ -15,6 +15,7 @@ import gb.smartchat.library.publisher.ChatEditedPublisher
 import gb.smartchat.library.publisher.ChatUnarchivePublisher
 import gb.smartchat.library.publisher.LeaveChatPublisher
 import gb.smartchat.library.utils.SingleEvent
+import gb.smartchat.library.utils.humanMessage
 import gb.smartchat.library.utils.toContact
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -75,7 +76,8 @@ class ChatProfileViewModel(
                     exitToRootScreenCommand.accept(SingleEvent(Unit))
                 },
                 {
-                    val message = resourceManager.getString(R.string.leave_chat_error)
+                    val defaultMessage = resourceManager.getString(R.string.leave_chat_error)
+                    val message = it.humanMessage(defaultMessage)
                     showDialogCommand.accept(SingleEvent(message))
                 }
             )
@@ -93,7 +95,8 @@ class ChatProfileViewModel(
                     exitToRootScreenCommand.accept(SingleEvent(Unit))
                 },
                 {
-                    val message = resourceManager.getString(R.string.archive_chat_error)
+                    val defaultMessage = resourceManager.getString(R.string.archive_chat_error)
+                    val message = it.humanMessage(defaultMessage)
                     showDialogCommand.accept(SingleEvent(message))
                 }
             )
@@ -111,7 +114,8 @@ class ChatProfileViewModel(
                     exitToRootScreenCommand.accept(SingleEvent(Unit))
                 },
                 {
-                    val message = resourceManager.getString(R.string.archive_chat_error)
+                    val defaultMessage = resourceManager.getString(R.string.unarchive_error)
+                    val message = it.humanMessage(defaultMessage)
                     showDialogCommand.accept(SingleEvent(message))
                 }
             )
@@ -120,7 +124,7 @@ class ChatProfileViewModel(
 
     fun editPhoto(uri: Uri) {
         uploadDisposable?.dispose()
-        val (name, size) = contentHelper.nameSize(uri) ?: return
+        val (name, _) = contentHelper.nameSize(uri) ?: return
         val filePart = MultipartBody.Part
             .createFormData("upload_file", name, contentHelper.requestBody(uri))
         httpApi
@@ -140,9 +144,9 @@ class ChatProfileViewModel(
                     )
                 },
                 {
-                    showDialogCommand.accept(
-                        SingleEvent(resourceManager.getString(R.string.upload_photo_error))
-                    )
+                    val defaultMessage = resourceManager.getString(R.string.upload_photo_error)
+                    val message = it.humanMessage(defaultMessage)
+                    showDialogCommand.accept(SingleEvent(message))
                 }
             ).also {
                 uploadDisposable = it
