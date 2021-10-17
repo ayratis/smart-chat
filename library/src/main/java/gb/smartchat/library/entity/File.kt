@@ -21,8 +21,9 @@ data class File(
 //    val preview: Any?
 ) : Serializable {
     fun isImage(): Boolean {
-        if (url != null) {
-            val extension = MimeTypeMap.getFileExtensionFromUrl(url)
+        val source = url ?: name
+        if (source != null) {
+            val extension = MimeTypeMap.getFileExtensionFromUrl(source)
             val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
             return mimeType?.startsWith("image") == true
         }
