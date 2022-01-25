@@ -394,7 +394,11 @@ fun Context.launchCustomTab(url: String, customTabsSession: CustomTabsSession? =
     val builder = customTabsSession?.let { CustomTabsIntent.Builder(it) }
         ?: CustomTabsIntent.Builder()
     val intent = builder.build()
-    intent.launchUrl(this, Uri.parse(url))
+    var uri = Uri.parse(url)
+    if (uri.scheme == null) {
+        uri = Uri.parse("http://$url")
+    }
+    intent.launchUrl(this, uri)
 }
 
 fun Context.openFile(uri: Uri) {
