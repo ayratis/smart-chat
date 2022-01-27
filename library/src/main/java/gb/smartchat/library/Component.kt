@@ -75,6 +75,20 @@ class Component constructor(
     val okHttpClient: OkHttpClient by lazy {
         with(OkHttpClient.Builder()) {
             addNetworkInterceptor(AuthHeaderInterceptor(userId))
+            if (BuildConfig.DEBUG) {
+                addNetworkInterceptor(
+                    HttpLoggingInterceptor().apply {
+                        level = HttpLoggingInterceptor.Level.BODY
+                    }
+                )
+            }
+            build()
+        }
+    }
+
+    val okHttpClientWithErrorResponseInterceptor by lazy {
+        with(OkHttpClient.Builder()) {
+            addNetworkInterceptor(AuthHeaderInterceptor(userId))
             addNetworkInterceptor(ErrorResponseInterceptor(gson))
             if (BuildConfig.DEBUG) {
                 addNetworkInterceptor(
@@ -107,7 +121,7 @@ class Component constructor(
         with(Retrofit.Builder()) {
             addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             addConverterFactory(GsonConverterFactory.create(gson))
-            client(okHttpClient)
+            client(okHttpClientWithErrorResponseInterceptor)
             baseUrl(baseUrl)
             build().create(HttpApi::class.java)
         }
