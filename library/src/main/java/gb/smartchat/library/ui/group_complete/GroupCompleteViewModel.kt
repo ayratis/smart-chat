@@ -22,7 +22,7 @@ import io.reactivex.schedulers.Schedulers
 import okhttp3.MultipartBody
 
 class GroupCompleteViewModel(
-    private val storeInfo: StoreInfo,
+    private val storeInfo: StoreInfo?,
     private val userProfile: UserProfile,
     private val store: GroupCompleteUDF.Store,
     private val httpApi: HttpApi,
@@ -82,11 +82,11 @@ class GroupCompleteViewModel(
             chatName = chatName,
             fileUrl = avatarUrl,
             contacts = contacts + userProfile.toContact(),
-            storeId = storeInfo.storeId,
-            storeName = storeInfo.storeName,
-            partnerName = storeInfo.partnerName,
-            agentCode = storeInfo.agentCode,
-            partnerCode = storeInfo.partnerCode
+            storeId = storeInfo?.storeId,
+            storeName = storeInfo?.storeName,
+            partnerName = storeInfo?.partnerName,
+            agentCode = storeInfo?.agentCode,
+            partnerCode = storeInfo?.partnerCode
         )
         httpApi
             .postCreateChat(requestBody)

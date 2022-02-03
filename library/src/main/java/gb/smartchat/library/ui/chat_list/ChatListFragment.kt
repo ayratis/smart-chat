@@ -268,6 +268,15 @@ class ChatListFragment : Fragment(), MessageDialogFragment.OnClickListener {
                     event.getContentIfNotHandled()?.let {
                         val storeInfoList = component.storeInfoList
                         when {
+                            storeInfoList.size == 0 -> {
+                                parentFragmentManager.navigateTo(
+                                    CreateChatFragment.create(
+                                        null,
+                                        CreateChatMode.CREATE_GROUP
+                                    ),
+                                    NavAnim.OPEN
+                                )
+                            }
                             storeInfoList.size == 1 -> {
                                 parentFragmentManager.navigateTo(
                                     CreateChatFragment.create(
