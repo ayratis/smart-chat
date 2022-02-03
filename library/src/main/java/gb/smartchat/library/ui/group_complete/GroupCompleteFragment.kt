@@ -38,7 +38,7 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
         private const val ARG_SELECTED_CONTACTS = "arg selected contacts"
 
         fun create(
-            storeInfo: StoreInfo,
+            storeInfo: StoreInfo?,
             selectedContacts: List<Contact>
         ) =
             GroupCompleteFragment().apply {
@@ -53,8 +53,8 @@ class GroupCompleteFragment : Fragment(), AttachDialogFragment.Listener {
     private val binding: FragmentGroupCompleteBinding
         get() = _binding!!
     private val compositeDisposable = CompositeDisposable()
-    private val storeInfo: StoreInfo by lazy {
-        requireArguments().getSerializable(ARG_STORE_INFO) as StoreInfo
+    private val storeInfo: StoreInfo? by lazy {
+        requireArguments().getSerializable(ARG_STORE_INFO) as StoreInfo?
     }
     private val selectedContacts: List<Contact> by lazy {
         @Suppress("UNCHECKED_CAST")

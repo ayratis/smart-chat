@@ -34,7 +34,7 @@ class CreateChatFragment : Fragment() {
         private const val ARG_CHAT = "arg chat"
 
         fun create(
-            storeInfo: StoreInfo,
+            storeInfo: StoreInfo?,
             mode: CreateChatMode,
             chat: Chat? = null
         ) =
@@ -47,8 +47,8 @@ class CreateChatFragment : Fragment() {
             }
     }
 
-    private val storeInfo: StoreInfo by lazy {
-        requireArguments().getSerializable(ARG_STORE_INFO) as StoreInfo
+    private val storeInfo: StoreInfo? by lazy {
+        requireArguments().getSerializable(ARG_STORE_INFO) as StoreInfo?
     }
     private val mode by lazy {
         requireArguments().getSerializable(ARG_MODE) as CreateChatMode
