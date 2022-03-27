@@ -78,6 +78,7 @@ object ChatPushNotificationManager {
 
     fun proceedRemoteMessage(
         context: Context,
+        launchMode: LaunchMode = LaunchMode.ChatList,
         smartUserId: String,
         storeInfoList: List<StoreInfo>,
         dataMap: Map<String, String>,
@@ -97,6 +98,7 @@ object ChatPushNotificationManager {
 
         sendPush(
             context,
+            launchMode,
             smartUserId,
             storeInfoList,
             chatIdLong,
@@ -111,6 +113,7 @@ object ChatPushNotificationManager {
 
     fun proceedSocketMessage(
         context: Context,
+        launchMode: LaunchMode,
         smartUserId: String,
         storeInfoList: List<StoreInfo>,
         message: Message,
@@ -127,6 +130,7 @@ object ChatPushNotificationManager {
 
         sendPush(
             context,
+            launchMode,
             smartUserId,
             storeInfoList,
             message.chatId,
@@ -139,6 +143,7 @@ object ChatPushNotificationManager {
 
     private fun sendPush(
         context: Context,
+        launchMode: LaunchMode,
         smartUserId: String,
         storeInfoList: List<StoreInfo>,
         chatId: Long,
@@ -151,6 +156,7 @@ object ChatPushNotificationManager {
 
         val intent = SmartChatActivity.createLaunchIntent(
             context,
+            launchMode,
             smartUserId,
             storeInfoList,
             chatId,

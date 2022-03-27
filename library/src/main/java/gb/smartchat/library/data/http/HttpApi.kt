@@ -139,4 +139,10 @@ interface HttpApi {
     fun postUsername(
         @Body request: UsernameRequest
     ): Single<BaseResponse<Any>>
+
+    @GET("chat/management/get_service_chat")
+    fun getServiceChat(
+        @Query("store_id") storeId: String?, //GUID
+        @Query("partner_code") partnerCode: Int?,
+    ): Single<BaseResponse<ChatResponse>>
 }

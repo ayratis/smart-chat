@@ -46,17 +46,19 @@ class Component constructor(
     private val baseUrl: String,
     val userId: String,
     val storeInfoList: List<StoreInfo>,
+    val launchMode: LaunchMode,
 ) : ViewModel() {
 
     class Factory(
         private val application: Application,
         private val baseUrl: String,
         private val userId: String,
-        private val storeInfoList: List<StoreInfo>
+        private val storeInfoList: List<StoreInfo>,
+        private val launchMode: LaunchMode,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return Component(application, baseUrl, userId, storeInfoList) as T
+            return Component(application, baseUrl, userId, storeInfoList, launchMode) as T
         }
     }
 

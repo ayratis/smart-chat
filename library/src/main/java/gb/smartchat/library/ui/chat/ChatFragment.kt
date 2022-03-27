@@ -22,6 +22,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import gb.smartchat.R
+import gb.smartchat.library.LaunchMode
 import gb.smartchat.library.SmartChatActivity
 import gb.smartchat.library.entity.Chat
 import gb.smartchat.library.entity.File
@@ -106,6 +107,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                     userId = component.userId,
                     chatId = argChatId,
                     argChat = argChat,
+                    launchMode = component.launchMode,
                     socketApi = component.socketApi,
                     httpApi = component.httpApi,
                     contentHelper = contentHelper,
@@ -239,14 +241,14 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         requireActivity().onBackPressedDispatcher.addCallback {
-            parentFragmentManager.popBackStack()
+            exit()
         }
         binding.layoutInput.addOnLayoutChangeListener(onLayoutChangeListener)
         binding.appBarLayout.addSystemTopPadding()
         binding.layoutInput.addSystemBottomPadding()
 
         binding.toolbar.setNavigationOnClickListener {
-            parentFragmentManager.popBackStack()
+            exit()
         }
         binding.rvChat.apply {
             layoutManager = LinearLayoutManager(binding.rvChat.context).apply {
@@ -390,11 +392,13 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                         .placeholder(R.drawable.group_avatar_placeholder)
                         .circleCrop()
                         .into(binding.ivChatAvatar)
-                    binding.chatInfoLayout.setOnClickListener {
-                        parentFragmentManager.navigateTo(
-                            ChatProfileFragment.create(chat),
-                            NavAnim.SLIDE
-                        )
+                    if (component.launchMode != LaunchMode.ServiceChat) {
+                        binding.chatInfoLayout.setOnClickListener {
+                            parentFragmentManager.navigateTo(
+                                ChatProfileFragment.create(chat),
+                                NavAnim.SLIDE
+                            )
+                        }
                     }
                 }
                 binding.tvTitle.text = chat.name
@@ -412,7 +416,7 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                     Glide.with(this)
                         .load(chat.partnerAvatar)
                         .into(binding.ivPartnerIcon)
-                    binding.ivPartnerIcon.visible(chat.partnerAvatar != null)
+                    binding.ivPartnerIcon.visible(chat.partnerAvatar != null && chat.partnerName != null)
                 } else {
                     binding.tvSubtitle.setTextColor(requireContext().color(R.color.santas_gray))
                     binding.tvSubtitle.text = getString(R.string.waiting_for_network)
@@ -676,5 +680,13 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
 
         val shareIntent = Intent.createChooser(sendIntent, null)
         startActivity(shareIntent)
+    }
+
+    private fun exit() {
+        if (parentFragmentManager.backStackEntryCount > 0) {
+            parentFragmentManager.popBackStack()
+        } else {
+            activity?.finish()
+        }
     }
 }
