@@ -6,6 +6,7 @@ import android.util.LongSparseArray
 import androidx.core.util.forEach
 import androidx.lifecycle.ViewModel
 import com.jakewharton.rxrelay2.BehaviorRelay
+import gb.smartchat.library.LaunchMode
 import gb.smartchat.library.data.content.ContentHelper
 import gb.smartchat.library.data.download.FileDownloadHelper
 import gb.smartchat.library.data.http.HttpApi
@@ -36,6 +37,7 @@ class ChatViewModel(
     private val userId: String,
     chatId: Long,
     argChat: Chat?,
+    private val launchMode: LaunchMode,
     private val socketApi: SocketApi,
     private val httpApi: HttpApi,
     private val contentHelper: ContentHelper,
@@ -579,7 +581,9 @@ class ChatViewModel(
     }
 
     fun onToFavoriteClick(message: Message) {
-        makeMessageFavorite(message)
+        if (launchMode != LaunchMode.ServiceChat) {
+            makeMessageFavorite(message)
+        }
     }
 
     fun errorMessagePositveClick(tag: String) {

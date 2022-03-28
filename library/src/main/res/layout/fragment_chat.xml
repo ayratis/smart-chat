@@ -47,7 +47,7 @@
                     android:layout_height="12sp"
                     android:layout_marginEnd="4dp"
                     android:importantForAccessibility="no"
-                    android:visibility="gone"
+                    android:visibility="visible"
                     app:layout_constraintBottom_toBottomOf="@id/tv_subtitle"
                     app:layout_constraintEnd_toStartOf="@id/tv_subtitle"
                     app:layout_constraintStart_toStartOf="parent"

@@ -17,6 +17,7 @@ import gb.smartchat.library.ui._global.MessageDialogFragment
 import gb.smartchat.library.ui.chat.ChatFragment
 import gb.smartchat.library.ui.chat_list.ChatListFragment
 import gb.smartchat.library.ui.group_complete.GroupCompleteFragment
+import gb.smartchat.library.ui.service_chat_preparing.ServiceChatPreparingFragment
 import gb.smartchat.library.ui.username_missing.UsernameMissingFragment
 import gb.smartchat.library.utils.*
 import io.reactivex.disposables.CompositeDisposable
@@ -31,10 +32,12 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
         private const val ARG_CHAT_ID_TO_OPEN = "arg chat id to open"
         private const val ARG_STORE_INFO_LIST = "arg store info list"
         private const val ARG_BASE_URL = "arg base url"
+        private const val ARG_LAUNCH_MODE = "arg launch mode"
         private const val USER_MISSING_TAG = "user missing tag"
 
         fun createLaunchIntent(
             context: Context,
+            launchMode: LaunchMode = LaunchMode.ChatList,
             userId: String,
             storeInfoList: List<StoreInfo>,
             chatId: Long = 0,
@@ -45,6 +48,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
                 putExtra(ARG_STORE_INFO_LIST, ArrayList(storeInfoList))
                 putExtra(ARG_CHAT_ID_TO_OPEN, chatId)
                 putExtra(ARG_BASE_URL, baseUrl)
+                putExtra(ARG_LAUNCH_MODE, launchMode)
             }
         }
     }
@@ -55,6 +59,10 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
 
     private val userId: String by lazy {
         intent.getStringExtra(ARG_USER_ID)!!
+    }
+
+    private val launchMode: LaunchMode by lazy {
+        intent.getSerializableExtra(ARG_LAUNCH_MODE) as LaunchMode
     }
 
     private val storeInfoList: List<StoreInfo> by lazy {
@@ -76,7 +84,8 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
             application = application,
             userId = userId,
             baseUrl = baseUrl,
-            storeInfoList = storeInfoList
+            storeInfoList = storeInfoList,
+            launchMode = launchMode,
         )
     }
 
@@ -112,20 +121,46 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
         }
 
         if (savedInstanceState == null) {
-
-            //если перешли по пушу
-            if (argChatIdToOpen != 0L) {
-                supportFragmentManager.newRootChain(
-                    ChatListFragment.create(false),
-                    ChatFragment.create(chatId = argChatIdToOpen, chat = null),
-                )
-                return
+            when(launchMode) {
+                is LaunchMode.ChatList -> {
+                    //если перешли по пушу
+                    if (argChatIdToOpen != 0L) {
+                        supportFragmentManager.newRootChain(
+                            ChatListFragment.create(false),
+                            ChatFragment.create(chatId = argChatIdToOpen, chat = null),
+                        )
+                    } else {
+                        supportFragmentManager
+                            .beginTransaction()
+                            .replace(
+                                R.id.fragment_container,
+                                ChatListFragment.create(false)
+                            )
+                            .commitNow()
+                    }
+                }
+                is LaunchMode.ServiceChat -> {
+                    //если перешли по пушу
+                    if (argChatIdToOpen != 0L) {
+                        supportFragmentManager
+                            .beginTransaction()
+                            .replace(
+                                R.id.fragment_container,
+                                ChatFragment.create(chatId = argChatIdToOpen, chat = null)
+                            )
+                            .commitNow()
+                    } else {
+                        supportFragmentManager
+                            .beginTransaction()
+                            .replace(
+                                R.id.fragment_container,
+                                ServiceChatPreparingFragment.create()
+                            )
+                            .commitNow()
+                    }
+                }
             }
 
-            supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.fragment_container, ChatListFragment.create(false))
-                .commitNow()
         }
     }
 
@@ -195,6 +230,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
             if (!currentFragment.isSameChat(message)) {
                 ChatPushNotificationManager.proceedSocketMessage(
                     this,
+                    launchMode,
                     userId,
                     storeInfoList,
                     message,
@@ -208,6 +244,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
             if (!currentFragment.isSameChat(message)) {
                 ChatPushNotificationManager.proceedSocketMessage(
                     this,
+                    launchMode,
                     userId,
                     storeInfoList,
                     message,
@@ -219,6 +256,7 @@ class SmartChatActivity : AppCompatActivity(R.layout.activity_smart_chat),
 
         ChatPushNotificationManager.proceedSocketMessage(
             this,
+            launchMode,
             userId,
             storeInfoList,
             message,
