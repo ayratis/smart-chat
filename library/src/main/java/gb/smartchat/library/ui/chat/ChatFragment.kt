@@ -191,9 +191,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                 onQuotedMsgClickListener = viewModel::onQuotedMessageClick,
                 onFileClickListener = viewModel::onFileClick,
                 onMentionClickListener = viewModel::onMentionClick,
-                onToFavoritesClickListener = { chatItem ->
-                    viewModel.onToFavoriteClick(chatItem.message)
-                },
+                onToFavoritesClickListener =
+                if (component.launchMode is LaunchMode.ServiceChat) null
+                else { chatItem -> viewModel.onToFavoriteClick(chatItem.message) },
                 onPhotoClickListener = this::openMedia,
                 onShareClickListener = this::shareText,
             ).apply {
@@ -392,7 +392,9 @@ class ChatFragment : Fragment(), AttachDialogFragment.Listener,
                         .placeholder(R.drawable.group_avatar_placeholder)
                         .circleCrop()
                         .into(binding.ivChatAvatar)
-                    if (component.launchMode != LaunchMode.ServiceChat) {
+                    if (component.launchMode is LaunchMode.ServiceChat) {
+                        binding.chatInfoLayout.setOnClickListener(null)
+                    } else {
                         binding.chatInfoLayout.setOnClickListener {
                             parentFragmentManager.navigateTo(
                                 ChatProfileFragment.create(chat),
